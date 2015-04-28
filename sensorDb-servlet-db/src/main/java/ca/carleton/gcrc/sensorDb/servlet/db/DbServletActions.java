@@ -1,7 +1,9 @@
 package ca.carleton.gcrc.sensorDb.servlet.db;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,4 +73,46 @@ public class DbServletActions {
 		return result;
 	}
 
+	public JSONObject getLocations(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray locationArr = new JSONArray();
+			result.put("locations", locationArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,name,responsible_party,ST_AsText(coordinates),elevation FROM locations"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				int id = resultSet.getInt(1);
+				String name = resultSet.getString(2);
+				String responsible = resultSet.getString(3);
+				String coordinates = resultSet.getString(4);
+				int elevation = resultSet.getInt(5);
+				
+				JSONObject location = new JSONObject();
+				location.put("id", id);
+				location.put("name", name);
+				location.put("responsible", responsible);
+				location.put("coordinates", coordinates);
+				location.put("elevation", elevation);
+				
+				locationArr.put(location);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting location into database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
 }
