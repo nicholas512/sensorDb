@@ -116,5 +116,10 @@
 		<artifactId>commons-codec</artifactId>
 		<version>${commons-codec.version}</version>
 	</dependency>
+	<dependency>
+		<groupId>ca.gcrc.carleton</groupId>
+		<artifactId>sensorDb-servlet-html</artifactId>
+		<version>${project.version}</version>
+	</dependency>
   </dependencies>
 </project>

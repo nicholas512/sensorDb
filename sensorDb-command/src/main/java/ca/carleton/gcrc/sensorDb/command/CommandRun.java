@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.Stack;
 
+import javax.servlet.http.HttpServlet;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -14,6 +16,8 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import ca.carleton.gcrc.sensorDb.html.HtmlServletFactory;
 
 
 public class CommandRun implements Command {
@@ -123,6 +127,14 @@ public class CommandRun implements Command {
         	servletHolder.setInitParameter("pathInfoOnly", "true");
         	servletHolder.setInitParameter("resourceBase", mediaDir.getAbsolutePath());
         	context.addServlet(servletHolder,"/media/*");
+        }
+
+        // Proxy to html pages
+        {
+        	HtmlServletFactory factory = new HtmlServletFactory();
+        	HttpServlet htmlServlet = factory.create("/");
+        	ServletHolder servletHolder = new ServletHolder(htmlServlet);
+        	context.addServlet(servletHolder,"/*");
         }
 
         // Servlet for configuration

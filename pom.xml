@@ -35,5 +35,6 @@
 	</properties>
 	<modules>
 		<module>sensorDb-command</module>
+		<module>sensorDb-servlet-html</module>
 	</modules>
 </project>
