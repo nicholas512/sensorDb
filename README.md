@@ -1,6 +1,6 @@
 # sensorDb
 
-
+<pre>
 sudo -u postgres createdb --owner=<user> observations
 
 sudo -u postgres psql --command="CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology;" observations
@@ -15,6 +15,7 @@ for tbl in `psql -qAt -c "select sequence_name from information_schema.sequences
 
 for tbl in `psql -qAt -c "select table_name from information_schema.views where table_schema = 'public';" observations` ; do  psql -c "alter table $tbl owner to <user>" observations ; done
 
+</pre>
 
 # Queries
 
