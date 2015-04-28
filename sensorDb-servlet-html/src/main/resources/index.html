@@ -1,8 +1,191 @@
 <html>
-	<head>
-		<title>SensorDb</title>
-	</head>
-	<body>
-		<h1>SensorDb</h1>
-	</body>
+    <head>
+        <title>SensorDb</title>
+    </head>
+    <body>
+        <h1>SensorDb</h1>
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Add Location</legend>
+
+                <!-- Textarea -->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="location_notes">Location Notes</label>
+                    <div class="col-md-4">                     
+                        <textarea class="form-control" id="location_notes" name="location_notes"></textarea>
+                    </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="location_lattitude">Latitude</label>  
+                    <div class="col-md-4">
+                        <input id="location_lattitude" name="location_lattitude" type="text" placeholder="45.00000" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="location_longitude">longitude</label>  
+                    <div class="col-md-4">
+                        <input id="location_longitude" name="location_longitude" type="text" placeholder="-75.00000" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Add Device</legend>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_serial_number">Serial Number</label>  
+                    <div class="col-md-4">
+                        <input id="device_serial_number" name="device_serial_number" type="text" placeholder="E5096D" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Select Basic -->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_type">Device Type</label>
+                    <div class="col-md-4">
+                        <select id="device_type" name="device_type" class="form-control">
+                            <option value="LOG-PT1000">LOG-PT1000</option>
+                            <option value="LOG-HC2">LOG-HC2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_access_code">Access Code</label>  
+                    <div class="col-md-4">
+                        <input id="device_access_code" name="device_access_code" type="text" placeholder="AFF9" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_firmware_version">Firmware Version</label>  
+                    <div class="col-md-4">
+                        <input id="device_firmware_version" name="device_firmware_version" type="text" placeholder="" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_notes">Device Notes</label>
+                    <div class="col-md-4">                     
+                        <textarea class="form-control" id="device_notes" name="device_notes"></textarea>
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Place Device in Location</legend>
+
+                <!-- Search input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
+                    <div class="col-md-4">
+                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Search input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="location_searchinput">Search Locations</label>
+                    <div class="col-md-4">
+                        <input id="location_searchinput" name="location_searchinput" type="search" placeholder="Carleton" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Log Device Note</legend>
+
+                <!-- Search input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
+                    <div class="col-md-4">
+                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Textarea -->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="textarea">Notes</label>
+                    <div class="col-md-4">                     
+                        <textarea class="form-control" id="textarea" name="textarea"></textarea>
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Log Device Firmware Change</legend>
+
+                <!-- Search input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
+                    <div class="col-md-4">
+                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="device_firmware">Firmware version</label>  
+                    <div class="col-md-4">
+                        <input id="device_firmware" name="device_firmware" type="text" placeholder="" class="form-control input-md" required="">
+
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+        <form class="form-horizontal">
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend>Upload Observations File</legend>
+
+                <!-- File Button --> 
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="upload_observations_file">Upload Device CSV</label>
+                    <div class="col-md-4">
+                        <input id="upload_observations_file" name="upload_observations_file" class="input-file" type="file">
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+
+    </body>
 </html>
