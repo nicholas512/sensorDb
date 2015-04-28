@@ -1,9 +1,15 @@
 <html>
-    <head>
-        <title>SensorDb</title>
-    </head>
-    <body>
-        <h1>SensorDb</h1>
+
+<head>
+    <title>SensorDb</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="sensordb.css">
+</head>
+
+<body>
+    <h1>SensorDb</h1>
+    <div class="sensordb_forms">
         <form class="form-horizontal">
             <fieldset>
 
@@ -13,14 +19,14 @@
                 <!-- Textarea -->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="location_notes">Location Notes</label>
-                    <div class="col-md-4">                     
+                    <div class="col-md-4">
                         <textarea class="form-control" id="location_notes" name="location_notes"></textarea>
                     </div>
                 </div>
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_lattitude">Latitude</label>  
+                    <label class="col-md-4 control-label" for="location_lattitude">Latitude</label>
                     <div class="col-md-4">
                         <input id="location_lattitude" name="location_lattitude" type="text" placeholder="45.00000" class="form-control input-md" required="">
 
@@ -29,7 +35,7 @@
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_longitude">longitude</label>  
+                    <label class="col-md-4 control-label" for="location_longitude">longitude</label>
                     <div class="col-md-4">
                         <input id="location_longitude" name="location_longitude" type="text" placeholder="-75.00000" class="form-control input-md" required="">
 
@@ -47,7 +53,7 @@
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_serial_number">Serial Number</label>  
+                    <label class="col-md-4 control-label" for="device_serial_number">Serial Number</label>
                     <div class="col-md-4">
                         <input id="device_serial_number" name="device_serial_number" type="text" placeholder="E5096D" class="form-control input-md" required="">
 
@@ -67,7 +73,7 @@
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_access_code">Access Code</label>  
+                    <label class="col-md-4 control-label" for="device_access_code">Access Code</label>
                     <div class="col-md-4">
                         <input id="device_access_code" name="device_access_code" type="text" placeholder="AFF9" class="form-control input-md" required="">
 
@@ -76,7 +82,7 @@
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_firmware_version">Firmware Version</label>  
+                    <label class="col-md-4 control-label" for="device_firmware_version">Firmware Version</label>
                     <div class="col-md-4">
                         <input id="device_firmware_version" name="device_firmware_version" type="text" placeholder="" class="form-control input-md" required="">
 
@@ -86,7 +92,7 @@
                 <!-- Textarea -->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="device_notes">Device Notes</label>
-                    <div class="col-md-4">                     
+                    <div class="col-md-4">
                         <textarea class="form-control" id="device_notes" name="device_notes"></textarea>
                     </div>
                 </div>
@@ -137,7 +143,7 @@
                 <!-- Textarea -->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="textarea">Notes</label>
-                    <div class="col-md-4">                     
+                    <div class="col-md-4">
                         <textarea class="form-control" id="textarea" name="textarea"></textarea>
                     </div>
                 </div>
@@ -161,7 +167,7 @@
 
                 <!-- Text input-->
                 <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_firmware">Firmware version</label>  
+                    <label class="col-md-4 control-label" for="device_firmware">Firmware version</label>
                     <div class="col-md-4">
                         <input id="device_firmware" name="device_firmware" type="text" placeholder="" class="form-control input-md" required="">
 
@@ -176,7 +182,7 @@
                 <!-- Form Name -->
                 <legend>Upload Observations File</legend>
 
-                <!-- File Button --> 
+                <!-- File Button -->
                 <div class="form-group">
                     <label class="col-md-4 control-label" for="upload_observations_file">Upload Device CSV</label>
                     <div class="col-md-4">
@@ -186,6 +192,9 @@
 
             </fieldset>
         </form>
+    </div>
 
-    </body>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</body>
+
 </html>
