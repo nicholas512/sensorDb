@@ -4,5 +4,30 @@
 	</head>
 	<body>
 		<h1>SensorDb</h1>
+		
+		<h2>Create Location</h2>
+		<form action="./db/createLocation" method="POST">
+			<label for="_name">Name:</label>
+			<input id="_name" type="text" name="name"/>
+			<br/>
+			
+			<label for="_responsible">Responsible Party:</label>
+			<input id="_responsible" type="text" name="responsible"/>
+			<br/>
+			
+			<label for="_lng">Longitude:</label>
+			<input id="_lng" type="text" name="lng"/>
+			<br/>
+			
+			<label for="_lat">Latitude:</label>
+			<input id="_lat" type="text" name="lat"/>
+			<br/>
+			
+			<label for="_elev">Elevation:</label>
+			<input id="_elev" type="text" name="elevation"/>
+			<br/>
+			
+			<input type="submit" value="OK"/>
+		</form>
 	</body>
 </html>

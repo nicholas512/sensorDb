@@ -19,6 +19,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.sensorDb.html.HtmlServletFactory;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
+import ca.carleton.gcrc.sensorDb.servlet.db.DbServlet;
 
 
 public class CommandRun implements Command {
@@ -106,7 +107,7 @@ public class CommandRun implements Command {
 		String connectionString = serverProperties.getDbConnection();
 		String dbUser = serverProperties.getDbUser();
 		String dbPassword = serverProperties.getDbPassword();
-		//DbConnection dbConnection = 
+		DbConnection dbConnection = 
 				DbConnection.fromParameters(connectionString, dbUser, dbPassword);
 		
 		// Figure out media directory
@@ -145,14 +146,12 @@ public class CommandRun implements Command {
         	context.addServlet(servletHolder,"/*");
         }
 
-        // Servlet for configuration
-//        {
-//        	ServletHolder servletHolder = new ServletHolder(new ConfigServlet());
-//        	servletHolder.setInitParameter("atlasDir", atlasDir.getAbsolutePath());
-//        	servletHolder.setInitParameter("installDir", gs.getInstallDir().getAbsolutePath());
-//        	servletHolder.setInitOrder(1);
-//        	context.addServlet(servletHolder,"/servlet/configuration/*");
-//        }
+        // Servlet for db
+        {
+        	ServletHolder servletHolder = new ServletHolder(new DbServlet(dbConnection));
+        	servletHolder.setInitOrder(1);
+        	context.addServlet(servletHolder,"/db/*");
+        }
 
 		// Start server
 		server.start();

@@ -5,8 +5,8 @@
     <artifactId>sensorDb</artifactId>
     <version>0.0.1-SNAPSHOT</version>
   </parent>
-  <artifactId>sensorDb-servlet-html</artifactId>
-	<name>sensorDb-servlet-html</name>
+  <artifactId>sensorDb-servlet-db</artifactId>
+  <name>sensorDb-servlet-db</name>
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -27,6 +27,17 @@
 	  		<version>${slf4j.version}</version>
 	  		<type>jar</type>
 	  		<scope>compile</scope>
+	  	</dependency>
+	  	<dependency>
+		  <groupId>ca.carleton.gcrc</groupId>
+		  <artifactId>nunaliit2-json</artifactId>
+		  <version>${nunaliit.version}</version>
+	  		<scope>compile</scope>
+	  	</dependency>
+	  	<dependency>
+	  		<groupId>ca.gcrc.carleton</groupId>
+	  		<artifactId>sensorDb-jdbc</artifactId>
+	  		<version>${project.version}</version>
 	  	</dependency>
 	</dependencies>
 </project>
