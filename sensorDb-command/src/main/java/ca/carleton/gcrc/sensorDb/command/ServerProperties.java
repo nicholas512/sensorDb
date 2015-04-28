@@ -48,6 +48,30 @@ public class ServerProperties {
 		} catch(Exception e) {
 			throw new Exception("Unable to interpret server key",e);
 		}
+
+		// DB Connection
+		{
+			String dbConn = props.getProperty("db.connection",null);
+			if( null != dbConn ){
+				serverProps.setDbConnection(dbConn);
+			}
+		}
+
+		// DB User
+		{
+			String dbUser = props.getProperty("db.user",null);
+			if( null != dbUser ){
+				serverProps.setDbUser(dbUser);
+			}
+		}
+
+		// DB Password
+		{
+			String dbPassword = props.getProperty("db.password",null);
+			if( null != dbPassword ){
+				serverProps.setDbPassword(dbPassword);
+			}
+		}
 		
 		return serverProps;
 	}
@@ -121,6 +145,7 @@ public class ServerProperties {
 		Set<String> sensitivePropertyNames = new HashSet<String>();
 		{
 			sensitivePropertyNames.add("server.key");
+			sensitivePropertyNames.add("db.password");
 			
 			File sensitivePropFile = new File(serverDir,"config/sensitive.properties");
 			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
@@ -229,6 +254,9 @@ public class ServerProperties {
 	
 	private int serverPort = 8080;
 	private byte[] serverKey = null;
+	private String dbConnection = null;
+	private String dbUser = null;
+	private String dbPassword = null;
 
 	public int getServerPort() {
 		return serverPort;
@@ -242,5 +270,26 @@ public class ServerProperties {
 	}
 	public void setServerKey(byte[] serverKey) {
 		this.serverKey = serverKey;
+	}
+
+	public String getDbConnection() {
+		return dbConnection;
+	}
+	public void setDbConnection(String conn) {
+		this.dbConnection = conn;
+	}
+
+	public String getDbPassword() {
+		return dbPassword;
+	}
+	public void setDbPassword(String dbPassword) {
+		this.dbPassword = dbPassword;
+	}
+
+	public String getDbUser() {
+		return dbUser;
+	}
+	public void setDbUser(String dbUser) {
+		this.dbUser = dbUser;
 	}
 }

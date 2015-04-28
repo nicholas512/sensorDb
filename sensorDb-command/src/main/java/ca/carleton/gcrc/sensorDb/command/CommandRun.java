@@ -18,6 +18,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.sensorDb.html.HtmlServletFactory;
+import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
 
 public class CommandRun implements Command {
@@ -100,6 +101,13 @@ public class CommandRun implements Command {
 			 // the initialization phase of your application
 			 SLF4JBridgeHandler.install();
 		}
+		
+		// Test connection to database
+		String connectionString = serverProperties.getDbConnection();
+		String dbUser = serverProperties.getDbUser();
+		String dbPassword = serverProperties.getDbPassword();
+		//DbConnection dbConnection = 
+				DbConnection.fromParameters(connectionString, dbUser, dbPassword);
 		
 		// Figure out media directory
 		File mediaDir = new File(serverDir, "media");

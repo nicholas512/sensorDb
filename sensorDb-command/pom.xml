@@ -121,5 +121,10 @@
 		<artifactId>sensorDb-servlet-html</artifactId>
 		<version>${project.version}</version>
 	</dependency>
+	<dependency>
+		<groupId>ca.gcrc.carleton</groupId>
+		<artifactId>sensorDb-jdbc</artifactId>
+		<version>${project.version}</version>
+	</dependency>
   </dependencies>
 </project>

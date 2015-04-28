@@ -82,7 +82,7 @@ public class CommandConfig implements Command {
 	}
 	
 	private void userInputProperties(GlobalSettings gs, Properties props) throws Exception {
-		
+
 		// Servlet port
 		{
 			String portString = null;
@@ -106,6 +106,34 @@ public class CommandConfig implements Command {
 				}
 			}
 			props.put("servlet.url.port", portString);
+		}
+
+		// Database connection string
+		{
+			String dbConnectionString = null;
+			while( null == dbConnectionString ) {
+				dbConnectionString = getUserStringInput(gs, "Enter the database connection string", props, "db.connection");
+				if( null == dbConnectionString ){
+					gs.getErrStream().println("A connection string must be provided");
+				}
+			}
+			props.put("db.connection", dbConnectionString);
+		}
+
+		// Database user
+		{
+			String dbUser = getUserStringInput(gs, "Enter the database user", props, "db.user");
+			if( null != dbUser ){
+				props.put("db.user", dbUser);
+			}
+		}
+
+		// Database password
+		{
+			String dbPassword = getUserStringInput(gs, "Enter the database password", props, "db.password");
+			if( null != dbPassword ){
+				props.put("db.password", dbPassword);
+			}
 		}
 	}
 	
