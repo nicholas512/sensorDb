@@ -2,6 +2,7 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Date;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -120,6 +121,47 @@ public class DbServletActions {
 
 		return result;
 	}
+
+	public JSONObject getLocationFromId(
+			int location_id
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray locationArr = new JSONArray();
+			result.put("locations", locationArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,name,responsible_party,ST_AsText(coordinates),elevation FROM locations WHERE id=?"
+			);
+			
+			pstmt.setInt(1, location_id);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				int id = resultSet.getInt(1);
+				String name = resultSet.getString(2);
+				String responsible = resultSet.getString(3);
+				String coordinates = resultSet.getString(4);
+				int elevation = resultSet.getInt(5);
+				
+				JSONObject location = buildLocationJson(id,name,responsible,coordinates,elevation);
+				
+				locationArr.put(location);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving location ("+location_id+") from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
 	
 	private JSONObject buildLocationJson(
 			int id, 
@@ -212,6 +254,46 @@ public class DbServletActions {
 
 		return result;
 	}
+
+	public JSONObject getDeviceFromId(
+			int device_id
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceArr = new JSONArray();
+			result.put("devices", deviceArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,serial_number,device_type,notes FROM devices WHERE id=?"
+			);
+			
+			pstmt.setInt(1, device_id);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				int res_id = resultSet.getInt(1);
+				String res_serialNumber = resultSet.getString(2);
+				String res_deviceType = resultSet.getString(3);
+				String res_Notes = resultSet.getString(4);
+					
+				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_Notes);
+				
+				deviceArr.put(device);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device ("+device_id+") from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
 	
 	private JSONObject buildDeviceJson(
 			int id, 
@@ -227,4 +309,137 @@ public class DbServletActions {
 		device.put("notes", notes);
 		return device;
 	}
+
+	public JSONObject addDeviceLocation(
+			Date time, 
+			int device_id,
+			int location_id,
+			String notes
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			// Check if device_id is valid
+			try {
+				JSONObject query = getDeviceFromId(device_id);
+				JSONArray devices = query.getJSONArray("devices");
+				if( devices.length() < 1 ){
+					throw new Exception("Device not found");
+				}
+				if( devices.length() > 1 ){
+					throw new Exception("Multiple devices with same identifier were found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding device ("+device_id+")",e);
+			}
+			
+			// Check if location_id is valid
+			try {
+				JSONObject query = getLocationFromId(location_id);
+				JSONArray devices = query.getJSONArray("locations");
+				if( devices.length() < 1 ){
+					throw new Exception("Location not found");
+				}
+				if( devices.length() > 1 ){
+					throw new Exception("Multiple locations with same identifier were found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding device ("+device_id+")",e);
+			}
+			
+			// Get Sql Date
+			java.sql.Date dbDate = new java.sql.Date( time.getTime() );
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO device_location (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
+				+" RETURNING id,timestamp,device_id,location_id,notes"
+			);
+			
+			pstmt.setDate(1, dbDate);
+			pstmt.setInt(2, device_id);
+			pstmt.setInt(3, location_id);
+			pstmt.setString(4, notes);
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			int res_id = resultSet.getInt(1);
+			java.sql.Date res_time_sql = resultSet.getDate(2);
+			Date res_time = new Date( res_time_sql.getTime() );
+			int res_device_id = resultSet.getInt(3);
+			int res_location_id = resultSet.getInt(4);
+			String res_notes = resultSet.getString(5);
+				
+			JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
+			result.put("deviceLocation", deviceLocation);
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceLocation into database", e);
+		}
+		
+		result.put("ok", true);
+		result.put("action", "insert device");
+		return result;
+	}
+
+	public JSONObject getDeviceLocations(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceLocationArr = new JSONArray();
+			result.put("deviceLocations", deviceLocationArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,timestamp,device_id,location_id,notes FROM device_location"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				int res_id = resultSet.getInt(1);
+				java.sql.Date res_time_sql = resultSet.getDate(2);
+				Date res_time = new Date( res_time_sql.getTime() );
+				int res_device_id = resultSet.getInt(3);
+				int res_location_id = resultSet.getInt(4);
+				String res_notes = resultSet.getString(5);
+					
+				JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
+				
+				deviceLocationArr.put(deviceLocation);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all deviceLocations from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+	
+	private JSONObject buildDeviceLocationJson(
+			int id, 
+			Date time,
+			int device_id, 
+			int location_id, 
+			String notes ){
+		
+		JSONObject device = new JSONObject();
+		device.put("type", "deviceLocation");
+		device.put("id", id);
+		device.put("timestamp", time.getTime());
+		device.put("timestamp_text", time.toString());
+		device.put("device_id", device_id);
+		device.put("location_id", location_id);
+		device.put("notes", notes);
+		return device;
+	}
+	
 }

@@ -239,6 +239,27 @@
 			<input type="submit" value="OK"/>
 		</form>
     
+		<h2>Add Device Location (experimental)</h2>
+		<form action="./db/addDeviceLocation" method="POST">
+			<label for="_adl_time">Date/Time:</label>
+			<input id="_adl_time" type="text" name="time"/>
+			<br/>
+			
+			<label for="_adl_device_id">Device Id:</label>
+			<input id="_adl_device_id" type="text" name="device_id"/>
+			<br/>
+			
+			<label for="_adl_location_id">Location Id:</label>
+			<input id="_adl_location_id" type="text" name="location_id"/>
+			<br/>
+			
+			<label for="_adl_notes">Notes:</label>
+			<input id="_adl_notes" type="text" name="notes"/>
+			<br/>
+			
+			<input type="submit" value="OK"/>
+		</form>
+    
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 </body>

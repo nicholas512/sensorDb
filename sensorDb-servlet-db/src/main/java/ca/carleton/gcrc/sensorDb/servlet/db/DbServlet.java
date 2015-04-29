@@ -4,9 +4,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -76,6 +82,10 @@ public class DbServlet extends HttpServlet {
 			} else if( path.size() == 1 && path.get(0).equals("getDevices") ) {
 				JSONObject result = actions.getDevices();
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getDeviceLocations") ) {
+				JSONObject result = actions.getDeviceLocations();
+				sendJsonResponse(resp, result);
 				
 			} else {
 				throw new Exception("Invalid action requested");
@@ -122,6 +132,21 @@ public class DbServlet extends HttpServlet {
 							serialNumber
 							,deviceType
 							,notes
+							);
+					sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("addDeviceLocation") ) {
+
+					Date time = getDateParameter(req, "time");
+					int device_id = getIntegerParameter(req, "device_id");
+					int location_id = getIntegerParameter(req, "location_id");
+					String notes = getStringParameter(req, "notes");
+
+					JSONObject result = actions.addDeviceLocation(
+							time,
+							device_id,
+							location_id,
+							notes
 							);
 					sendJsonResponse(resp, result);
 
@@ -281,5 +306,29 @@ public class DbServlet extends HttpServlet {
 		}
 
 		return value.doubleValue();
+	}
+	
+	private Date optDateParameter(HttpServletRequest req, String paramName) throws Exception {
+		String strValue = optStringParameter(req, paramName);
+		if( null == strValue ){
+			return null;
+		}
+		
+		try {
+			Date value = DateUtils.parseUtcString(strValue);
+			return value;
+			
+		} catch (Exception e) {
+			throw new Exception("'"+paramName+"' parameter must be a date",e);
+		}
+	}
+	
+	private Date getDateParameter(HttpServletRequest req, String paramName) throws Exception {
+		Date value = optDateParameter(req, paramName);
+		if( null == value ){
+			throw new Exception("'"+paramName+"' parameter must be specified");
+		}
+
+		return value;
 	}
 }
