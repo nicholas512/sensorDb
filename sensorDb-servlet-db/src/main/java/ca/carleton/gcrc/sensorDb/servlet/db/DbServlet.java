@@ -72,6 +72,10 @@ public class DbServlet extends HttpServlet {
 			} else if( path.size() == 1 && path.get(0).equals("getLocations") ) {
 				JSONObject result = actions.getLocations();
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getDevices") ) {
+				JSONObject result = actions.getDevices();
+				sendJsonResponse(resp, result);
 				
 			} else {
 				throw new Exception("Invalid action requested");
@@ -107,6 +111,19 @@ public class DbServlet extends HttpServlet {
 						,elevation
 						);
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("createDevice") ) {
+
+					String serialNumber = getStringParameter(req, "serial");
+					String deviceType = getStringParameter(req, "device_type");
+					String notes = getStringParameter(req, "notes");
+
+					JSONObject result = actions.createDevice(
+							serialNumber
+							,deviceType
+							,notes
+							);
+					sendJsonResponse(resp, result);
 
 			} else {
 				throw new Exception("Invalid action requested");

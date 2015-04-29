@@ -219,6 +219,26 @@
 			<input type="submit" value="OK"/>
 		</form>
     
+		<h2>Create Device (experimental)</h2>
+		<form action="./db/createDevice" method="POST">
+			<label for="_sn">Serial Number:</label>
+			<input id="_sn" type="text" name="serial"/>
+			<br/>
+			
+			<label for="_type">Type:</label>
+            <select id="_type" name="device_type">
+                <option value="LOG-PT1000">LOG-PT1000</option>
+                <option value="LOG-HC2">LOG-HC2</option>
+            </select>
+			<br/>
+			
+			<label for="_notes">Notes:</label>
+			<input id="_notes" type="text" name="notes"/>
+			<br/>
+			
+			<input type="submit" value="OK"/>
+		</form>
+    
 
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 </body>
