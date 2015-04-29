@@ -182,6 +182,39 @@ public class DbServletActions {
 		location.put("elevation", elevation);
 		return location;
 	}
+	
+	public JSONObject getDeviceTypes(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceTypeArr = new JSONArray();
+			result.put("deviceTypes", deviceTypeArr);
+			
+			for(DeviceType type : DeviceType.getDeviceTypes()){
+				JSONObject deviceType = buildDeviceTypeJson(type.getLabel());
+				
+				deviceTypeArr.put(deviceType);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all device types from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+
+	private JSONObject buildDeviceTypeJson(
+			String name ){
+		
+		JSONObject device = new JSONObject();
+		device.put("type", "deviceType");
+		device.put("name", name);
+		return device;
+	}
 
 	public JSONObject createDevice(
 			String serialNumber, 
@@ -192,13 +225,15 @@ public class DbServletActions {
 		JSONObject result = new JSONObject();
 		
 		try {
+			DeviceType deviceType = DeviceType.getDeviceTypeFromName(type);
+			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO devices (serial_number,device_type,notes) VALUES (?,?,?)"
 				+" RETURNING id,serial_number,device_type,notes"
 			);
 			
 			pstmt.setString(1, serialNumber);
-			pstmt.setString(2, type);
+			pstmt.setString(2, deviceType.getLabel());
 			pstmt.setString(3, notes);
 
 			ResultSet resultSet = pstmt.executeQuery();

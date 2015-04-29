@@ -27,6 +27,12 @@ var HtmlFixer = $n2.Class({
 			_this._getLocationOptions($select);
 		});
 		
+		// Device Types
+		$set.filter('select.sdb_getDeviceTypes').each(function(){
+			var $select = $(this);
+			_this._getDeviceTypeOptions($select);
+		});
+		
 		// Devices
 		$set.filter('select.sdb_getDevices').each(function(){
 			var $select = $(this);
@@ -53,6 +59,30 @@ var HtmlFixer = $n2.Class({
 					$('<option>')
 						.text(name)
 						.attr('value',id)
+						.appendTo($select);
+				};
+			}
+		});
+	},
+	
+	_getDeviceTypeOptions: function($select){
+		this.dbService.getDeviceTypes({
+			onSuccess: function(deviceTypes){
+				$select.empty();
+				
+				deviceTypes.sort(function(o1,o2){
+					if(o1.name < o2.name) return -1;
+					if(o1.name > o2.name) return 1;
+					return 0;
+				});
+				
+				for(var i=0,e=deviceTypes.length; i<e; ++i){
+					var deviceType = deviceTypes[i];
+					var name = deviceType.name;
+					
+					$('<option>')
+						.text(name)
+						.attr('value',name)
 						.appendTo($select);
 				};
 			}

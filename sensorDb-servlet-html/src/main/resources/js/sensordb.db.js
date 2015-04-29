@@ -55,7 +55,32 @@ var Database = $n2.Class({
 			}
 			,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opts.onError('Error obtaining location: '+errStr);
+				opts.onError('Error obtaining locations: '+errStr);
+			}
+		});
+	},
+	
+	getDeviceTypes: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(deviceTypes){}
+			,onError: function(err){}
+		},opts_);
+		
+		$.ajax({
+			url: this.dbUrl + 'getDeviceTypes'
+			,type: 'get'
+			,async: true
+			,dataType: 'json'
+			,success: function(res) {
+				if( res.ok ) {
+					opts.onSuccess(res.deviceTypes);
+				} else {
+					opts.onError('Malformed response');
+				};
+			}
+			,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining device types: '+errStr);
 			}
 		});
 	},
@@ -80,7 +105,7 @@ var Database = $n2.Class({
 			}
 			,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opts.onError('Error obtaining location: '+errStr);
+				opts.onError('Error obtaining devices: '+errStr);
 			}
 		});
 	}
