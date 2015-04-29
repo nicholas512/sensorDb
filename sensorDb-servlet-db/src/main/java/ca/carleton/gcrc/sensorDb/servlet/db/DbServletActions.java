@@ -359,7 +359,7 @@ public class DbServletActions {
 			java.sql.Date dbDate = new java.sql.Date( time.getTime() );
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO device_location (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
+				"INSERT INTO devices_locations (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
 				+" RETURNING id,timestamp,device_id,location_id,notes"
 			);
 			
@@ -400,7 +400,7 @@ public class DbServletActions {
 			result.put("deviceLocations", deviceLocationArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,timestamp,device_id,location_id,notes FROM device_location"
+				"SELECT id,timestamp,device_id,location_id,notes FROM devices_locations"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
