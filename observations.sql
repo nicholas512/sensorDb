@@ -1,170 +1,120 @@
--- Database generated with pgModeler (PostgreSQL Database Modeler).
--- pgModeler  version: 0.8.0
--- PostgreSQL version: 9.4
--- Project Site: pgmodeler.com.br
--- Model Author: ---
-
-
--- Database creation must be done outside an multicommand file.
--- These commands were put in this file only for convenience.
--- -- object: observations | type: DATABASE --
--- -- DROP DATABASE IF EXISTS observations;
--- 
--- -- Prepended SQL commands --
--- -- Enable PostGIS (includes raster)
--- CREATE EXTENSION postgis;
--- -- Enable Topology
--- CREATE EXTENSION postgis_topology;
--- -- ddl-end --
--- 
 -- CREATE DATABASE observations
+-- 	ENCODING = 'UTF8'
+-- 	TABLESPACE = pg_default
 -- 	OWNER = postgres
--- ;
--- -- ddl-end --
--- 
 
--- object: public.devices | type: TABLE --
--- DROP TABLE IF EXISTS public.devices CASCADE;
+ CREATE ROLE sensordb WITH 
+ 	INHERIT
+ 	LOGIN;
+
+ CREATE ROLE observations_read WITH 
+ 	INHERIT;
+
+CREATE ROLE observations_write WITH 
+	INHERIT;
+
+CREATE ROLE observations_admin WITH 
+	INHERIT;
+
+CREATE EXTENSION postgis;
+CREATE EXTENSION postgis_topology;
+CREATE EXTENSION "uuid-ossp";
+
 CREATE TABLE public.devices(
-	id serial NOT NULL,
-	serial_number varchar,
-	device_type varchar,
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	serial_number character varying,
+	device_type character varying,
 	notes text,
 	CONSTRAINT devices_pk PRIMARY KEY (id),
 	CONSTRAINT unique_serial_number UNIQUE (serial_number)
 
 );
--- ddl-end --
-ALTER TABLE public.devices OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.devices OWNER TO observations_admin;
 
--- object: public.sensors | type: TABLE --
--- DROP TABLE IF EXISTS public.sensors CASCADE;
 CREATE TABLE public.sensors(
-	id serial NOT NULL,
-	serial_number varchar,
-	device_id integer NOT NULL,
-	type_of_measurement varchar NOT NULL,
-	unit_of_measurement varchar,
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	device_id uuid NOT NULL,
+	label character varying NOT NULL,
+	type_of_measurement character varying NOT NULL,
+	unit_of_measurement character varying,
 	accuracy numeric,
 	precision numeric,
 	height_in_metres numeric,
+	serial_number character varying,
 	CONSTRAINT sensors_pk PRIMARY KEY (id)
 
 );
--- ddl-end --
-ALTER TABLE public.sensors OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.sensors OWNER TO observations_admin;
 
--- object: public.locations | type: TABLE --
--- DROP TABLE IF EXISTS public.locations CASCADE;
 CREATE TABLE public.locations(
-	id serial NOT NULL,
-	name varchar,
-	responsible_party varchar,
-	coordinates geometry(POINT, 4326) NOT NULL,
-	elevation integer,
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	name character varying,
+	responsible_party character varying,
+	coordinates geometry NOT NULL,
+	elevation integer NOT NULL,
 	CONSTRAINT locations_pk PRIMARY KEY (id)
 
 );
--- ddl-end --
-ALTER TABLE public.locations OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.locations OWNER TO observations_admin;
 
--- object: public.device_location | type: TABLE --
--- DROP TABLE IF EXISTS public.device_location CASCADE;
-CREATE TABLE public.device_location(
-	id bigserial NOT NULL,
+CREATE TABLE public.devices_locations(
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	timestamp timestamp NOT NULL,
-	device_id integer NOT NULL,
-	location_id integer NOT NULL,
+	device_id uuid NOT NULL,
+	location_id uuid NOT NULL,
 	notes text,
 	CONSTRAINT device_location_pk PRIMARY KEY (id)
 
 );
--- ddl-end --
-ALTER TABLE public.device_location OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.devices_locations OWNER TO observations_admin;
 
--- object: public.observations | type: TABLE --
--- DROP TABLE IF EXISTS public.observations CASCADE;
 CREATE TABLE public.observations(
-	id bigint NOT NULL,
-	sensor_id integer NOT NULL,
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	sensor_id uuid NOT NULL,
 	timestamp timestamp NOT NULL,
 	numeric_value numeric,
 	text_value text,
 	CONSTRAINT observations_pk PRIMARY KEY (id)
 
 );
--- ddl-end --
-ALTER TABLE public.observations OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.observations OWNER TO observations_admin;
 
--- object: public.dois | type: TABLE --
--- DROP TABLE IF EXISTS public.dois CASCADE;
 CREATE TABLE public.dois(
-	id serial NOT NULL,
-	doi varchar NOT NULL,
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	doi character varying NOT NULL,
 	notes text,
 	CONSTRAINT dois_pk PRIMARY KEY (id)
 
 );
--- ddl-end --
-ALTER TABLE public.dois OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.dois OWNER TO observations_admin;
 
--- object: public.observation_doi | type: TABLE --
--- DROP TABLE IF EXISTS public.observation_doi CASCADE;
-CREATE TABLE public.observation_doi(
-	id bigserial NOT NULL,
-	observation_id bigint NOT NULL,
-	doi_id bigint NOT NULL
+CREATE TABLE public.observations_dois(
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	observation_id uuid NOT NULL,
+	doi_id uuid NOT NULL
 );
--- ddl-end --
-ALTER TABLE public.observation_doi OWNER TO postgres;
--- ddl-end --
+ALTER TABLE public.observations_dois OWNER TO observations_admin;
 
--- object: fk_device_id | type: CONSTRAINT --
--- ALTER TABLE public.sensors DROP CONSTRAINT IF EXISTS fk_device_id CASCADE;
 ALTER TABLE public.sensors ADD CONSTRAINT fk_device_id FOREIGN KEY (device_id)
 REFERENCES public.devices (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
 
--- object: device_location_fk_device | type: CONSTRAINT --
--- ALTER TABLE public.device_location DROP CONSTRAINT IF EXISTS device_location_fk_device CASCADE;
-ALTER TABLE public.device_location ADD CONSTRAINT device_location_fk_device FOREIGN KEY (device_id)
+ALTER TABLE public.devices_locations ADD CONSTRAINT device_location_fk_device FOREIGN KEY (device_id)
 REFERENCES public.devices (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
 
--- object: device_location_fk_location | type: CONSTRAINT --
--- ALTER TABLE public.device_location DROP CONSTRAINT IF EXISTS device_location_fk_location CASCADE;
-ALTER TABLE public.device_location ADD CONSTRAINT device_location_fk_location FOREIGN KEY (location_id)
+ALTER TABLE public.devices_locations ADD CONSTRAINT device_location_fk_location FOREIGN KEY (location_id)
 REFERENCES public.locations (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
 
--- object: observations_sensor_fk | type: CONSTRAINT --
--- ALTER TABLE public.observations DROP CONSTRAINT IF EXISTS observations_sensor_fk CASCADE;
 ALTER TABLE public.observations ADD CONSTRAINT observations_sensor_fk FOREIGN KEY (sensor_id)
 REFERENCES public.sensors (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
 
--- object: observation_doi_observation_fk | type: CONSTRAINT --
--- ALTER TABLE public.observation_doi DROP CONSTRAINT IF EXISTS observation_doi_observation_fk CASCADE;
-ALTER TABLE public.observation_doi ADD CONSTRAINT observation_doi_observation_fk FOREIGN KEY (observation_id)
+ALTER TABLE public.observations_dois ADD CONSTRAINT observation_doi_observation_fk FOREIGN KEY (observation_id)
 REFERENCES public.observations (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
 
--- object: observation_doi_doi_fk | type: CONSTRAINT --
--- ALTER TABLE public.observation_doi DROP CONSTRAINT IF EXISTS observation_doi_doi_fk CASCADE;
-ALTER TABLE public.observation_doi ADD CONSTRAINT observation_doi_doi_fk FOREIGN KEY (doi_id)
+ALTER TABLE public.observations_dois ADD CONSTRAINT observation_doi_doi_fk FOREIGN KEY (doi_id)
 REFERENCES public.dois (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
--- ddl-end --
-
-
