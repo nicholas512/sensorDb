@@ -3,7 +3,7 @@
 <pre>
 sudo -u postgres createdb --owner=<user> observations
 
-sudo -u postgres psql --command="CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology;" observations
+sudo -u postgres psql --command="CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology; CREATE EXTENSION 'uuid-ossp';" observations
 
 sudo -u postgres psql --file=./observations.sql observations
 
