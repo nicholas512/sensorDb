@@ -64,7 +64,7 @@ public class DeviceType {
 		this.label = label;
 	}
 
-	public boolean isIncludeFirmware() {
+	public boolean includesFirmware() {
 		return includeFirmware;
 	}
 
@@ -72,7 +72,7 @@ public class DeviceType {
 		this.includeFirmware = includeFirmware;
 	}
 
-	public boolean isIncludeNotes() {
+	public boolean includesNotes() {
 		return includeNotes;
 	}
 

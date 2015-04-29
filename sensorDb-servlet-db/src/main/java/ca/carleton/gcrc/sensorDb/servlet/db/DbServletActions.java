@@ -32,6 +32,16 @@ public class DbServletActions {
 		return cached_welcome;
 	}
 
+	/**
+	 * Create a new location record
+	 * @param name
+	 * @param responsible
+	 * @param lat
+	 * @param lng
+	 * @param elevation
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject createLocation(
 			String name, 
 			String responsible,
@@ -85,6 +95,11 @@ public class DbServletActions {
 		return result;
 	}
 
+	/**
+	 * Returns all location records
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getLocations(
 			) throws Exception {
 
@@ -123,6 +138,12 @@ public class DbServletActions {
 		return result;
 	}
 
+	/**
+	 * Get a location record from its UUID
+	 * @param location_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getLocationFromId(
 			String location_id
 			) throws Exception {
@@ -166,6 +187,15 @@ public class DbServletActions {
 		return result;
 	}
 	
+	/**
+	 * Create JSON representation of a location record
+	 * @param id
+	 * @param name
+	 * @param responsible
+	 * @param coordinates
+	 * @param elevation
+	 * @return
+	 */
 	private JSONObject buildLocationJson(
 			String id, 
 			String name, 
@@ -183,6 +213,11 @@ public class DbServletActions {
 		return location;
 	}
 	
+	/**
+	 * Return all device types
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getDeviceTypes(
 			) throws Exception {
 
@@ -207,6 +242,11 @@ public class DbServletActions {
 		return result;
 	}
 
+	/**
+	 * Get JSON representation of a device type
+	 * @param name
+	 * @return
+	 */
 	private JSONObject buildDeviceTypeJson(
 			String name ){
 		
@@ -216,6 +256,14 @@ public class DbServletActions {
 		return device;
 	}
 
+	/**
+	 * CReate a new device record
+	 * @param serialNumber
+	 * @param type
+	 * @param notes
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject createDevice(
 			String serialNumber, 
 			String type,
@@ -247,6 +295,47 @@ public class DbServletActions {
 			JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_Notes);
 			result.put("device", device);
 			
+			JSONArray sensors = new JSONArray();
+			device.put("sensors", sensors);
+			
+			// Create sensors...
+			if( deviceType.includesFirmware() ){
+				JSONObject sensorJson = createDeviceSensor(
+						res_id,
+						"firmware",
+						"text",
+						""
+						);
+				sensors.put(sensorJson);
+			}
+			if( deviceType.includesNotes() ){
+				JSONObject sensorJson = createDeviceSensor(
+						res_id,
+						"notes",
+						"text",
+						""
+						);
+				sensors.put(sensorJson);
+			}
+			for(int index=0; index<deviceType.getTempCount(); ++index){
+				JSONObject sensorJson = createDeviceSensor(
+						res_id,
+						"temp"+index,
+						"temperature",
+						"C"
+						);
+				sensors.put(sensorJson);
+			}
+			for(int index=0; index<deviceType.getVoltageCount(); ++index){
+				JSONObject sensorJson = createDeviceSensor(
+						res_id,
+						"volt"+index,
+						"voltage",
+						"V"
+						);
+				sensors.put(sensorJson);
+			}
+			
 		} catch (Exception e) {
 			throw new Exception("Error inserting device into database", e);
 		}
@@ -255,7 +344,12 @@ public class DbServletActions {
 		result.put("action", "insert device");
 		return result;
 	}
-
+	
+	/**
+	 * Get all device records from database
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getDevices(
 			) throws Exception {
 
@@ -293,6 +387,11 @@ public class DbServletActions {
 		return result;
 	}
 
+	/**
+	 * @param device_id
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getDeviceFromId(
 			String device_id
 			) throws Exception {
@@ -335,6 +434,13 @@ public class DbServletActions {
 		return result;
 	}
 	
+	/**
+	 * @param id
+	 * @param serialNumber
+	 * @param type
+	 * @param notes
+	 * @return
+	 */
 	private JSONObject buildDeviceJson(
 			String id, 
 			String serialNumber, 
@@ -349,7 +455,93 @@ public class DbServletActions {
 		device.put("notes", notes);
 		return device;
 	}
+	
+	/**
+	 * @param device_id
+	 * @param label
+	 * @param typeOfMeasurment
+	 * @param units
+	 * @return
+	 * @throws Exception
+	 */
+	private JSONObject createDeviceSensor(
+			String device_id,
+			String label,
+			String typeOfMeasurment,
+			String units
+			) throws Exception {
+		
+		JSONObject sensor = null;
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+					"INSERT INTO sensors (device_id,label,type_of_measurement,unit_of_measurement)"
+					+" VALUES (?,?,?,?)"
+					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement"
+				);
+				
+			pstmt.setObject(1, UUID.fromString(device_id));
+			pstmt.setString(2, label);
+			pstmt.setString(3, typeOfMeasurment);
+			pstmt.setString(4, units);
 
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			String res_id = resultSet.getString(1);
+			String res_device_id = resultSet.getString(2);
+			String res_label = resultSet.getString(3);
+			String res_typeOfMeasurement = resultSet.getString(4);
+			String res_unitOfMeasurement = resultSet.getString(5);
+				
+			sensor = buildSensorJson(res_id,res_device_id,res_label,res_typeOfMeasurement,res_unitOfMeasurement);
+
+		} catch(Exception e) {
+			
+		}
+		
+		return sensor;
+	}
+	
+	/**
+	 * @param device_id
+	 * @return
+	 */
+//	private JSONArray getSensorsFromDeviceId(String device_id){
+//		
+//	}
+	
+	/**
+	 * @param id
+	 * @param device_id
+	 * @param label
+	 * @param typeOfMeasurement
+	 * @param unitOfMeasurement
+	 * @return
+	 */
+	private JSONObject buildSensorJson(
+			String id, 
+			String device_id, 
+			String label, 
+			String typeOfMeasurement, 
+			String unitOfMeasurement){
+
+		JSONObject location = new JSONObject();
+		location.put("type", "sensor");
+		location.put("id", id);
+		location.put("label", label);
+		location.put("type_of_measurement", typeOfMeasurement);
+		location.put("unit_of_measurement", unitOfMeasurement);
+		return location;
+	}
+
+	/**
+	 * @param time
+	 * @param device_id
+	 * @param location_id
+	 * @param notes
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject addDeviceLocation(
 			Date time, 
 			String device_id,
@@ -425,6 +617,10 @@ public class DbServletActions {
 		return result;
 	}
 
+	/**
+	 * @return
+	 * @throws Exception
+	 */
 	public JSONObject getDeviceLocations(
 			) throws Exception {
 
@@ -464,6 +660,14 @@ public class DbServletActions {
 		return result;
 	}
 	
+	/**
+	 * @param id
+	 * @param time
+	 * @param device_id
+	 * @param location_id
+	 * @param notes
+	 * @return
+	 */
 	private JSONObject buildDeviceLocationJson(
 			String id, 
 			Date time,
