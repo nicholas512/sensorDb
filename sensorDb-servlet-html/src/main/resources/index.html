@@ -246,11 +246,13 @@
 			<br/>
 			
 			<label for="_adl_device_id">Device Id:</label>
-			<input id="_adl_device_id" type="text" name="device_id"/>
+			<select class="sdb_getDevices" id="_adl_device_id" name="device_id">
+			</select>
 			<br/>
 			
 			<label for="_adl_location_id">Location Id:</label>
-			<input id="_adl_location_id" type="text" name="location_id"/>
+			<select class="sdb_getLocations" id="_adl_location_id" name="location_id">
+			</select>
 			<br/>
 			
 			<label for="_adl_notes">Notes:</label>
@@ -261,6 +263,23 @@
 		</form>
     
 
+    <script src="./js/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="./js/nunaliit2.js"></script>
+    <script src="./js/sensordb.core.js"></script>
+    <script src="./js/sensordb.config.js"></script>
+    <script src="./js/sensordb.db.js"></script>
+    <script src="./js/sensordb.html.js"></script>
+    <script type="text/javascript">
+	    jQuery().ready(function() {
+	    	var $s = sensorDb;
+	    	
+	    	var config = $s.config.GetConfiguration({
+	    		rootPath: './'
+	    	});
+	    	
+	    	config.htmlService.fixHtml();
+	    });
+    </script>
 </body>
 </html>

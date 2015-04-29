@@ -3,6 +3,7 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
+import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -66,7 +67,7 @@ public class DbServletActions {
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			resultSet.next();
-			int res_id = resultSet.getInt(1);
+			String res_id = resultSet.getString(1);
 			String res_name = resultSet.getString(2);
 			String res_responsible = resultSet.getString(3);
 			String res_coordinates = resultSet.getString(4);
@@ -100,13 +101,13 @@ public class DbServletActions {
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			while( resultSet.next() ){
-				int id = resultSet.getInt(1);
-				String name = resultSet.getString(2);
-				String responsible = resultSet.getString(3);
-				String coordinates = resultSet.getString(4);
-				int elevation = resultSet.getInt(5);
-				
-				JSONObject location = buildLocationJson(id,name,responsible,coordinates,elevation);
+				String res_id = resultSet.getString(1);
+				String res_name = resultSet.getString(2);
+				String res_responsible = resultSet.getString(3);
+				String res_coordinates = resultSet.getString(4);
+				int res_elevation = resultSet.getInt(5);
+					
+				JSONObject location = buildLocationJson(res_id,res_name,res_responsible,res_coordinates,res_elevation);
 				
 				locationArr.put(location);
 			}
@@ -123,7 +124,7 @@ public class DbServletActions {
 	}
 
 	public JSONObject getLocationFromId(
-			int location_id
+			String location_id
 			) throws Exception {
 
 		JSONObject result = new JSONObject();
@@ -136,18 +137,20 @@ public class DbServletActions {
 				"SELECT id,name,responsible_party,ST_AsText(coordinates),elevation FROM locations WHERE id=?"
 			);
 			
-			pstmt.setInt(1, location_id);
+			UUID uuid = UUID.fromString(location_id);
+			
+			pstmt.setObject(1, uuid);
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			while( resultSet.next() ){
-				int id = resultSet.getInt(1);
-				String name = resultSet.getString(2);
-				String responsible = resultSet.getString(3);
-				String coordinates = resultSet.getString(4);
-				int elevation = resultSet.getInt(5);
-				
-				JSONObject location = buildLocationJson(id,name,responsible,coordinates,elevation);
+				String res_id = resultSet.getString(1);
+				String res_name = resultSet.getString(2);
+				String res_responsible = resultSet.getString(3);
+				String res_coordinates = resultSet.getString(4);
+				int res_elevation = resultSet.getInt(5);
+					
+				JSONObject location = buildLocationJson(res_id,res_name,res_responsible,res_coordinates,res_elevation);
 				
 				locationArr.put(location);
 			}
@@ -164,7 +167,7 @@ public class DbServletActions {
 	}
 	
 	private JSONObject buildLocationJson(
-			int id, 
+			String id, 
 			String name, 
 			String responsible, 
 			String coordinates, 
@@ -201,7 +204,7 @@ public class DbServletActions {
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			resultSet.next();
-			int res_id = resultSet.getInt(1);
+			String res_id = resultSet.getString(1);
 			String res_serialNumber = resultSet.getString(2);
 			String res_deviceType = resultSet.getString(3);
 			String res_Notes = resultSet.getString(4);
@@ -234,7 +237,7 @@ public class DbServletActions {
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			while( resultSet.next() ){
-				int res_id = resultSet.getInt(1);
+				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
 				String res_deviceType = resultSet.getString(3);
 				String res_Notes = resultSet.getString(4);
@@ -256,7 +259,7 @@ public class DbServletActions {
 	}
 
 	public JSONObject getDeviceFromId(
-			int device_id
+			String device_id
 			) throws Exception {
 
 		JSONObject result = new JSONObject();
@@ -269,17 +272,19 @@ public class DbServletActions {
 				"SELECT id,serial_number,device_type,notes FROM devices WHERE id=?"
 			);
 			
-			pstmt.setInt(1, device_id);
+			UUID uuid = UUID.fromString(device_id);
+			
+			pstmt.setObject(1, uuid);
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			while( resultSet.next() ){
-				int res_id = resultSet.getInt(1);
+				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
 				String res_deviceType = resultSet.getString(3);
-				String res_Notes = resultSet.getString(4);
+				String res_notes = resultSet.getString(4);
 					
-				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_Notes);
+				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_notes);
 				
 				deviceArr.put(device);
 			}
@@ -296,7 +301,7 @@ public class DbServletActions {
 	}
 	
 	private JSONObject buildDeviceJson(
-			int id, 
+			String id, 
 			String serialNumber, 
 			String type, 
 			String notes ){
@@ -312,8 +317,8 @@ public class DbServletActions {
 
 	public JSONObject addDeviceLocation(
 			Date time, 
-			int device_id,
-			int location_id,
+			String device_id,
+			String location_id,
 			String notes
 			) throws Exception {
 
@@ -359,18 +364,18 @@ public class DbServletActions {
 			);
 			
 			pstmt.setDate(1, dbDate);
-			pstmt.setInt(2, device_id);
-			pstmt.setInt(3, location_id);
+			pstmt.setObject(2, UUID.fromString(device_id) );
+			pstmt.setObject(3, UUID.fromString(location_id) );
 			pstmt.setString(4, notes);
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			resultSet.next();
-			int res_id = resultSet.getInt(1);
+			String res_id = resultSet.getString(1);
 			java.sql.Date res_time_sql = resultSet.getDate(2);
 			Date res_time = new Date( res_time_sql.getTime() );
-			int res_device_id = resultSet.getInt(3);
-			int res_location_id = resultSet.getInt(4);
+			String res_device_id = resultSet.getString(3);
+			String res_location_id = resultSet.getString(4);
 			String res_notes = resultSet.getString(5);
 				
 			JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
@@ -401,11 +406,11 @@ public class DbServletActions {
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			while( resultSet.next() ){
-				int res_id = resultSet.getInt(1);
+				String res_id = resultSet.getString(1);
 				java.sql.Date res_time_sql = resultSet.getDate(2);
 				Date res_time = new Date( res_time_sql.getTime() );
-				int res_device_id = resultSet.getInt(3);
-				int res_location_id = resultSet.getInt(4);
+				String res_device_id = resultSet.getString(3);
+				String res_location_id = resultSet.getString(4);
 				String res_notes = resultSet.getString(5);
 					
 				JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
@@ -425,10 +430,10 @@ public class DbServletActions {
 	}
 	
 	private JSONObject buildDeviceLocationJson(
-			int id, 
+			String id, 
 			Date time,
-			int device_id, 
-			int location_id, 
+			String device_id, 
+			String location_id, 
 			String notes ){
 		
 		JSONObject device = new JSONObject();

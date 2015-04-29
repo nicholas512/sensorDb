@@ -2,28 +2,16 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.util.resource.Resource;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,8 +126,8 @@ public class DbServlet extends HttpServlet {
 			} else if( path.size() == 1 && path.get(0).equals("addDeviceLocation") ) {
 
 					Date time = getDateParameter(req, "time");
-					int device_id = getIntegerParameter(req, "device_id");
-					int location_id = getIntegerParameter(req, "location_id");
+					String device_id = getStringParameter(req, "device_id");
+					String location_id = getStringParameter(req, "location_id");
 					String notes = getStringParameter(req, "notes");
 
 					JSONObject result = actions.addDeviceLocation(
@@ -155,6 +143,7 @@ public class DbServlet extends HttpServlet {
 			}
 			
 		} catch(Exception e) {
+			logger.error("POST error",e);
 			reportError(e, resp);
 		}
 	}
