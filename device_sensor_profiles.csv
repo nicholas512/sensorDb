@@ -35,10 +35,10 @@ temperature logger,GeoPrecision,LOG-HC2 (M-Log5W-US 20m 7xTemp),notes,text,,,,
 temperature logger,GeoPrecision,M-Log5W-US-ROCK,#1:oC,numeric,C,0.1,0.01,-0.1
 temperature logger,GeoPrecision,M-Log5W-US-ROCK,#HK-BAT:V,numeric,V,,,
 temperature logger,GeoPrecision,M-Log5W-US-ROCK,notes,text,,,,
-temperature logger,GeoPrecision,M-Log5W-US-HUMIDITY,#1:oC,numeric,C,0.3,0.05,2
-temperature logger,GeoPrecision,M-Log5W-US-HUMIDITY,#2:%RH,numeric,%RH,1.8,0.1,2
-temperature logger,GeoPrecision,M-Log5W-US-HUMIDITY,#HK-BAT:V,numeric,V,,,
-temperature logger,GeoPrecision,M-Log5W-US-HUMIDITY,notes,text,,,,
+humidity logger,GeoPrecision,M-Log5W-US-HUMIDITY,#1:oC,numeric,C,0.3,0.05,2
+humidity logger,GeoPrecision,M-Log5W-US-HUMIDITY,#2:%RH,numeric,%RH,1.8,0.1,2
+humidity logger,GeoPrecision,M-Log5W-US-HUMIDITY,#HK-BAT:V,numeric,V,,,
+humidity logger,GeoPrecision,M-Log5W-US-HUMIDITY,notes,text,,,,
 manual_observation,manual_observation,manual_observation,location_responsible_party,text,,,,
 manual_observation,manual_observation,manual_observation,location_to_do,text,,,,
 manual_observation,manual_observation,manual_observation,location_access,text,,,,
