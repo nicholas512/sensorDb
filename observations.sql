@@ -16,6 +16,8 @@ CREATE ROLE observations_write WITH
 CREATE ROLE observations_admin WITH 
 	INHERIT;
 
+GRANT observations_write to sensordb;
+
 CREATE EXTENSION postgis;
 CREATE EXTENSION postgis_topology;
 CREATE EXTENSION "uuid-ossp";
@@ -24,6 +26,9 @@ CREATE TABLE public.devices(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	serial_number character varying,
 	device_type character varying,
+    manufacturer character varying,
+    manufacturer_device_name character varying,
+    acquired_on timestamp,
 	notes text,
 	CONSTRAINT devices_pk PRIMARY KEY (id),
 	CONSTRAINT unique_serial_number UNIQUE (serial_number)
@@ -118,3 +123,21 @@ ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE public.observations_dois ADD CONSTRAINT observation_doi_doi_fk FOREIGN KEY (doi_id)
 REFERENCES public.dois (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+
+GRANT SELECT on devices to observations_read;
+GRANT SELECT on sensors to observations_read;
+GRANT SELECT on locations to observations_read;
+GRANT SELECT on observations to observations_read;
+GRANT SELECT on dois to observations_read;
+GRANT SELECT on devices_locations to observations_read;
+GRANT SELECT on observations_dois to observations_read;
+
+GRANT SELECT, INSERT, UPDATE, DELETE on devices to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on sensors to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on observations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on dois to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on devices_locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on observations_dois to observations_write;
+
