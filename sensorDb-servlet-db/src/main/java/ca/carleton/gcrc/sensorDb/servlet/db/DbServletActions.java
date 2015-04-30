@@ -3,6 +3,8 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.json.JSONArray;
@@ -369,14 +371,25 @@ public class DbServletActions {
 				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
 				String res_deviceType = resultSet.getString(3);
-				String res_Notes = resultSet.getString(4);
+				String res_notes = resultSet.getString(4);
 					
-				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_Notes);
+				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_notes);
 				
 				deviceArr.put(device);
 			}
 			
 			resultSet.close();
+			
+			// Get sensors
+			Map<String,JSONArray> sensorMap = getAllSensors();
+			for(int i=0; i<deviceArr.length(); ++i){
+				JSONObject device = deviceArr.getJSONObject(i);
+				
+				JSONArray sensors = sensorMap.get(device.getString("id"));
+				if( null != sensors ){
+					device.put("sensors", sensors);
+				}
+			}
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all devices from database", e);
@@ -419,6 +432,9 @@ public class DbServletActions {
 				String res_notes = resultSet.getString(4);
 					
 				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_notes);
+				
+				JSONArray sensors = getSensorsFromDeviceId(device_id);
+				device.put("sensors", sensors);
 				
 				deviceArr.put(device);
 			}
@@ -476,7 +492,7 @@ public class DbServletActions {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 					"INSERT INTO sensors (device_id,label,type_of_measurement,unit_of_measurement)"
 					+" VALUES (?,?,?,?)"
-					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement"
+					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision"
 				);
 				
 			pstmt.setObject(1, UUID.fromString(device_id));
@@ -492,11 +508,21 @@ public class DbServletActions {
 			String res_label = resultSet.getString(3);
 			String res_typeOfMeasurement = resultSet.getString(4);
 			String res_unitOfMeasurement = resultSet.getString(5);
+			double accuracy = resultSet.getDouble(6);
+			double precision = resultSet.getDouble(7);
 				
-			sensor = buildSensorJson(res_id,res_device_id,res_label,res_typeOfMeasurement,res_unitOfMeasurement);
+			sensor = buildSensorJson(
+					res_id,
+					res_device_id,
+					res_label,
+					res_typeOfMeasurement,
+					res_unitOfMeasurement,
+					accuracy,
+					precision
+					);
 
 		} catch(Exception e) {
-			
+			throw new Exception("Error while creating sensor ("+label+") for device ("+device_id+")",e);
 		}
 		
 		return sensor;
@@ -505,10 +531,104 @@ public class DbServletActions {
 	/**
 	 * @param device_id
 	 * @return
+	 * @throws Exception  
 	 */
-//	private JSONArray getSensorsFromDeviceId(String device_id){
-//		
-//	}
+	private JSONArray getSensorsFromDeviceId(String device_id) throws Exception {
+
+		JSONArray result = new JSONArray();
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,label,type_of_measurement,unit_of_measurement,accuracy,precision FROM sensors"
+				+" WHERE device_id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(device_id));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String res_id = resultSet.getString(1);
+				String res_label = resultSet.getString(2);
+				String res_type_of_measurement = resultSet.getString(3);
+				String res_unit_of_measurement = resultSet.getString(4);
+				double res_accuracy = resultSet.getDouble(5);
+				double res_precision = resultSet.getDouble(6);
+					
+				JSONObject sensor = buildSensorJson(
+						res_id,
+						device_id,
+						res_label,
+						res_type_of_measurement,
+						res_unit_of_measurement,
+						res_accuracy,
+						res_precision
+						);
+				
+				result.put(sensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving sensors for device ("+device_id+") from database", e);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * @param device_id
+	 * @return
+	 * @throws Exception  
+	 */
+	private Map<String,JSONArray> getAllSensors() throws Exception {
+
+		Map<String,JSONArray> map = new HashMap<String,JSONArray>();
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision FROM sensors"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String res_id = resultSet.getString(1);
+				String res_device_id = resultSet.getString(2);
+				String res_label = resultSet.getString(3);
+				String res_type_of_measurement = resultSet.getString(4);
+				String res_unit_of_measurement = resultSet.getString(5);
+				double res_accuracy = resultSet.getDouble(6);
+				double res_precision = resultSet.getDouble(7);
+					
+				JSONObject sensor = buildSensorJson(
+						res_id,
+						res_device_id,
+						res_label,
+						res_type_of_measurement,
+						res_unit_of_measurement,
+						res_accuracy,
+						res_precision
+						);
+				
+				JSONArray arr = map.get(res_device_id);
+				if( null == arr ){
+					arr = new JSONArray();
+					map.put(res_device_id, arr);
+				}
+				
+				arr.put(sensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all sensors from database", e);
+		}
+		
+		return map;
+	}
 	
 	/**
 	 * @param id
@@ -523,7 +643,10 @@ public class DbServletActions {
 			String device_id, 
 			String label, 
 			String typeOfMeasurement, 
-			String unitOfMeasurement){
+			String unitOfMeasurement,
+			double accuracy,
+			double precision
+			){
 
 		JSONObject location = new JSONObject();
 		location.put("type", "sensor");
@@ -531,6 +654,8 @@ public class DbServletActions {
 		location.put("label", label);
 		location.put("type_of_measurement", typeOfMeasurement);
 		location.put("unit_of_measurement", unitOfMeasurement);
+		location.put("accuracy", accuracy);
+		location.put("precision", precision);
 		return location;
 	}
 
