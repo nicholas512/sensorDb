@@ -20,6 +20,9 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import ca.carleton.gcrc.sensorDb.html.HtmlServletFactory;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 import ca.carleton.gcrc.sensorDb.servlet.db.DbServlet;
+import ca.carleton.gcrc.sensorDb.upload.observations.ObservationsUploaded;
+import ca.carleton.gcrc.upload.OnUploadedListener;
+import ca.carleton.gcrc.upload.UploadServlet;
 
 
 public class CommandRun implements Command {
@@ -120,6 +123,7 @@ public class CommandRun implements Command {
         context.setContextPath("/");
 		server.setHandler(context);
 
+
         // Proxy to server
 //        {
 //        	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
@@ -151,6 +155,19 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new DbServlet(dbConnection));
         	servletHolder.setInitOrder(1);
         	context.addServlet(servletHolder,"/db/*");
+        }
+
+        // Servlet for uploading observations
+        {
+        	OnUploadedListener onUploadedListener = new ObservationsUploaded(dbConnection);
+        	
+        	UploadServlet uploadServlet = new UploadServlet();
+        	uploadServlet.setOnUploadedListener(onUploadedListener);
+        	uploadServlet.setRepositoryDir(mediaDir);
+        	
+        	ServletHolder servletHolder = new ServletHolder(uploadServlet);
+        	servletHolder.setInitOrder(1);
+        	context.addServlet(servletHolder,"/uploadObservations/*");
         }
 
 		// Start server

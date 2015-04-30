@@ -320,16 +320,16 @@ public class DbServletActions {
 			for(int index=0; index<deviceType.getTempCount(); ++index){
 				JSONObject sensorJson = createDeviceSensor(
 						res_id,
-						"temp"+index,
+						""+(index+1),
 						"temperature",
-						"C"
+						"oC"
 						);
 				sensors.put(sensorJson);
 			}
 			for(int index=0; index<deviceType.getVoltageCount(); ++index){
 				JSONObject sensorJson = createDeviceSensor(
 						res_id,
-						"volt"+index,
+						"HK-Bat"+(index>0?""+index:""),
 						"voltage",
 						"V"
 						);
@@ -582,15 +582,15 @@ public class DbServletActions {
 				throw new Exception("Error finding device ("+device_id+")",e);
 			}
 			
-			// Get Sql Date
-			java.sql.Date dbDate = new java.sql.Date( time.getTime() );
+			// Get Sql Time
+			java.sql.Timestamp dbTime = new java.sql.Timestamp( time.getTime() );
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO devices_locations (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
 				+" RETURNING id,timestamp,device_id,location_id,notes"
 			);
 			
-			pstmt.setDate(1, dbDate);
+			pstmt.setTimestamp(1, dbTime);
 			pstmt.setObject(2, UUID.fromString(device_id) );
 			pstmt.setObject(3, UUID.fromString(location_id) );
 			pstmt.setString(4, notes);
@@ -599,7 +599,7 @@ public class DbServletActions {
 			
 			resultSet.next();
 			String res_id = resultSet.getString(1);
-			java.sql.Date res_time_sql = resultSet.getDate(2);
+			java.sql.Timestamp res_time_sql = resultSet.getTimestamp(2);
 			Date res_time = new Date( res_time_sql.getTime() );
 			String res_device_id = resultSet.getString(3);
 			String res_location_id = resultSet.getString(4);
@@ -638,7 +638,7 @@ public class DbServletActions {
 			
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
-				java.sql.Date res_time_sql = resultSet.getDate(2);
+				java.sql.Timestamp res_time_sql = resultSet.getTimestamp(2);
 				Date res_time = new Date( res_time_sql.getTime() );
 				String res_device_id = resultSet.getString(3);
 				String res_location_id = resultSet.getString(4);

@@ -32,12 +32,13 @@
 		<mustache.version>0.8.14</mustache.version>
 		<jetty.version>9.2.3.v20140905</jetty.version>
 		<maven-assembly-plugin.version>2.4.1</maven-assembly-plugin.version>
-		<nunaliit.version>2.2.3</nunaliit.version>
+		<nunaliit.version>2.2.4-SNAPSHOT</nunaliit.version>
 	</properties>
 	<modules>
 		<module>sensorDb-command</module>
 		<module>sensorDb-servlet-html</module>
 		<module>sensorDb-jdbc</module>
 		<module>sensorDb-servlet-db</module>
+		<module>sensorDb-upload-observations</module>
 	</modules>
 </project>
