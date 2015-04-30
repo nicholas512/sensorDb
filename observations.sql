@@ -69,7 +69,6 @@ ALTER TABLE public.sensors OWNER TO observations_admin;
 CREATE TABLE public.locations(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	name character varying,
-	responsible_party character varying,
 	coordinates geometry NOT NULL,
 	elevation integer NOT NULL,
 	CONSTRAINT locations_pk PRIMARY KEY (id)
