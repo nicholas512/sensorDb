@@ -22,6 +22,21 @@ CREATE EXTENSION postgis;
 CREATE EXTENSION postgis_topology;
 CREATE EXTENSION "uuid-ossp";
 
+CREATE TABLE public.device_sensor_profiles(
+	id uuid NOT NULL DEFAULT uuid_generate_v4(),
+	device_type character varying NOT NULL,
+    manufacturer character varying NOT NULL,
+    manufacturer_device_name character varying NOT NULL,
+    sensor_label character varying NOT NULL,
+	sensor_type_of_measurement character varying NOT NULL,
+	sensor_unit_of_measurement character varying,
+	sensor_accuracy numeric,
+	sensor_precision numeric,
+	sensor_height_in_metres numeric,
+	CONSTRAINT device_sensor_profiles_pk PRIMARY KEY (id)
+);
+ALTER TABLE public.device_sensor_profiles OWNER TO observations_admin;
+
 CREATE TABLE public.devices(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	serial_number character varying,
