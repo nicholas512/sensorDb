@@ -77,9 +77,9 @@ public class ConversionThread extends Thread {
 		// Check if we need to convert a file
 		if( null != fileToConvert ){
 			try {
-				logger.info("Start file conversion "+ fileToConvert.getAbsolutePath() +" "+threadName);
+				logger.info("Start file conversion "+ fileToConvert.getName() +" "+threadName);
 				importer.importFile(fileToConvert);
-				logger.info("End file conversion "+ fileToConvert.getAbsolutePath() +" "+threadName);
+				logger.info("End file conversion "+ fileToConvert.getName() +" "+threadName);
 			} catch (Exception e) {
 				logger.error("Work error on thread "+threadName,e);
 			}

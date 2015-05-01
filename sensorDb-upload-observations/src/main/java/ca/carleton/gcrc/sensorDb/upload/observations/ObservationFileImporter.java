@@ -1,6 +1,9 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
@@ -24,10 +27,13 @@ public class ObservationFileImporter {
 	}
 	
 	public void importFile(File file) throws Exception {
+		FileInputStream fis = null;
+		InputStreamReader isr = null;
 		try {
-			ObservationFileParser parser = new ObservationFileParser();
-			ObservationFile obsFile = parser.parse(file);
-			importFile(obsFile);
+			fis = new FileInputStream(file);
+			isr = new InputStreamReader(fis,"UTF-8");
+			
+			importFile(isr);
 			
 		} catch (Exception e) {
 			String fileName = null;
@@ -35,6 +41,22 @@ public class ObservationFileImporter {
 				fileName = file.getAbsolutePath();
 			}
 			throw new Exception("Error while importing observation file "+fileName,e);
+		
+		} finally {
+			if( null != isr ){
+				try {
+					isr.close();
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
+			if( null != fis ){
+				try {
+					fis.close();
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
 		}
 	}
 
@@ -56,6 +78,35 @@ public class ObservationFileImporter {
 			String sensor_id = sensorsMap.get( observation.getColumn().getName() );
 			
 			insertObservation(observation.getTime(), sensor_id, observation.getValue());
+		}
+	}
+
+	public void importFile(Reader reader) throws Exception {
+		ObservationFileReader obsReader = new ObservationFileReader(reader);
+		
+		String deviceSerialNumber = obsReader.getDeviceSerialNumber();
+		
+		String device_id = getDeviceIdFromSerialNumber(deviceSerialNumber);
+		Map<String,String> sensorsMap = getSensorsFromDeviceId(device_id);
+
+		// Check that sensors were found for all parsed columns
+		for(ObservationColumn column : obsReader.getColumns()){
+			if( column.isValue() ){
+				if( null == sensorsMap.get( column.getName() ) ){
+					throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+deviceSerialNumber+")");
+				}
+			}
+		}
+		
+		// All seems fine. Start saving observations
+		Observation observation = obsReader.read();
+		while( null != observation ){
+			String sensor_label = observation.getColumn().getName();
+			String sensor_id = sensorsMap.get( sensor_label );
+			
+			insertObservation(observation.getTime(), sensor_id, observation.getValue());
+
+			observation = obsReader.read();
 		}
 	}
 
