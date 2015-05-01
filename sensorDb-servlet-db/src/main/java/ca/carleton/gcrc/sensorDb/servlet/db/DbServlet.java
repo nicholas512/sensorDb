@@ -116,11 +116,13 @@ public class DbServlet extends HttpServlet {
 
 					String serialNumber = getStringParameter(req, "serial");
 					String deviceType = getStringParameter(req, "device_type");
+					Date acquiredOn = getDateParameter(req, "acquired_on");
 					String notes = getStringParameter(req, "notes");
 
 					JSONObject result = actions.createDevice(
 							serialNumber
 							,deviceType
+							,acquiredOn
 							,notes
 							);
 					sendJsonResponse(resp, result);

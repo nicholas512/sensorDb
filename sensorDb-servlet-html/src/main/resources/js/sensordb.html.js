@@ -78,11 +78,11 @@ var HtmlFixer = $n2.Class({
 				
 				for(var i=0,e=deviceTypes.length; i<e; ++i){
 					var deviceType = deviceTypes[i];
-					var device_type = deviceType.device_type;
+					var manufacturer_device_name = deviceType.manufacturer_device_name;
 					
 					$('<option>')
-						.text(device_type)
-						.attr('value',device_type)
+						.text(manufacturer_device_name)
+						.attr('value',manufacturer_device_name)
 						.appendTo($select);
 				};
 			}
@@ -95,14 +95,14 @@ var HtmlFixer = $n2.Class({
 				$select.empty();
 				
 				devices.sort(function(o1,o2){
-					if(o1.name < o2.name) return -1;
-					if(o1.name > o2.name) return 1;
+					if(o1.serial_number < o2.serial_number) return -1;
+					if(o1.serial_number > o2.serial_number) return 1;
 					return 0;
 				});
 				
 				for(var i=0,e=devices.length; i<e; ++i){
 					var device = devices[i];
-					var serialNumber = device.serialNumber;
+					var serialNumber = device.serial_number;
 					var id = device.id;
 					
 					$('<option>')

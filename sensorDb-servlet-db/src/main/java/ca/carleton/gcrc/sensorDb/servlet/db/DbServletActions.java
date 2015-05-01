@@ -2,6 +2,7 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -245,10 +246,10 @@ public class DbServletActions {
 				fields.sensor_precision = resultSet.getDouble(9);
 				fields.sensor_height_in_metres = resultSet.getDouble(10);
 					
-				List<DeviceTypeFields> listOfFields = listOfFieldsByType.get(fields.device_type);
+				List<DeviceTypeFields> listOfFields = listOfFieldsByType.get(fields.manufacturer_device_name);
 				if( null == listOfFields ){
 					listOfFields = new Vector<DeviceTypeFields>();
-					listOfFieldsByType.put(fields.device_type, listOfFields);
+					listOfFieldsByType.put(fields.manufacturer_device_name, listOfFields);
 				}
 				
 				listOfFields.add(fields);
@@ -288,15 +289,15 @@ public class DbServletActions {
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
-				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
-				+ "sensor_precision,sensor_height_in_metres "
-				+ "FROM device_sensor_profiles"
-				+ "WHERE device_type=?"
+				+"sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
+				+"sensor_precision,sensor_height_in_metres"
+				+" FROM device_sensor_profiles"
+				+" WHERE manufacturer_device_name=?"
 			);
 			
-			ResultSet resultSet = pstmt.executeQuery();
-			
 			pstmt.setString(1, name);
+			
+			ResultSet resultSet = pstmt.executeQuery();
 			
 			List<DeviceTypeFields> listOfFields = new Vector<DeviceTypeFields>();
 			
@@ -377,22 +378,37 @@ public class DbServletActions {
 	public JSONObject createDevice(
 			String serialNumber, 
 			String type,
+			Date acquiredOn,
 			String notes
 			) throws Exception {
 
 		JSONObject result = new JSONObject();
 		
 		try {
-			DeviceType deviceType = DeviceType.getDeviceTypeFromName(type);
+			JSONObject jsonDeviceType = null;
+			JSONArray jsonSensorDefs = null;
+			{
+				JSONObject deviceTypesResult = getDeviceTypeFromName(type);
+				JSONArray arr = deviceTypesResult.getJSONArray("deviceTypes");
+				if( arr.length() < 1 ){
+					throw new Exception("Can not find device type: "+type);
+				}
+				jsonDeviceType = arr.getJSONObject(0);
+				jsonSensorDefs = jsonDeviceType.getJSONArray("sensors");
+			}
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO devices (serial_number,device_type,notes) VALUES (?,?,?)"
-				+" RETURNING id,serial_number,device_type,notes"
+				"INSERT INTO devices (serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes)"
+				+" VALUES (?,?,?,?,?,?)"
+				+" RETURNING id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
 			);
 			
 			pstmt.setString(1, serialNumber);
-			pstmt.setString(2, deviceType.getLabel());
-			pstmt.setString(3, notes);
+			pstmt.setString(2, jsonDeviceType.getString("device_type"));
+			pstmt.setString(3, jsonDeviceType.getString("manufacturer"));
+			pstmt.setString(4, jsonDeviceType.getString("manufacturer_device_name"));
+			pstmt.setTimestamp(5, new Timestamp(acquiredOn.getTime()));
+			pstmt.setString(6, notes);
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -400,48 +416,44 @@ public class DbServletActions {
 			String res_id = resultSet.getString(1);
 			String res_serialNumber = resultSet.getString(2);
 			String res_deviceType = resultSet.getString(3);
-			String res_Notes = resultSet.getString(4);
+			String res_manufacturer = resultSet.getString(4);
+			String res_manufacturer_device_name = resultSet.getString(5);
+			Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
+			String res_notes = resultSet.getString(7);
 				
-			JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_Notes);
+			JSONObject device = buildDeviceJson(
+				res_id,
+				res_serialNumber,
+				res_deviceType,
+				res_manufacturer,
+				res_manufacturer_device_name,
+				res_acquired_on,
+				res_notes
+				);
 			result.put("device", device);
 			
 			JSONArray sensors = new JSONArray();
 			device.put("sensors", sensors);
 			
 			// Create sensors...
-			if( deviceType.includesFirmware() ){
+			for(int i=0; i<jsonSensorDefs.length(); ++i){
+				JSONObject jsonSensorDef = jsonSensorDefs.getJSONObject(i);
+				
+				String label = jsonSensorDef.getString("label");
+				String type_of_measurement = jsonSensorDef.getString("type_of_measurement");
+				String unit_of_measurement = jsonSensorDef.optString("unit_of_measurement");
+				double accuracy = jsonSensorDef.getDouble("accuracy");
+				double precision = jsonSensorDef.getDouble("precision");
+				double height_in_metres = jsonSensorDef.getDouble("height_in_metres");
+
 				JSONObject sensorJson = createDeviceSensor(
 						res_id,
-						"firmware",
-						"text",
-						""
-						);
-				sensors.put(sensorJson);
-			}
-			if( deviceType.includesNotes() ){
-				JSONObject sensorJson = createDeviceSensor(
-						res_id,
-						"notes",
-						"text",
-						""
-						);
-				sensors.put(sensorJson);
-			}
-			for(int index=0; index<deviceType.getTempCount(); ++index){
-				JSONObject sensorJson = createDeviceSensor(
-						res_id,
-						""+(index+1),
-						"temperature",
-						"oC"
-						);
-				sensors.put(sensorJson);
-			}
-			for(int index=0; index<deviceType.getVoltageCount(); ++index){
-				JSONObject sensorJson = createDeviceSensor(
-						res_id,
-						"HK-Bat"+(index>0?""+index:""),
-						"voltage",
-						"V"
+						label,
+						type_of_measurement,
+						unit_of_measurement,
+						accuracy,
+						precision,
+						height_in_metres
 						);
 				sensors.put(sensorJson);
 			}
@@ -470,7 +482,8 @@ public class DbServletActions {
 			result.put("devices", deviceArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,device_type,notes FROM devices"
+				"SELECT id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+				+ " FROM devices"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -478,10 +491,21 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
-				String res_deviceType = resultSet.getString(3);
-				String res_notes = resultSet.getString(4);
+				String res_device_type = resultSet.getString(3);
+				String res_manufacturer = resultSet.getString(4);
+				String res_manufacturer_device_name = resultSet.getString(5);
+				Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
+				String res_notes = resultSet.getString(7);
 					
-				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_notes);
+				JSONObject device = buildDeviceJson(
+						res_id,
+						res_serialNumber,
+						res_device_type,
+						res_manufacturer,
+						res_manufacturer_device_name,
+						res_acquired_on,
+						res_notes
+						);
 				
 				deviceArr.put(device);
 			}
@@ -524,7 +548,8 @@ public class DbServletActions {
 			result.put("devices", deviceArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,device_type,notes FROM devices WHERE id=?"
+				"SELECT id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+				+ " FROM devices WHERE id=?"
 			);
 			
 			UUID uuid = UUID.fromString(device_id);
@@ -536,10 +561,21 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
-				String res_deviceType = resultSet.getString(3);
-				String res_notes = resultSet.getString(4);
+				String res_device_type = resultSet.getString(3);
+				String res_manufacturer = resultSet.getString(4);
+				String res_manufacturer_device_name = resultSet.getString(5);
+				Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
+				String res_notes = resultSet.getString(7);
 					
-				JSONObject device = buildDeviceJson(res_id,res_serialNumber,res_deviceType,res_notes);
+				JSONObject device = buildDeviceJson(
+						res_id,
+						res_serialNumber,
+						res_device_type,
+						res_manufacturer,
+						res_manufacturer_device_name,
+						res_acquired_on,
+						res_notes
+						);
 				
 				JSONArray sensors = getSensorsFromDeviceId(device_id);
 				device.put("sensors", sensors);
@@ -566,16 +602,24 @@ public class DbServletActions {
 	 * @return
 	 */
 	private JSONObject buildDeviceJson(
-			String id, 
-			String serialNumber, 
-			String type, 
-			String notes ){
+			String id,
+			String serialNumber,
+			String deviceType,
+			String manufacturer,
+			String manufacturer_device_name,
+			Date acquired_on,
+			String notes 
+			){
 		
 		JSONObject device = new JSONObject();
 		device.put("type", "device");
 		device.put("id", id);
-		device.put("serialNumber", serialNumber);
-		device.put("device_type", type);
+		device.put("serial_number", serialNumber);
+		device.put("device_type", deviceType);
+		device.put("manufacturer", manufacturer);
+		device.put("manufacturer_device_name", manufacturer_device_name);
+		device.put("acquired_on", acquired_on.getTime());
+		device.put("acquired_on_text", acquired_on.toString());
 		device.put("notes", notes);
 		return device;
 	}
@@ -591,22 +635,28 @@ public class DbServletActions {
 	private JSONObject createDeviceSensor(
 			String device_id,
 			String label,
-			String typeOfMeasurment,
-			String units
+			String type_of_measurement,
+			String unit_of_measurement,
+			double accuracy,
+			double precision,
+			double height_in_metres
 			) throws Exception {
 		
 		JSONObject sensor = null;
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-					"INSERT INTO sensors (device_id,label,type_of_measurement,unit_of_measurement)"
-					+" VALUES (?,?,?,?)"
-					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision"
+					"INSERT INTO sensors (device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres)"
+					+" VALUES (?,?,?,?,?,?,?)"
+					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
 				);
 				
 			pstmt.setObject(1, UUID.fromString(device_id));
 			pstmt.setString(2, label);
-			pstmt.setString(3, typeOfMeasurment);
-			pstmt.setString(4, units);
+			pstmt.setString(3, type_of_measurement);
+			pstmt.setString(4, unit_of_measurement);
+			pstmt.setDouble(5, accuracy);
+			pstmt.setDouble(6, precision);
+			pstmt.setDouble(7, height_in_metres);
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -614,19 +664,21 @@ public class DbServletActions {
 			String res_id = resultSet.getString(1);
 			String res_device_id = resultSet.getString(2);
 			String res_label = resultSet.getString(3);
-			String res_typeOfMeasurement = resultSet.getString(4);
-			String res_unitOfMeasurement = resultSet.getString(5);
-			double accuracy = resultSet.getDouble(6);
-			double precision = resultSet.getDouble(7);
+			String res_type_of_measurement = resultSet.getString(4);
+			String res_unit_of_measurement = resultSet.getString(5);
+			double res_accuracy = resultSet.getDouble(6);
+			double res_precision = resultSet.getDouble(7);
+			double res_height_in_metres = resultSet.getDouble(8);
 				
 			sensor = buildSensorJson(
 					res_id,
 					res_device_id,
 					res_label,
-					res_typeOfMeasurement,
-					res_unitOfMeasurement,
-					accuracy,
-					precision
+					res_type_of_measurement,
+					res_unit_of_measurement,
+					res_accuracy,
+					res_precision,
+					res_height_in_metres
 					);
 
 		} catch(Exception e) {
@@ -647,7 +699,8 @@ public class DbServletActions {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,label,type_of_measurement,unit_of_measurement,accuracy,precision FROM sensors"
+				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
+				+" FROM sensors"
 				+" WHERE device_id=?"
 			);
 			
@@ -657,20 +710,23 @@ public class DbServletActions {
 			
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
-				String res_label = resultSet.getString(2);
-				String res_type_of_measurement = resultSet.getString(3);
-				String res_unit_of_measurement = resultSet.getString(4);
-				double res_accuracy = resultSet.getDouble(5);
-				double res_precision = resultSet.getDouble(6);
+				String res_device_id = resultSet.getString(2);
+				String res_label = resultSet.getString(3);
+				String res_type_of_measurement = resultSet.getString(4);
+				String res_unit_of_measurement = resultSet.getString(5);
+				double res_accuracy = resultSet.getDouble(6);
+				double res_precision = resultSet.getDouble(7);
+				double res_height_in_metres = resultSet.getDouble(8);
 					
 				JSONObject sensor = buildSensorJson(
 						res_id,
-						device_id,
+						res_device_id,
 						res_label,
 						res_type_of_measurement,
 						res_unit_of_measurement,
 						res_accuracy,
-						res_precision
+						res_precision,
+						res_height_in_metres
 						);
 				
 				result.put(sensor);
@@ -696,7 +752,8 @@ public class DbServletActions {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision FROM sensors"
+				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
+				+" FROM sensors"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -709,6 +766,7 @@ public class DbServletActions {
 				String res_unit_of_measurement = resultSet.getString(5);
 				double res_accuracy = resultSet.getDouble(6);
 				double res_precision = resultSet.getDouble(7);
+				double res_height_in_metres = resultSet.getDouble(8);
 					
 				JSONObject sensor = buildSensorJson(
 						res_id,
@@ -717,7 +775,8 @@ public class DbServletActions {
 						res_type_of_measurement,
 						res_unit_of_measurement,
 						res_accuracy,
-						res_precision
+						res_precision,
+						res_height_in_metres
 						);
 				
 				JSONArray arr = map.get(res_device_id);
@@ -750,20 +809,22 @@ public class DbServletActions {
 			String id, 
 			String device_id, 
 			String label, 
-			String typeOfMeasurement, 
-			String unitOfMeasurement,
+			String type_of_measurement, 
+			String unit_of_measurement,
 			double accuracy,
-			double precision
+			double precision,
+			double height_in_meters
 			){
 
 		JSONObject location = new JSONObject();
 		location.put("type", "sensor");
 		location.put("id", id);
 		location.put("label", label);
-		location.put("type_of_measurement", typeOfMeasurement);
-		location.put("unit_of_measurement", unitOfMeasurement);
+		location.put("type_of_measurement", type_of_measurement);
+		location.put("unit_of_measurement", unit_of_measurement);
 		location.put("accuracy", accuracy);
 		location.put("precision", precision);
+		location.put("height_in_meters", height_in_meters);
 		return location;
 	}
 
@@ -816,7 +877,7 @@ public class DbServletActions {
 			}
 			
 			// Get Sql Time
-			java.sql.Timestamp dbTime = new java.sql.Timestamp( time.getTime() );
+			Timestamp dbTime = new Timestamp( time.getTime() );
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO devices_locations (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
@@ -832,8 +893,7 @@ public class DbServletActions {
 			
 			resultSet.next();
 			String res_id = resultSet.getString(1);
-			java.sql.Timestamp res_time_sql = resultSet.getTimestamp(2);
-			Date res_time = new Date( res_time_sql.getTime() );
+			Date res_time = new Date( resultSet.getTimestamp(2).getTime() );
 			String res_device_id = resultSet.getString(3);
 			String res_location_id = resultSet.getString(4);
 			String res_notes = resultSet.getString(5);
@@ -871,8 +931,7 @@ public class DbServletActions {
 			
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
-				java.sql.Timestamp res_time_sql = resultSet.getTimestamp(2);
-				Date res_time = new Date( res_time_sql.getTime() );
+				Date res_time = new Date( resultSet.getTimestamp(2).getTime() );
 				String res_device_id = resultSet.getString(3);
 				String res_location_id = resultSet.getString(4);
 				String res_notes = resultSet.getString(5);

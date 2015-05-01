@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class ObservationColumn {
 
-	static private Pattern patternValue = Pattern.compile("^#(.*):(.*)$");
+	static private Pattern patternValue = Pattern.compile("^(#.*)$");
 	
 	static public ObservationColumn parseColumnString(String str) throws Exception {
 		ObservationColumn column = new ObservationColumn();
@@ -21,7 +21,6 @@ public class ObservationColumn {
 		} else if( matcherValue.matches() ){
 			column.setValue(true);
 			column.setName( matcherValue.group(1).trim() );
-			column.setUnits( matcherValue.group(2).trim() );
 		
 		} else {
 			throw new Exception("Unable to analyze column: "+str);
@@ -34,7 +33,6 @@ public class ObservationColumn {
 	private boolean isTime = false;
 	private boolean isSerial = false;
 	private String name = null;
-	private String units = null;
 
 	public ObservationColumn(){
 		
@@ -70,13 +68,5 @@ public class ObservationColumn {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getUnits() {
-		return units;
-	}
-
-	public void setUnits(String units) {
-		this.units = units;
 	}
 }
