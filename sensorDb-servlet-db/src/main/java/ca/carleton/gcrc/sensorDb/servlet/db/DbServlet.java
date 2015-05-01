@@ -100,14 +100,12 @@ public class DbServlet extends HttpServlet {
 			if( path.size() == 1 && path.get(0).equals("createLocation") ) {
 
 				String name = getStringParameter(req, "name");
-				String responsible = optStringParameter(req, "responsible");
 				double lat = getDoubleParameter(req, "lat");
 				double lng = getDoubleParameter(req, "lng");
 				Integer elevation = optIntegerParameter(req, "elevation");
 
 				JSONObject result = actions.createLocation(
 						name
-						,responsible
 						,lat
 						,lng
 						,elevation

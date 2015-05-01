@@ -4,8 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,7 +48,6 @@ public class DbServletActions {
 	 */
 	public JSONObject createLocation(
 			String name, 
-			String responsible,
 			double lat, 
 			double lng, 
 			Integer elevation
@@ -58,22 +59,17 @@ public class DbServletActions {
 			String geom = String.format("POINT(%f %f)", lng, lat);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO locations (name,responsible_party,coordinates,elevation)"
-				+" VALUES (?,?,ST_GeomFromText(?,4326),?)"
-				+" RETURNING id,name,responsible_party,ST_AsText(coordinates),elevation"
+				"INSERT INTO locations (name,coordinates,elevation)"
+				+" VALUES (?,ST_GeomFromText(?,4326),?)"
+				+" RETURNING id,name,ST_AsText(coordinates),elevation"
 			);
 			
 			pstmt.setString(1, name);
-			if( null == responsible ){
-				pstmt.setNull(2, java.sql.Types.VARCHAR);
-			} else {
-				pstmt.setString(2, responsible);
-			}
-			pstmt.setString(3, geom);
+			pstmt.setString(2, geom);
 			if( null == elevation ){
-				pstmt.setNull(4,java.sql.Types.INTEGER);
+				pstmt.setNull(3,java.sql.Types.INTEGER);
 			} else {
-				pstmt.setInt(4, elevation);
+				pstmt.setInt(3, elevation);
 			}
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -81,11 +77,10 @@ public class DbServletActions {
 			resultSet.next();
 			String res_id = resultSet.getString(1);
 			String res_name = resultSet.getString(2);
-			String res_responsible = resultSet.getString(3);
-			String res_coordinates = resultSet.getString(4);
-			int res_elevation = resultSet.getInt(5);
+			String res_coordinates = resultSet.getString(3);
+			int res_elevation = resultSet.getInt(4);
 				
-			JSONObject location = buildLocationJson(res_id,res_name,res_responsible,res_coordinates,res_elevation);
+			JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
 			result.put("location", location);
 			
 		} catch (Exception e) {
@@ -112,7 +107,7 @@ public class DbServletActions {
 			result.put("locations", locationArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,responsible_party,ST_AsText(coordinates),elevation FROM locations"
+				"SELECT id,name,ST_AsText(coordinates),elevation FROM locations"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -120,11 +115,10 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_name = resultSet.getString(2);
-				String res_responsible = resultSet.getString(3);
-				String res_coordinates = resultSet.getString(4);
-				int res_elevation = resultSet.getInt(5);
+				String res_coordinates = resultSet.getString(3);
+				int res_elevation = resultSet.getInt(4);
 					
-				JSONObject location = buildLocationJson(res_id,res_name,res_responsible,res_coordinates,res_elevation);
+				JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
 				
 				locationArr.put(location);
 			}
@@ -157,7 +151,7 @@ public class DbServletActions {
 			result.put("locations", locationArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,responsible_party,ST_AsText(coordinates),elevation FROM locations WHERE id=?"
+				"SELECT id,name,ST_AsText(coordinates),elevation FROM locations WHERE id=?"
 			);
 			
 			UUID uuid = UUID.fromString(location_id);
@@ -169,11 +163,10 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_name = resultSet.getString(2);
-				String res_responsible = resultSet.getString(3);
-				String res_coordinates = resultSet.getString(4);
-				int res_elevation = resultSet.getInt(5);
+				String res_coordinates = resultSet.getString(3);
+				int res_elevation = resultSet.getInt(4);
 					
-				JSONObject location = buildLocationJson(res_id,res_name,res_responsible,res_coordinates,res_elevation);
+				JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
 				
 				locationArr.put(location);
 			}
@@ -201,7 +194,6 @@ public class DbServletActions {
 	private JSONObject buildLocationJson(
 			String id, 
 			String name, 
-			String responsible, 
 			String coordinates, 
 			int elevation ){
 		
@@ -209,7 +201,6 @@ public class DbServletActions {
 		location.put("type", "location");
 		location.put("id", id);
 		location.put("name", name);
-		location.put("responsible", responsible);
 		location.put("coordinates", coordinates);
 		location.put("elevation", elevation);
 		return location;
@@ -226,14 +217,50 @@ public class DbServletActions {
 		JSONObject result = new JSONObject();
 		
 		try {
-			JSONArray deviceTypeArr = new JSONArray();
-			result.put("deviceTypes", deviceTypeArr);
+			JSONArray deviceTypesArr = new JSONArray();
+			result.put("deviceTypes", deviceTypesArr);
 			
-			for(DeviceType type : DeviceType.getDeviceTypes()){
-				JSONObject deviceType = buildDeviceTypeJson(type.getLabel());
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
+				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
+				+ "sensor_precision,sensor_height_in_metres FROM device_sensor_profiles"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			Map<String,List<DeviceTypeFields>> listOfFieldsByType = 
+					new HashMap<String,List<DeviceTypeFields>>();
+			
+			while( resultSet.next() ){
+				DeviceTypeFields fields = new DeviceTypeFields();
 				
-				deviceTypeArr.put(deviceType);
+				fields.id = resultSet.getString(1);
+				fields.device_type = resultSet.getString(2);
+				fields.manufacturer = resultSet.getString(3);
+				fields.manufacturer_device_name = resultSet.getString(4);
+				fields.sensor_label = resultSet.getString(5);
+				fields.sensor_type_of_measurement = resultSet.getString(6);
+				fields.sensor_unit_of_measurement = resultSet.getString(7);
+				fields.sensor_accuracy = resultSet.getDouble(8);
+				fields.sensor_precision = resultSet.getDouble(9);
+				fields.sensor_height_in_metres = resultSet.getDouble(10);
+					
+				List<DeviceTypeFields> listOfFields = listOfFieldsByType.get(fields.device_type);
+				if( null == listOfFields ){
+					listOfFields = new Vector<DeviceTypeFields>();
+					listOfFieldsByType.put(fields.device_type, listOfFields);
+				}
+				
+				listOfFields.add(fields);
 			}
+
+			for(List<DeviceTypeFields> listOfFields : listOfFieldsByType.values()){
+				JSONObject deviceType = buildDeviceTypeJson(listOfFields);
+				
+				deviceTypesArr.put(deviceType);
+			}
+			
+			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all device types from database", e);
@@ -243,19 +270,100 @@ public class DbServletActions {
 
 		return result;
 	}
+	
+	/**
+	 * Return a device type from name
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject getDeviceTypeFromName(
+			String name
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceTypesArr = new JSONArray();
+			result.put("deviceTypes", deviceTypesArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
+				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
+				+ "sensor_precision,sensor_height_in_metres "
+				+ "FROM device_sensor_profiles"
+				+ "WHERE device_type=?"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			pstmt.setString(1, name);
+			
+			List<DeviceTypeFields> listOfFields = new Vector<DeviceTypeFields>();
+			
+			while( resultSet.next() ){
+				DeviceTypeFields fields = new DeviceTypeFields();
+				
+				fields.id = resultSet.getString(1);
+				fields.device_type = resultSet.getString(2);
+				fields.manufacturer = resultSet.getString(3);
+				fields.manufacturer_device_name = resultSet.getString(4);
+				fields.sensor_label = resultSet.getString(5);
+				fields.sensor_type_of_measurement = resultSet.getString(6);
+				fields.sensor_unit_of_measurement = resultSet.getString(7);
+				fields.sensor_accuracy = resultSet.getDouble(8);
+				fields.sensor_precision = resultSet.getDouble(9);
+				fields.sensor_height_in_metres = resultSet.getDouble(10);
+					
+				listOfFields.add(fields);
+			}
+
+			JSONObject deviceType = buildDeviceTypeJson(listOfFields);
+			
+			deviceTypesArr.put(deviceType);
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device type "+name+" from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
 
 	/**
-	 * Get JSON representation of a device type
-	 * @param name
+	 * @param listOfFields
 	 * @return
 	 */
-	private JSONObject buildDeviceTypeJson(
-			String name ){
+	private JSONObject buildDeviceTypeJson(List<DeviceTypeFields> listOfFields){
 		
-		JSONObject device = new JSONObject();
-		device.put("type", "deviceType");
-		device.put("name", name);
-		return device;
+		JSONObject deviceType = new JSONObject();
+		deviceType.put("type", "deviceType");
+		
+		{
+			DeviceTypeFields fields = listOfFields.get(0);
+			deviceType.put("device_type", fields.device_type);
+			deviceType.put("manufacturer", fields.manufacturer);
+			deviceType.put("manufacturer_device_name", fields.manufacturer_device_name);
+		}
+		
+		JSONArray sensors = new JSONArray();
+		deviceType.put("sensors", sensors);
+		
+		for(DeviceTypeFields fields : listOfFields){
+			JSONObject sensor = new JSONObject();
+			sensors.put(sensor);
+			
+			sensor.put("label", fields.sensor_label);
+			sensor.put("type_of_measurement", fields.sensor_type_of_measurement);
+			sensor.put("unit_of_measurement", fields.sensor_unit_of_measurement);
+			sensor.put("accuracy", fields.sensor_accuracy);
+			sensor.put("precision", fields.sensor_precision);
+			sensor.put("height_in_metres", fields.sensor_height_in_metres);
+		}
+
+		return deviceType;
 	}
 
 	/**

@@ -71,18 +71,18 @@ var HtmlFixer = $n2.Class({
 				$select.empty();
 				
 				deviceTypes.sort(function(o1,o2){
-					if(o1.name < o2.name) return -1;
-					if(o1.name > o2.name) return 1;
+					if(o1.device_type < o2.device_type) return -1;
+					if(o1.device_type > o2.device_type) return 1;
 					return 0;
 				});
 				
 				for(var i=0,e=deviceTypes.length; i<e; ++i){
 					var deviceType = deviceTypes[i];
-					var name = deviceType.name;
+					var device_type = deviceType.device_type;
 					
 					$('<option>')
-						.text(name)
-						.attr('value',name)
+						.text(device_type)
+						.attr('value',device_type)
 						.appendTo($select);
 				};
 			}

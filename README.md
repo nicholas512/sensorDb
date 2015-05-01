@@ -1,13 +1,15 @@
 # sensorDb
 
 ```
-sudo -u postgres createdb --owner=<user> observations
+sudo su -l postgres 
 
-sudo -u postgres psql --command='CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology; CREATE EXTENSION "uuid-ossp";' observations
+createdb --owner=<user> observations
 
-sudo -u postgres psql --file=./observations.sql observations
+psql --command='CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology; CREATE EXTENSION "uuid-ossp";' observations
 
-sudo su -l postgres
+psql --file=./observations.sql observations
+
+psql -d observations -c "COPY device_sensor_profiles (device_type,manufacturer,manufacturer_device_name,sensor_label,sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,sensor_precision,sensor_height_in_metres) FROM STDIN CSV HEADER;" < device_sensor_profiles.csv
 
 for tbl in `psql -qAt -c "select tablename from pg_tables where schemaname = 'public';" observations` ; do  psql -c "alter table $tbl owner to <user>" observations ; done
 
