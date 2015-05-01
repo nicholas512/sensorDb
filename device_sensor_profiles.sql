@@ -1,0 +1,1 @@
+COPY device_sensor_profiles (device_type,manufacturer,manufacturer_device_name,sensor_label,sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,sensor_precision,sensor_height_in_metres) FROM 'device_sensor_profiles.csv' CSV HEADER;
