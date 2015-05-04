@@ -43,7 +43,7 @@ CREATE TABLE public.devices(
 	device_type character varying,
     manufacturer character varying,
     manufacturer_device_name character varying,
-    acquired_on timestamp WITHOUT TIME ZONE,
+    acquired_on timestamp WITH TIME ZONE,
 	notes text,
 	CONSTRAINT devices_pk PRIMARY KEY (id),
 	CONSTRAINT unique_serial_number UNIQUE (serial_number)
@@ -78,7 +78,7 @@ ALTER TABLE public.locations OWNER TO observations_admin;
 
 CREATE TABLE public.devices_locations(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	timestamp timestamp WITHOUT TIME ZONE NOT NULL,
+	timestamp timestamp WITH TIME ZONE NOT NULL,
 	device_id uuid NOT NULL,
 	location_id uuid NOT NULL,
 	notes text,
@@ -90,7 +90,7 @@ ALTER TABLE public.devices_locations OWNER TO observations_admin;
 CREATE TABLE public.observations(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	sensor_id uuid NOT NULL,
-	timestamp timestamp WITHOUT TIME ZONE NOT NULL,
+	timestamp timestamp WITH TIME ZONE NOT NULL,
 	numeric_value numeric,
 	text_value text,
 	CONSTRAINT observations_pk PRIMARY KEY (id)
@@ -117,7 +117,7 @@ ALTER TABLE public.observations_dois OWNER TO observations_admin;
 
 CREATE TABLE public.logs(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	timestamp timestamp WITHOUT TIME ZONE NOT NULL,
+	timestamp timestamp WITH TIME ZONE NOT NULL,
 	log text,
 	CONSTRAINT logs_pk PRIMARY KEY (id)
 
