@@ -5,8 +5,6 @@ sudo su -l postgres
 
 createdb --owner=<user> observations
 
-psql --command='CREATE EXTENSION postgis; CREATE EXTENSION postgis_topology; CREATE EXTENSION "uuid-ossp";' observations
-
 psql --file=./observations.sql observations
 
 psql -d observations -c "COPY device_sensor_profiles (device_type,manufacturer,manufacturer_device_name,sensor_label,sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,sensor_precision,sensor_height_in_metres) FROM STDIN CSV HEADER;" < device_sensor_profiles.csv
