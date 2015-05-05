@@ -150,19 +150,23 @@ REFERENCES public.dois (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 
+GRANT SELECT on device_sensor_profiles to observations_read;
 GRANT SELECT on devices to observations_read;
-GRANT SELECT on sensors to observations_read;
-GRANT SELECT on locations to observations_read;
-GRANT SELECT on observations to observations_read;
-GRANT SELECT on dois to observations_read;
 GRANT SELECT on devices_locations to observations_read;
+GRANT SELECT on dois to observations_read;
+GRANT SELECT on locations to observations_read;
+GRANT SELECT on logs to observations_read;
+GRANT SELECT on observations to observations_read;
 GRANT SELECT on observations_dois to observations_read;
+GRANT SELECT on sensors to observations_read;
 
+GRANT SELECT, INSERT, UPDATE, DELETE on device_sensor_profiles to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on sensors to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on observations to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on dois to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices_locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on dois to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on logs to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on observations to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on observations_dois to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on sensors to observations_write;
 
