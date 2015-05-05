@@ -619,7 +619,7 @@ public class DbServletActions {
 		device.put("manufacturer", manufacturer);
 		device.put("manufacturer_device_name", manufacturer_device_name);
 		device.put("acquired_on", acquired_on.getTime());
-		device.put("acquired_on_text", acquired_on.toString());
+		device.put("acquired_on_text", DateUtils.getUtcDateString(acquired_on));
 		device.put("notes", notes);
 		return device;
 	}
@@ -971,7 +971,7 @@ public class DbServletActions {
 		device.put("type", "deviceLocation");
 		device.put("id", id);
 		device.put("timestamp", time.getTime());
-		device.put("timestamp_text", time.toString());
+		device.put("timestamp_text", DateUtils.getUtcDateString(time));
 		device.put("device_id", device_id);
 		device.put("location_id", location_id);
 		device.put("notes", notes);
@@ -1022,7 +1022,7 @@ public class DbServletActions {
 		logEntry.put("type", "logEntry");
 		logEntry.put("id", id);
 		logEntry.put("timestamp", time.getTime());
-		logEntry.put("timestamp_text", time.toString());
+		logEntry.put("timestamp_text", DateUtils.getUtcDateString(time));
 		return logEntry;
 	}
 
@@ -1075,7 +1075,7 @@ public class DbServletActions {
 		logEntry.put("type", "log");
 		logEntry.put("id", id);
 		logEntry.put("timestamp", time.getTime());
-		logEntry.put("timestamp_text", time.toString());
+		logEntry.put("timestamp_text", DateUtils.getUtcDateString(time));
 		logEntry.put("log", log);
 		return logEntry;
 	}

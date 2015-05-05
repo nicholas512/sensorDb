@@ -143,7 +143,9 @@ var HtmlFixer = $n2.Class({
 						
 						for(var i=0,e=logEntries.length; i<e; ++i){
 							var logEntry = logEntries[i];
-							var tsText = logEntry.timestamp_text;
+							var ts = logEntry.timestamp;
+							var d = new Date(ts);
+							var tsText = '' + d;
 							var id = logEntry.id;
 							
 							var $line = $('<div>')
