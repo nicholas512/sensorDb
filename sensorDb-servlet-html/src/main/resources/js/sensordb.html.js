@@ -38,6 +38,12 @@ var HtmlFixer = $n2.Class({
 			var $select = $(this);
 			_this._getDeviceOptions($select);
 		});
+		
+		// List log entries
+		$set.filter('.sdb_listLogEntries').each(function(){
+			var $elem = $(this);
+			_this._listLogEntries($elem);
+		});
 	},
 	
 	_getLocationOptions: function($select){
@@ -112,6 +118,70 @@ var HtmlFixer = $n2.Class({
 				};
 			}
 		});
+	},
+	
+	_listLogEntries: function($elem){
+		var _this = this;
+		
+		$elem.empty();
+		
+		var elemId = $n2.getUniqueId();
+		
+		$('<button>')
+			.text('Get Logs')
+			.appendTo($elem)
+			.click(function(){
+				_this.dbService.getListOfLogEntries({
+					onSuccess: function(logEntries){
+						var $div = $('#'+elemId).empty();
+						
+						logEntries.sort(function(o1,o2){
+							if(o1.timestamp < o2.timestamp) return -1;
+							if(o1.timestamp > o2.timestamp) return 1;
+							return 0;
+						});
+						
+						for(var i=0,e=logEntries.length; i<e; ++i){
+							var logEntry = logEntries[i];
+							var tsText = logEntry.timestamp_text;
+							var id = logEntry.id;
+							
+							var $line = $('<div>')
+								.appendTo($div);
+							
+							var $a = $('<a>')
+								.attr('href','#')
+								.attr('sdb_id',id)
+								.text(tsText)
+								.appendTo($div)
+								.click(showLog);
+						};
+					}
+				});
+			});
+		
+		$('<div>')
+			.attr('id',elemId)
+			.appendTo($elem);
+		
+		function showLog(){
+			var $a = $(this);
+			var id = $a.attr('sdb_id');
+
+			_this.dbService.getLog({
+				id: id
+				,onSuccess: function(log){
+					var $div = $('#'+elemId)
+						.empty();
+					
+					$('<pre>')
+						.text(log.log)
+						.appendTo($div);
+				}
+			});
+
+			return false;
+		};
 	}
 });	
 

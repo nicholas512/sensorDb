@@ -78,6 +78,15 @@ public class DbServlet extends HttpServlet {
 			} else if( path.size() == 1 && path.get(0).equals("getDeviceLocations") ) {
 				JSONObject result = actions.getDeviceLocations();
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getListOfLogEntries") ) {
+				JSONObject result = actions.getListOfLogEntries();
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getLog") ) {
+				String id = getStringParameter(req, "id");
+				JSONObject result = actions.getLogFromId(id);
+				sendJsonResponse(resp, result);
 				
 			} else {
 				throw new Exception("Invalid action requested");

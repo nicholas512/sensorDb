@@ -978,4 +978,105 @@ public class DbServletActions {
 		return device;
 	}
 	
+	public JSONObject getListOfLogEntries(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray logEntriesArr = new JSONArray();
+			result.put("logEntries", logEntriesArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,timestamp FROM logs"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String res_id = resultSet.getString(1);
+				Date res_timestamp = new Date( resultSet.getTimestamp(2).getTime() );
+					
+				JSONObject logEntry = buildLogEntryJson(res_id,res_timestamp);
+				
+				logEntriesArr.put(logEntry);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all log entries from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+
+	private JSONObject buildLogEntryJson(
+			String id, 
+			Date time
+			){
+		
+		JSONObject logEntry = new JSONObject();
+		logEntry.put("type", "logEntry");
+		logEntry.put("id", id);
+		logEntry.put("timestamp", time.getTime());
+		logEntry.put("timestamp_text", time.toString());
+		return logEntry;
+	}
+
+	public JSONObject getLogFromId(
+			String id
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray logsArr = new JSONArray();
+			result.put("logs", logsArr);
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,timestamp,log FROM logs WHERE id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(id));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String res_id = resultSet.getString(1);
+				Date res_timestamp = new Date( resultSet.getTimestamp(2).getTime() );
+				String res_log = resultSet.getString(3);
+					
+				JSONObject log = buildLogJson(res_id,res_timestamp,res_log);
+				
+				logsArr.put(log);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving log "+id+" from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+
+	private JSONObject buildLogJson(
+			String id, 
+			Date time,
+			String log
+			){
+		
+		JSONObject logEntry = new JSONObject();
+		logEntry.put("type", "log");
+		logEntry.put("id", id);
+		logEntry.put("timestamp", time.getTime());
+		logEntry.put("timestamp_text", time.toString());
+		logEntry.put("log", log);
+		return logEntry;
+	}
 }

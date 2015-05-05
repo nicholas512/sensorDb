@@ -108,6 +108,60 @@ var Database = $n2.Class({
 				opts.onError('Error obtaining devices: '+errStr);
 			}
 		});
+	},
+	
+	getListOfLogEntries: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(logEntries){}
+			,onError: function(err){}
+		},opts_);
+		
+		$.ajax({
+			url: this.dbUrl + 'getListOfLogEntries'
+			,type: 'get'
+			,async: true
+			,dataType: 'json'
+			,success: function(res) {
+				if( res.ok ) {
+					opts.onSuccess(res.logEntries);
+				} else {
+					opts.onError('Malformed response');
+				};
+			}
+			,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining list of log entries: '+errStr);
+			}
+		});
+	},
+	
+	getLog: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,onSuccess: function(log){}
+			,onError: function(err){}
+		},opts_);
+		
+		$.ajax({
+			url: this.dbUrl + 'getLog'
+			,type: 'get'
+			,async: true
+			,dataType: 'json'
+			,data: {
+				id: opts.id
+			}
+			,success: function(res) {
+				if( res.ok && res.logs && res.logs.length === 1 ) {
+					opts.onSuccess(res.logs[0]);
+				} else {
+					opts.onError('Malformed response');
+				};
+			}
+			,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining log '+opts.id+': '+errStr);
+			}
+		});
 	}
 });	
 
