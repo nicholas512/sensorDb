@@ -406,7 +406,7 @@ public class DbServletActions {
 			);
 			
 			pstmt.setString(1, serialNumber);
-            pstmt.setString(2, jsonDeviceType.getString("access_code"));
+            pstmt.setString(2, accessCode);
 			pstmt.setString(3, jsonDeviceType.getString("device_type"));
 			pstmt.setString(4, jsonDeviceType.getString("manufacturer"));
 			pstmt.setString(5, jsonDeviceType.getString("manufacturer_device_name"));
