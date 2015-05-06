@@ -370,13 +370,15 @@ public class DbServletActions {
 	/**
 	 * CReate a new device record
 	 * @param serialNumber
+     * @Param accessCode
 	 * @param type
 	 * @param notes
 	 * @return
 	 * @throws Exception
 	 */
 	public JSONObject createDevice(
-			String serialNumber, 
+			String serialNumber,
+            String accessCode,
 			String type,
 			Date acquiredOn,
 			String notes
@@ -604,6 +606,7 @@ public class DbServletActions {
 	/**
 	 * @param id
 	 * @param serialNumber
+     * @Param accessCode
 	 * @param type
 	 * @param notes
 	 * @return
@@ -611,6 +614,7 @@ public class DbServletActions {
 	private JSONObject buildDeviceJson(
 			String id,
 			String serialNumber,
+            String accessCode,
 			String deviceType,
 			String manufacturer,
 			String manufacturer_device_name,
