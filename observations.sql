@@ -40,6 +40,7 @@ ALTER TABLE public.device_sensor_profiles OWNER TO observations_admin;
 CREATE TABLE public.devices(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	serial_number character varying,
+	access_code character varying,
 	device_type character varying,
     manufacturer character varying,
     manufacturer_device_name character varying,
