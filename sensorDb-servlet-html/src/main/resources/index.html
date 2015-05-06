@@ -9,270 +9,198 @@
 
 <body>
     <h1>SensorDb</h1>
-    <div class="sensordb_forms">
-        <form class="form-horizontal">
-            <fieldset>
+    <form action="./db/createLocation" method="POST" class="form-horizontal">
+        <fieldset>
 
-                <!-- Form Name -->
-                <legend>Add Location</legend>
+            <!-- Form Name -->
+            <legend>Add Location</legend>
 
-                <!-- Textarea -->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_notes">Location Notes</label>
-                    <div class="col-md-4">
-                        <textarea class="form-control" id="location_notes" name="location_notes"></textarea>
-                    </div>
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_name">Name</label>
+                <div class="col-md-4">
+                    <input id="_name" name="_name" type="text" placeholder="" class="form-control input-md" required="">
+
                 </div>
+            </div>
 
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_lattitude">Latitude</label>
-                    <div class="col-md-4">
-                        <input id="location_lattitude" name="location_lattitude" type="text" placeholder="45.00000" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_lat">Lattitude</label>
+                <div class="col-md-4">
+                    <input id="_lat" name="_lat" type="text" placeholder="45.00000" class="form-control input-md" required="">
+                    <span class="help-block">decimal degrees</span>
                 </div>
+            </div>
 
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_longitude">longitude</label>
-                    <div class="col-md-4">
-                        <input id="location_longitude" name="location_longitude" type="text" placeholder="-75.00000" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_lng">Longitude</label>
+                <div class="col-md-4">
+                    <input id="_lng" name="_lng" type="text" placeholder="-75.00000" class="form-control input-md" required="">
+                    <span class="help-block">decimal degrees</span>
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-
-        <form class="form-horizontal">
-            <fieldset>
-
-                <!-- Form Name -->
-                <legend>Add Device</legend>
-
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_serial_number">Serial Number</label>
-                    <div class="col-md-4">
-                        <input id="device_serial_number" name="device_serial_number" type="text" placeholder="E5096D" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_elev">Elevation</label>
+                <div class="col-md-4">
+                    <input id="_elev" name="_elev" type="text" placeholder="" class="form-control input-md" required="">
+                    <span class="help-block">metres</span>
                 </div>
+            </div>
 
-                <!-- Select Basic -->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_type">Device Type</label>
-                    <div class="col-md-4">
-                        <select id="device_type" name="device_type" class="form-control">
-                            <option value="LOG-PT1000">LOG-PT1000</option>
-                            <option value="LOG-HC2">LOG-HC2</option>
-                        </select>
-                    </div>
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="submit"></label>
+                <div class="col-md-4">
+                    <input type="submit" value="Submit" class="btn btn-primary" />
                 </div>
+            </div>
 
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_access_code">Access Code</label>
-                    <div class="col-md-4">
-                        <input id="device_access_code" name="device_access_code" type="text" placeholder="AFF9" class="form-control input-md" required="">
+        </fieldset>
+    </form>
 
-                    </div>
+    <form action="./db/createDevice" method="POST" class="form-horizontal">
+        <fieldset>
+
+            <!-- Form Name -->
+            <legend>Add Device</legend>
+
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_sn">Serial Number</label>
+                <div class="col-md-4">
+                    <input id="_sn" name="serial_number" type="text" placeholder="E5096D" class="form-control input-md" required="">
+
                 </div>
+            </div>
 
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_firmware_version">Firmware Version</label>
-                    <div class="col-md-4">
-                        <input id="device_firmware_version" name="device_firmware_version" type="text" placeholder="" class="form-control input-md" required="">
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_access_code">Access Code</label>
+                <div class="col-md-4">
+                    <input id="_access_code" name="access_code" type="text" placeholder="AFF9" class="form-control input-md" required="">
 
-                    </div>
                 </div>
+            </div>
 
-                <!-- Textarea -->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_notes">Device Notes</label>
-                    <div class="col-md-4">
-                        <textarea class="form-control" id="device_notes" name="device_notes"></textarea>
-                    </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_type">Type</label>
+                <div class="col-md-4">
+                    <select id="_type" name="device_type" class="form-control sdb_getDeviceTypes">
+                    </select>
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-        <form class="form-horizontal">
-            <fieldset>
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="acquired_on">Acquired On</label>
+                <div class="col-md-4">
+                    <input id="_acquired_on" name="acquired_on" type="text" placeholder="2015-01-31" class="form-control input-md">
 
-                <!-- Form Name -->
-                <legend>Place Device in Location</legend>
-
-                <!-- Search input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
-                    <div class="col-md-4">
-                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
-
-                    </div>
                 </div>
+            </div>
 
-                <!-- Search input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="location_searchinput">Search Locations</label>
-                    <div class="col-md-4">
-                        <input id="location_searchinput" name="location_searchinput" type="search" placeholder="Carleton" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Textarea -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="notes">Notes</label>
+                <div class="col-md-4">
+                    <textarea class="form-control" id="_notes" name="notes"></textarea>
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-        <form class="form-horizontal">
-            <fieldset>
-
-                <!-- Form Name -->
-                <legend>Log Device Note</legend>
-
-                <!-- Search input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
-                    <div class="col-md-4">
-                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="submit"></label>
+                <div class="col-md-4">
+                    <button id="submit" name="submit" class="btn btn-primary">Submit</button>
                 </div>
+            </div>
 
-                <!-- Textarea -->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="textarea">Notes</label>
-                    <div class="col-md-4">
-                        <textarea class="form-control" id="textarea" name="textarea"></textarea>
-                    </div>
+        </fieldset>
+    </form>
+
+
+    <form action="./db/addDeviceLocation" method="POST" class="form-horizontal">
+        <fieldset>
+
+            <!-- Form Name -->
+            <legend>Assign Device Location</legend>
+
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_adl_time">Date/Time</label>
+                <div class="col-md-4">
+                    <input id="_adl_time" name="time" type="text" placeholder="2015-12-31" class="form-control input-md" required="">
+
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-        <form class="form-horizontal">
-            <fieldset>
-
-                <!-- Form Name -->
-                <legend>Log Device Firmware Change</legend>
-
-                <!-- Search input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="search_devices">Search Devices</label>
-                    <div class="col-md-4">
-                        <input id="search_devices" name="search_devices" type="search" placeholder="E5096D" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_adl_device_id">Device ID</label>
+                <div class="col-md-4">
+                    <select id="_adl_device_id" name="device_id" class="form-control sdb_getDevices">
+                    </select>
                 </div>
+            </div>
 
-                <!-- Text input-->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="device_firmware">Firmware version</label>
-                    <div class="col-md-4">
-                        <input id="device_firmware" name="device_firmware" type="text" placeholder="" class="form-control input-md" required="">
-
-                    </div>
+            <!-- Select Basic -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_adl_location_id">Location ID</label>
+                <div class="col-md-4">
+                    <select id="_adl_location_id" name="location_id" class="form-control sdb_getLocations">
+                    </select>
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-        <form class="form-horizontal">
-            <fieldset>
-
-                <!-- Form Name -->
-                <legend>Upload Observations File</legend>
-
-                <!-- File Button -->
-                <div class="form-group">
-                    <label class="col-md-4 control-label" for="upload_observations_file">Upload Device CSV</label>
-                    <div class="col-md-4">
-                        <input id="upload_observations_file" name="upload_observations_file" class="input-file" type="file">
-                    </div>
+            <!-- Textarea -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_adl_notes">Notes</label>
+                <div class="col-md-4">
+                    <textarea class="form-control" id="_adl_notes" name="notes"></textarea>
                 </div>
+            </div>
 
-            </fieldset>
-        </form>
-    </div>
-    
-		<h2>Create Location (experimental)</h2>
-		<form action="./db/createLocation" method="POST">
-			<label for="_name">Name:</label>
-			<input id="_name" type="text" name="name"/>
-			<br/>
-			
-			<label for="_lng">Longitude:</label>
-			<input id="_lng" type="text" name="lng"/>
-			<br/>
-			
-			<label for="_lat">Latitude:</label>
-			<input id="_lat" type="text" name="lat"/>
-			<br/>
-			
-			<label for="_elev">Elevation:</label>
-			<input id="_elev" type="text" name="elevation"/>
-			<br/>
-			
-			<input type="submit" value="OK"/>
-		</form>
-    
-		<h2>Create Device (experimental)</h2>
-		<form action="./db/createDevice" method="POST">
-			<label for="_sn">Serial Number:</label>
-			<input id="_sn" type="text" name="serial"/>
-			<br/>
-			
-			<label for="_type">Type:</label>
-            <select class="sdb_getDeviceTypes" id="_type" name="device_type">
-            </select>
-			<br/>
-			
-			<label for="_acquired_on">Acquired On:</label>
-			<input id="_acquired_on" type="text" name="acquired_on"/>
-			<br/>
-			
-			<label for="_notes">Notes:</label>
-			<input id="_notes" type="text" name="notes"/>
-			<br/>
-			
-			<input type="submit" value="OK"/>
-		</form>
-    
-		<h2>Add Device Location (experimental)</h2>
-		<form action="./db/addDeviceLocation" method="POST">
-			<label for="_adl_time">Date/Time:</label>
-			<input id="_adl_time" type="text" name="time"/>
-			<br/>
-			
-			<label for="_adl_device_id">Device Id:</label>
-			<select class="sdb_getDevices" id="_adl_device_id" name="device_id">
-			</select>
-			<br/>
-			
-			<label for="_adl_location_id">Location Id:</label>
-			<select class="sdb_getLocations" id="_adl_location_id" name="location_id">
-			</select>
-			<br/>
-			
-			<label for="_adl_notes">Notes:</label>
-			<input id="_adl_notes" type="text" name="notes"/>
-			<br/>
-			
-			<input type="submit" value="OK"/>
-		</form>
-    
-		<h2>Upload Observations (experimental)</h2>
-		<form action="./uploadObservations/put" method="POST" enctype="multipart/form-data">
-			<label for="_adl_notes">File:</label>
-			<input id="_adl_notes" type="file" name="file"/>
-			<br/>
-			
-			<input type="submit" value="OK"/>
-		</form>
-		
-		<h2>Logs (experimental)</h2>
-		<div class="sdb_listLogEntries">
-		</div>
-    
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="submit"></label>
+                <div class="col-md-4">
+                    <button id="submit" name="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
+
+        </fieldset>
+    </form>
+
+
+    <form action="./uploadObservations/put" method="POST" enctype="multipart/form-data" class="form-horizontal">
+        <fieldset>
+
+            <!-- Form Name -->
+            <legend>Upload Observations File</legend>
+
+            <!-- File Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_file">File</label>
+                <div class="col-md-4">
+                    <input id="_file" name="file" class="input-file" type="file">
+                </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="submit"></label>
+                <div class="col-md-4">
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </div>
+            </div>
+
+        </fieldset>
+    </form>
 
     <script src="./js/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
@@ -282,15 +210,16 @@
     <script src="./js/sensordb.db.js"></script>
     <script src="./js/sensordb.html.js"></script>
     <script type="text/javascript">
-	    jQuery().ready(function() {
-	    	var $s = sensorDb;
-	    	
-	    	var config = $s.config.GetConfiguration({
-	    		rootPath: './'
-	    	});
-	    	
-	    	config.htmlService.fixHtml();
-	    });
+        jQuery().ready(function() {
+            var $s = sensorDb;
+
+            var config = $s.config.GetConfiguration({
+                rootPath: './'
+            });
+
+            config.htmlService.fixHtml();
+        });
     </script>
 </body>
+
 </html>

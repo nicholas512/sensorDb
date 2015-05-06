@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
-@SuppressWarnings("serial")
+//@SuppressWarnings("serial")
 public class DbServlet extends HttpServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -123,13 +123,15 @@ public class DbServlet extends HttpServlet {
 
 			} else if( path.size() == 1 && path.get(0).equals("createDevice") ) {
 
-					String serialNumber = getStringParameter(req, "serial");
+					String serialNumber = getStringParameter(req, "serial_number");
+                    String accessCode = getStringParameter(req, "access_code");
 					String deviceType = getStringParameter(req, "device_type");
 					Date acquiredOn = getDateParameter(req, "acquired_on");
 					String notes = getStringParameter(req, "notes");
 
 					JSONObject result = actions.createDevice(
 							serialNumber
+                            ,accessCode
 							,deviceType
 							,acquiredOn
 							,notes

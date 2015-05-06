@@ -398,32 +398,35 @@ public class DbServletActions {
 			}
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO devices (serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes)"
-				+" VALUES (?,?,?,?,?,?)"
-				+" RETURNING id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+				"INSERT INTO devices (serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes)"
+				+" VALUES (?,?,?,?,?,?,?)"
+				+" RETURNING id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
 			);
 			
 			pstmt.setString(1, serialNumber);
-			pstmt.setString(2, jsonDeviceType.getString("device_type"));
-			pstmt.setString(3, jsonDeviceType.getString("manufacturer"));
-			pstmt.setString(4, jsonDeviceType.getString("manufacturer_device_name"));
-			pstmt.setTimestamp(5, new Timestamp(acquiredOn.getTime()));
-			pstmt.setString(6, notes);
+            pstmt.setString(2, jsonDeviceType.getString("access_code"));
+			pstmt.setString(3, jsonDeviceType.getString("device_type"));
+			pstmt.setString(4, jsonDeviceType.getString("manufacturer"));
+			pstmt.setString(5, jsonDeviceType.getString("manufacturer_device_name"));
+			pstmt.setTimestamp(6, new Timestamp(acquiredOn.getTime()));
+			pstmt.setString(7, notes);
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
 			resultSet.next();
 			String res_id = resultSet.getString(1);
 			String res_serialNumber = resultSet.getString(2);
-			String res_deviceType = resultSet.getString(3);
-			String res_manufacturer = resultSet.getString(4);
-			String res_manufacturer_device_name = resultSet.getString(5);
-			Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
-			String res_notes = resultSet.getString(7);
+            String res_accessCode = resultSet.getString(3);
+			String res_deviceType = resultSet.getString(4);
+			String res_manufacturer = resultSet.getString(5);
+			String res_manufacturer_device_name = resultSet.getString(6);
+			Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
+			String res_notes = resultSet.getString(8);
 				
 			JSONObject device = buildDeviceJson(
 				res_id,
 				res_serialNumber,
+                res_accessCode,
 				res_deviceType,
 				res_manufacturer,
 				res_manufacturer_device_name,
@@ -482,7 +485,7 @@ public class DbServletActions {
 			result.put("devices", deviceArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+				"SELECT id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
 				+ " FROM devices"
 			);
 			
@@ -491,15 +494,17 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
-				String res_device_type = resultSet.getString(3);
-				String res_manufacturer = resultSet.getString(4);
-				String res_manufacturer_device_name = resultSet.getString(5);
-				Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
-				String res_notes = resultSet.getString(7);
+                String res_accessCode = resultSet.getString(3);
+				String res_device_type = resultSet.getString(4);
+				String res_manufacturer = resultSet.getString(5);
+				String res_manufacturer_device_name = resultSet.getString(6);
+				Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
+				String res_notes = resultSet.getString(8);
 					
 				JSONObject device = buildDeviceJson(
 						res_id,
 						res_serialNumber,
+                        res_accessCode,
 						res_device_type,
 						res_manufacturer,
 						res_manufacturer_device_name,
@@ -548,7 +553,7 @@ public class DbServletActions {
 			result.put("devices", deviceArr);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+				"SELECT id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
 				+ " FROM devices WHERE id=?"
 			);
 			
@@ -561,15 +566,17 @@ public class DbServletActions {
 			while( resultSet.next() ){
 				String res_id = resultSet.getString(1);
 				String res_serialNumber = resultSet.getString(2);
-				String res_device_type = resultSet.getString(3);
-				String res_manufacturer = resultSet.getString(4);
-				String res_manufacturer_device_name = resultSet.getString(5);
-				Date res_acquired_on = new Date( resultSet.getTimestamp(6).getTime() );
-				String res_notes = resultSet.getString(7);
+                String res_accessCode = resultSet.getString(3);
+				String res_device_type = resultSet.getString(4);
+				String res_manufacturer = resultSet.getString(5);
+				String res_manufacturer_device_name = resultSet.getString(6);
+				Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
+				String res_notes = resultSet.getString(8);
 					
 				JSONObject device = buildDeviceJson(
 						res_id,
 						res_serialNumber,
+                        res_accessCode,
 						res_device_type,
 						res_manufacturer,
 						res_manufacturer_device_name,
@@ -615,6 +622,7 @@ public class DbServletActions {
 		device.put("type", "device");
 		device.put("id", id);
 		device.put("serial_number", serialNumber);
+        device.put("access_code", accessCode);
 		device.put("device_type", deviceType);
 		device.put("manufacturer", manufacturer);
 		device.put("manufacturer_device_name", manufacturer_device_name);
