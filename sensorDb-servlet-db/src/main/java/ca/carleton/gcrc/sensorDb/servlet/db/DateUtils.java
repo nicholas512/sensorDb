@@ -19,6 +19,7 @@ public class DateUtils {
 			TimeZone tz = TimeZone.getTimeZone("UTC");
 			Calendar calendar = Calendar.getInstance(tz);
 			calendar.clear();
+			calendar.setLenient(false);
 
 			int year = Integer.parseInt( matcherDate.group(1) );
 			int month = Integer.parseInt( matcherDate.group(2) );
