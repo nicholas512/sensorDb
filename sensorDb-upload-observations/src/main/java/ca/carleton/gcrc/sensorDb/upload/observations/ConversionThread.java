@@ -1,7 +1,9 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.slf4j.Logger;
@@ -13,7 +15,7 @@ public class ConversionThread extends Thread {
 
 	private boolean isShuttingDown = false;
 	private String threadName = null;
-	private List<File> filesToConvert = new Vector<File>();
+	private List<ConversionRequest> conversionRequests = new Vector<ConversionRequest>();
 	private ObservationFileImporter importer = null;
 	
 	public ConversionThread(ObservationFileImporter importer){
@@ -31,8 +33,41 @@ public class ConversionThread extends Thread {
 	}
 	
 	public void addFileToConvert(File fileToConvert){
+		Map<String, List<String>> parameters = new HashMap<String, List<String>>();
+		addFileToConvert(fileToConvert, parameters);
+	}
+
+	public void addFileToConvert(File fileToConvert, Map<String, List<String>> parameters) {
 		synchronized(this){
-			filesToConvert.add(fileToConvert);
+			ConversionRequest request = new ConversionRequest();
+			request.setFileToConvert(fileToConvert);
+
+			// Initial offset
+			{
+				request.setInitialOffset(0);
+				List<String> offsetStrings = parameters.get("initial_offset");
+				if( null != offsetStrings ){
+					for(String offsetString : offsetStrings){
+						int offset = Integer.parseInt(offsetString);
+						request.setInitialOffset(offset);
+					}
+				}
+			}
+
+			// Final offset
+			{
+				request.setFinalOffset(0);
+				List<String> offsetStrings = parameters.get("final_offset");
+				if( null != offsetStrings ){
+					for(String offsetString : offsetStrings){
+						int offset = Integer.parseInt(offsetString);
+						request.setFinalOffset(offset);
+					}
+				}
+			}
+
+			conversionRequests.add(request);
+
 			this.notify();
 		}
 	}
@@ -60,10 +95,10 @@ public class ConversionThread extends Thread {
 	
 	private void activity() {
 		// Get work
-		File fileToConvert = null;
+		ConversionRequest conversionRequest = null;
 		synchronized(this){
-			if( filesToConvert.size() > 0 ){
-				fileToConvert = filesToConvert.remove(0);	
+			if( conversionRequests.size() > 0 ){
+				conversionRequest = conversionRequests.remove(0);	
 			} else {
 				// Wait for work
 				try {
@@ -75,14 +110,15 @@ public class ConversionThread extends Thread {
 		}
 		
 		// Check if we need to convert a file
-		if( null != fileToConvert ){
+		if( null != conversionRequest ){
 			try {
-				logger.info("Start file conversion "+ fileToConvert.getName() +" "+threadName);
-				importer.importFile(fileToConvert);
-				logger.info("End file conversion "+ fileToConvert.getName() +" "+threadName);
+				logger.info("Start file conversion "+ conversionRequest +" "+threadName);
+				importer.importFile(conversionRequest);
+				logger.info("End file conversion "+ conversionRequest +" "+threadName);
 			} catch (Exception e) {
 				logger.error("Work error on thread "+threadName,e);
 			}
 		}
 	}
+
 }

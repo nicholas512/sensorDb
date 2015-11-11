@@ -1,20 +1,16 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
-import java.util.Vector;
+
+import org.json.JSONObject;
 
 public class ObservationFileImportReportMemory implements ObservationFileImportReport {
 
+	private String importId;
 	private int insertedObservations = 0;
 	private int skippedObservations = 0;
-	private int collidedObservations = 0;
-	private List<String> collisionStrings = new Vector<String>();
 	private DateFormat dateFormatter;
 	
 	public ObservationFileImportReportMemory() {
@@ -22,64 +18,35 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	    dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));	
 	}
 	
+	public String getImportId() {
+		return importId;
+	}
+	
 	@Override
-	public void insertedObservation(Date time, String sensor_id, double value) {
+	public void setImportId(String importId){
+		this.importId = importId;
+	}
+
+	@Override
+	public void insertedObservation(Observation observation) {
 		++insertedObservations;
 	}
 
 	@Override
-	public void skippedObservation(Date time, String sensor_id, double value) {
+	public void skippedObservation(Observation observation) {
 		++skippedObservations;
 	}
 
 	@Override
-	public void collisionOnObservation(
-			Date time, 
-			String sensor_id,
-			double value, 
-			double db_value
-			) {
-		++collidedObservations;
-		
-		String dateStr = dateFormatter.format(time);
-		
-		collisionStrings.add(""
-			+ dateStr
-			+ " "
-			+ sensor_id
-			+ " value:"
-			+ value
-			+ " db:"
-			+ db_value
-			);
-	}
-
-	@Override
 	public String produceReport() throws Exception {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
+		JSONObject jsonReport = new JSONObject();
 		
-		pw.println("Observation Import Report");
-		for(String line : collisionStrings){
-			pw.println(line);
-		}
+		jsonReport.put("type", "import");
+		jsonReport.put("importId", importId);
+		jsonReport.put("insertedCount", insertedObservations);
+		jsonReport.put("skippedCount", skippedObservations);
 		
-		int total = insertedObservations + collidedObservations + skippedObservations;
-		pw.println("Total observations: "+total);
-		pw.println("Inserted to database: "+insertedObservations);
-		if( skippedObservations > 0 ){
-			pw.println("Skipped: "+skippedObservations);
-		}
-		if( collidedObservations > 0 ){
-			pw.println("Collisions: "+collidedObservations);
-		}
-		
-		String report = sw.toString();
-		
-		pw.close();
-		sw.close();
-		
-		return report;
+		return jsonReport.toString();
 	}
 
 	public int getInsertedObservations() {
@@ -88,9 +55,5 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 
 	public int getSkippedObservations() {
 		return skippedObservations;
-	}
-
-	public int getCollidedObservations() {
-		return collidedObservations;
 	}
 }

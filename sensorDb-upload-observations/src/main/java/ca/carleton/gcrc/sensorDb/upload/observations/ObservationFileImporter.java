@@ -9,9 +9,12 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Vector;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,20 +30,61 @@ public class ObservationFileImporter {
 		this.dbConn = dbConn;
 	}
 	
-	public void importFile(File file) throws Exception {
+	public void importFile(ConversionRequest conversionRequest) throws Exception {
+		if( null == conversionRequest ){
+			throw new Exception("A conversion request must be provided");
+		}
+
+		File file = conversionRequest.getFileToConvert();
+		String fileName = null;
+		if( null != file ){
+			fileName = file.getAbsolutePath();
+		}
+		
+		JSONObject jsonParams = new JSONObject();
+		jsonParams.put("initial_offset", conversionRequest.getInitialOffset());
+		jsonParams.put("final_offset", conversionRequest.getFinalOffset());
+		String paramStr = jsonParams.toString();
+
+		// Record this file into the database
+		String importUuid = null;
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO imports (import_time,filename,import_parameters) VALUES (?,?,?) RETURNING id"
+			);
+
+			pstmt.setTimestamp(1, new Timestamp((new Date()).getTime())); // now
+			pstmt.setString(2, file.getName());
+			pstmt.setString(3, paramStr);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				importUuid = resultSet.getString(1);
+			}
+			
+			resultSet.close();
+		} catch (Exception e) {
+			throw new Exception("Error while recording observation file "+fileName,e);
+		}
+		
+		logger.error("Import UUID: "+importUuid);
+		
+		// Import the file
 		FileInputStream fis = null;
 		InputStreamReader isr = null;
 		try {
 			fis = new FileInputStream(file);
 			isr = new InputStreamReader(fis,"UTF-8");
 			
-			importFile(isr);
-			
+			importFile(
+					isr
+					,importUuid
+					,conversionRequest.getInitialOffset()
+					,conversionRequest.getFinalOffset()
+					);
+
 		} catch (Exception e) {
-			String fileName = null;
-			if( null != file ){
-				fileName = file.getAbsolutePath();
-			}
 			throw new Exception("Error while importing observation file "+fileName,e);
 		
 		} finally {
@@ -61,41 +105,13 @@ public class ObservationFileImporter {
 		}
 	}
 
-	public void importFile(ObservationFile obsFile) throws Exception {
-		String device_id = getDeviceIdFromSerialNumber(obsFile.getSerialNumber());
-		Map<String,String> sensorsMap = getSensorsFromDeviceId(device_id);
+	public void importFile(
+			Reader reader
+			,String importUUID
+			,int initialOffset
+			,int finalOffset
+			) throws Exception {
 
-		// Check that sensors were found for all parsed columns
-		for(ObservationColumn column : obsFile.getColumns()){
-			if( column.isValue() ){
-				if( null == sensorsMap.get( column.getName() ) ){
-					throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+obsFile.getSerialNumber()+")");
-				}
-			}
-		}
-		
-		// All seems fine. Start saving observations
-		ObservationFileImportReport report = new ObservationFileImportReportMemory();
-		for(Observation observation : obsFile.getObservations()){
-			String sensor_id = sensorsMap.get( observation.getColumn().getName() );
-
-			Date time = observation.getTime();
-			double value = observation.getValue();
-			
-			if( shouldInsertObservation(
-					time, 
-					sensor_id, 
-					value,
-					report
-					) ) {
-				insertObservation(time, sensor_id, value, report);
-			}
-		}
-		
-		saveImportReport(report);
-	}
-
-	public void importFile(Reader reader) throws Exception {
 		ObservationFileReader obsReader = new ObservationFileReader(reader);
 		
 		String deviceSerialNumber = obsReader.getDeviceSerialNumber();
@@ -111,26 +127,32 @@ public class ObservationFileImporter {
 				}
 			}
 		}
-		
-		// All seems fine. Start saving observations
+
 		ObservationFileImportReport report = new ObservationFileImportReportMemory();
-		Observation observation = obsReader.read();
-		while( null != observation ){
+		report.setImportId(importUUID);
+		
+		// Get all observations that should be saved
+		List<Observation> observations = new Vector<Observation>();
+		{
+			Observation observation = obsReader.read();
+			while( null != observation ){
+				if( isObservationInDatabase(observation) ) {
+					report.skippedObservation(observation);
+				} else {
+					observations.add(observation);
+				}
+
+				observation = obsReader.read();
+			}
+		}
+		
+		
+		// Start saving observations
+		for( Observation observation : observations ){
 			String sensor_label = observation.getColumn().getName();
 			String sensor_id = sensorsMap.get( sensor_label );
-
-			Date time = observation.getTime();
-			double value = observation.getValue();
 			
-			if( shouldInsertObservation(
-					time, 
-					sensor_id, 
-					value,
-					report
-					) ) {
-				insertObservation(time, sensor_id, value, report);
-			}
-			observation = obsReader.read();
+			insertObservation(importUUID, device_id, sensor_id, observation, report);
 		}
 		
 		saveImportReport(report);
@@ -206,72 +228,63 @@ public class ObservationFileImporter {
 		return sensorsMap;
 	}
 
-	private boolean shouldInsertObservation(
-			Date time, 
-			String sensor_id, 
-			double value,
-			ObservationFileImportReport report
-			) throws Exception {
+	private boolean isObservationInDatabase(Observation observation) throws Exception {
 		try {
-			boolean shouldInsert = true;
-			boolean collisionDetected = false;
+			boolean inDatabase = false;
+			
+			String importKey = observation.computeImportKey();
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT sensor_id,timestamp,numeric_value"
+				"SELECT sensor_id"
 				+" FROM observations"
-				+" WHERE sensor_id=? AND timestamp=?"
+				+" WHERE import_key=?"
 			);
 			
-			pstmt.setObject(1, UUID.fromString(sensor_id));
-			pstmt.setTimestamp(2, new Timestamp(time.getTime()));
+			pstmt.setString(1, importKey);
 			
 			ResultSet res = pstmt.executeQuery();
 			
 			while( res.next() ){
-//				String res_sensor_id = res.getString(1);
-//				Date res_timestamp = new Date( res.getTimestamp(2).getTime() );
-				double res_numeric_value = res.getDouble(3);
-				
 				// If something matches, we should not insert
-				shouldInsert = false;
-				
-				if( res_numeric_value != value ) {
-					// We should report this
-					collisionDetected = true;
-					report.collisionOnObservation(time, sensor_id, value, res_numeric_value);
-				}
+				inDatabase = true;
 			}
 			
-			if( false == shouldInsert && false == collisionDetected ){
-				report.skippedObservation(time, sensor_id, value);
-			}
-			
-			return shouldInsert;
+			return inDatabase;
 			
 		} catch (Exception e) {
-			throw new Exception("Error inserting observation for sensor (id="+sensor_id+") to database", e);
+			throw new Exception("Error while looking for matching observation: "+observation.getLine(), e);
 		}
 	}
 
 	private void insertObservation(
-			Date time, 
-			String sensor_id, 
-			double value, 
+			String importUUID,
+			String device_id,
+			String sensor_id,
+			Observation observation, 
 			ObservationFileImportReport report
 			) throws Exception {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO observations (sensor_id,timestamp,numeric_value) VALUES (?,?,?)"
+				"INSERT INTO observations"
+				+ " (device_id,sensor_id,corrected_utc_time,logged_time,numeric_value,import_id,import_key)"
+				+ " VALUES (?,?,?,?,?,?,?)"
 			);
 			
-			pstmt.setObject(1, UUID.fromString(sensor_id));
-			pstmt.setTimestamp(2, new java.sql.Timestamp(time.getTime()));
-			pstmt.setDouble(3, value);
+			Date loggerTime = observation.getTime();
+			Date correctedTime = loggerTime;
+			
+			pstmt.setObject(1, UUID.fromString(device_id));
+			pstmt.setObject(2, UUID.fromString(sensor_id));
+			pstmt.setTimestamp(3, new Timestamp(correctedTime.getTime()));
+			pstmt.setTimestamp(4, new Timestamp(loggerTime.getTime()));
+			pstmt.setDouble(5, observation.getValue());
+			pstmt.setObject(6, UUID.fromString(importUUID));
+			pstmt.setString(7, observation.computeImportKey());
 			
 			pstmt.executeUpdate();
 			
-			report.insertedObservation(time, sensor_id, value);
+			report.insertedObservation(observation);
 			
 		} catch (Exception e) {
 			throw new Exception("Error inserting observation for sensor (id="+sensor_id+") to database", e);
@@ -288,7 +301,7 @@ public class ObservationFileImporter {
 				"INSERT INTO logs (timestamp,log) VALUES (?,?)"
 			);
 			
-			pstmt.setTimestamp(1, new java.sql.Timestamp(time.getTime()));
+			pstmt.setTimestamp(1, new Timestamp(time.getTime()));
 			pstmt.setString(2, log);
 			
 			pstmt.executeUpdate();

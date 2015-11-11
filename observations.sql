@@ -88,16 +88,69 @@ CREATE TABLE public.devices_locations(
 );
 ALTER TABLE public.devices_locations OWNER TO observations_admin;
 
-CREATE TABLE public.observations(
-	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	sensor_id uuid NOT NULL,
-	timestamp timestamp WITH TIME ZONE NOT NULL,
-	numeric_value numeric,
-	text_value text,
-	CONSTRAINT observations_pk PRIMARY KEY (id)
+--- New imports table
 
+CREATE TABLE public.imports (
+    id uuid DEFAULT uuid_generate_v4() NOT NULL,
+    import_time timestamp with time zone NOT NULL,
+    filename varchar,
+    import_parameters text
 );
+
+ALTER TABLE ONLY public.imports
+    ADD CONSTRAINT imports_pk PRIMARY KEY (id);
+
+ALTER TABLE public.imports OWNER TO observations_admin;
+
+REVOKE ALL ON TABLE public.imports FROM PUBLIC;
+REVOKE ALL ON TABLE public.imports FROM observations_admin;
+GRANT ALL ON TABLE public.imports TO observations_admin;
+GRANT SELECT ON TABLE public.imports TO observations_read;
+GRANT SELECT ON TABLE public.imports TO observations_write;
+
+
+--- Revised observations table
+
+CREATE TABLE public.observations (
+    id uuid DEFAULT uuid_generate_v4() NOT NULL,
+    device_id uuid NOT NULL,
+    sensor_id uuid NOT NULL,
+    import_id uuid,
+    import_key text,
+    observation_type varchar,
+    unit_of_measure varchar,
+    accuracy numeric,
+    "precision" numeric,
+    numeric_value numeric,
+    text_value text,
+    logged_time timestamp with time zone,
+    corrected_utc_time timestamp with time zone NOT NULL,
+    location geometry(GEOMETRY,4326),
+    height_min_metres numeric,
+    height_max_metres numeric
+);
+
 ALTER TABLE public.observations OWNER TO observations_admin;
+
+ALTER TABLE ONLY public.observations
+    ADD CONSTRAINT observations_pk PRIMARY KEY (id);
+
+ALTER TABLE ONLY observations
+    ADD CONSTRAINT observations_sensor_fk FOREIGN KEY (sensor_id) REFERENCES sensors(id) MATCH FULL;
+
+ALTER TABLE ONLY observations
+    ADD CONSTRAINT observations_device_fk FOREIGN KEY (device_id) REFERENCES devices(id) MATCH FULL;
+
+ALTER TABLE ONLY observations
+    ADD CONSTRAINT observations_import_fk FOREIGN KEY (import_id) REFERENCES imports(id) MATCH FULL;
+
+REVOKE ALL ON TABLE public.observations FROM PUBLIC;
+REVOKE ALL ON TABLE public.observations FROM observations_admin;
+GRANT ALL ON TABLE public.observations TO observations_admin;
+GRANT SELECT ON TABLE public.observations TO observations_read;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.observations TO observations_write;
+
+--- end of observations table
 
 CREATE TABLE public.dois(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),

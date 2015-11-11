@@ -40,7 +40,7 @@ public class ObservationsUploaded implements OnUploadedListener,OnUploadedRequir
 		for(LoadedFile loadedFile : uploadedFiles){
 			logger.info("Uploaded file: "+loadedFile.getFile().getAbsolutePath());
 
-			conversionThread.addFileToConvert(loadedFile.getFile());
+			conversionThread.addFileToConvert(loadedFile.getFile(), parameters);
 		}
 
 		JSONObject result = new JSONObject();

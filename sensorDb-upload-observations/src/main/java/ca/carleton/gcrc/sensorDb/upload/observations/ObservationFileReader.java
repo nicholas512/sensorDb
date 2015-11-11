@@ -97,6 +97,8 @@ public class ObservationFileReader {
 				double value = Double.parseDouble(fieldStr.trim());
 				
 				Observation obs = new Observation(time, column, value);
+				obs.setLine(line);
+				obs.setDeviceSerialNumber(deviceSerialNumber);
 				cachedObservations.add(obs);
 			}
 		}
