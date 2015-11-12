@@ -27,6 +27,7 @@ Each line has a date and a number of variables readings.
 public class ObservationFileReader {
 
 	static private Pattern patternFirstLine = Pattern.compile("^Logger:\\s*#([^']*)'.*$");
+	static private Pattern patternTextNumber = Pattern.compile("^\\s*-?[0-9]+(\\.[0-9]+)\\s*$");
 
 	private BufferedReader bufReader;
 	private String deviceSerialNumber = null;
@@ -94,12 +95,21 @@ public class ObservationFileReader {
 			ObservationColumn column = columns.get(index);
 			
 			if( column.isValue() ){
-				double value = Double.parseDouble(fieldStr.trim());
+				Observation obs = null;
+
+				Matcher matcherTextNumber = patternTextNumber.matcher(fieldStr);
+				if( matcherTextNumber.matches() ){
+					double value = Double.parseDouble(fieldStr.trim());
+					obs = new Observation(time, column, value);
+				} else {
+					obs = new Observation(time, column, fieldStr.trim());
+				}
 				
-				Observation obs = new Observation(time, column, value);
-				obs.setLine(line);
-				obs.setDeviceSerialNumber(deviceSerialNumber);
-				cachedObservations.add(obs);
+				if( null != obs ){
+					obs.setLine(line);
+					obs.setDeviceSerialNumber(deviceSerialNumber);
+					cachedObservations.add(obs);
+				}
 			}
 		}
 		

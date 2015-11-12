@@ -415,9 +415,9 @@ public class ObservationFileImporter {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO observations"
 				+ " (device_id,sensor_id,import_id,import_key,observation_type,unit_of_measure,accuracy,"
-				+ "precision,numeric_value,logged_time,corrected_utc_time,location,height_min_metres,"
-				+ "height_max_metres)"
-				+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?)"
+				+ "precision,numeric_value,text_value,logged_time,corrected_utc_time,location,"
+				+ "height_min_metres,height_max_metres)"
+				+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?)"
 			);
 			
 			Date loggerTime = observation.getTime();
@@ -437,12 +437,24 @@ public class ObservationFileImporter {
 			pstmt.setString(6, sensor.getUnitOfMeasurement()); // unit_of_measure
 			pstmt.setDouble(7, sensor.getAccuracy()); // accuracy
 			pstmt.setDouble(8, sensor.getPrecision()); // precision
-			pstmt.setDouble(9, observation.getValue()); // numeric value
-			pstmt.setTimestamp(10, new Timestamp(loggerTime.getTime())); // logged_time
-			pstmt.setTimestamp(11, new Timestamp(correctedTime.getTime())); // corrected_utc_time
-			pstmt.setString(12, geometry); // location
-			pstmt.setDouble(13, sensor.getHeightInMetres()); // height_min_metres
-			pstmt.setDouble(14, sensor.getHeightInMetres()); // height_max_metres
+
+			if( null == observation.getValue() ){
+				pstmt.setNull(9, java.sql.Types.DOUBLE); // numeric value
+			} else {
+				pstmt.setDouble(9, observation.getValue()); // numeric value
+			}
+
+			if( null == observation.getText() ){
+				pstmt.setNull(10, java.sql.Types.VARCHAR); // text value
+			} else {
+				pstmt.setString(10, observation.getText()); // text value
+			}
+
+			pstmt.setTimestamp(11, new Timestamp(loggerTime.getTime())); // logged_time
+			pstmt.setTimestamp(12, new Timestamp(correctedTime.getTime())); // corrected_utc_time
+			pstmt.setString(13, geometry); // location
+			pstmt.setDouble(14, sensor.getHeightInMetres()); // height_min_metres
+			pstmt.setDouble(15, sensor.getHeightInMetres()); // height_max_metres
 			
 			pstmt.executeUpdate();
 			

@@ -13,7 +13,8 @@ public class Observation {
 
 	private Date time;
 	private ObservationColumn column;
-	private double value;
+	private Double value;
+	private String text;
 	private String line;
 	private String deviceSerialNumber;
 	private String importKey;
@@ -21,7 +22,15 @@ public class Observation {
 	public Observation(Date time, ObservationColumn column, double value){
 		this.time = time;
 		this.column = column;
-		this.value = value;
+		this.value = new Double(value);
+		this.text = null;
+	}
+
+	public Observation(Date time, ObservationColumn column, String text){
+		this.time = time;
+		this.column = column;
+		this.value = null;
+		this.text = text;
 	}
 	
 	public Date getTime() {
@@ -32,8 +41,12 @@ public class Observation {
 		return column;
 	}
 
-	public double getValue() {
+	public Double getValue() {
 		return value;
+	}
+
+	public String getText() {
+		return text;
 	}
 	
 	public String getLine() {
