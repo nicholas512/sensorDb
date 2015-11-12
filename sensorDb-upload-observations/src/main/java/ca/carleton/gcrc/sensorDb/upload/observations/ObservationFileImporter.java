@@ -46,6 +46,9 @@ public class ObservationFileImporter {
 		JSONObject jsonParams = new JSONObject();
 		jsonParams.put("initial_offset", conversionRequest.getInitialOffset());
 		jsonParams.put("final_offset", conversionRequest.getFinalOffset());
+		jsonParams.put("originalFileName", conversionRequest.getOriginalFileName());
+		jsonParams.put("importerName", conversionRequest.getImporterName());
+		jsonParams.put("notes", conversionRequest.getNotes());
 		String paramStr = jsonParams.toString();
 
 		// Record this file into the database

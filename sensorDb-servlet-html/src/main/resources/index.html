@@ -195,7 +195,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="_uf_initial_offset">Initial Offset</label>
                 <div class="col-md-4">
-                    <input id="_uf_initial_offset" name="initial_offset" type="text" placeholder="0" class="form-control input-md" required="">
+                    <input id="_uf_initial_offset" name="initial_offset" type="text" placeholder="0" class="form-control input-md" required="" value="0">
                     <span class="help-block">(initial time offset, default: 0)</span>
                 </div>
             </div>
@@ -206,6 +206,23 @@
                 <div class="col-md-4">
                     <input id="_uf_final_offset" name="final_offset" type="text" placeholder="0" class="form-control input-md" required="">
                     <span class="help-block">(final time offset, default: 0)</span>
+                </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_uf_importer">Importer</label>
+                <div class="col-md-4">
+                    <input id="_uf_importer" name="importer" type="text" placeholder="name" class="form-control input-md" required="">
+                    <span class="help-block">(name of person importing)</span>
+                </div>
+            </div>
+
+            <!-- Textarea -->
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="_uf_notes">Notes</label>
+                <div class="col-md-4">
+                    <textarea class="form-control" id="_uf_notes" name="notes"></textarea>
                 </div>
             </div>
 

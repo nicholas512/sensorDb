@@ -1,13 +1,13 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
-import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ca.carleton.gcrc.upload.LoadedFile;
 
 public class ConversionThread extends Thread {
 
@@ -31,16 +31,12 @@ public class ConversionThread extends Thread {
 			this.notifyAll();
 		}
 	}
-	
-	public void addFileToConvert(File fileToConvert){
-		Map<String, List<String>> parameters = new HashMap<String, List<String>>();
-		addFileToConvert(fileToConvert, parameters);
-	}
 
-	public void addFileToConvert(File fileToConvert, Map<String, List<String>> parameters) {
+	public void addFileToConvert(LoadedFile loadedFile, Map<String, List<String>> parameters) {
 		synchronized(this){
 			ConversionRequest request = new ConversionRequest();
-			request.setFileToConvert(fileToConvert);
+			request.setFileToConvert(loadedFile.getFile());
+			request.setOriginalFileName(loadedFile.getOriginalFileName());
 
 			// Initial offset
 			{
@@ -62,6 +58,26 @@ public class ConversionThread extends Thread {
 					for(String offsetString : offsetStrings){
 						int offset = Integer.parseInt(offsetString);
 						request.setFinalOffset(offset);
+					}
+				}
+			}
+
+			// Importer
+			{
+				List<String> params  = parameters.get("importer");
+				if( null != params ){
+					for(String param : params){
+						request.setImporterName(param);
+					}
+				}
+			}
+
+			// Notes
+			{
+				List<String> params  = parameters.get("notes");
+				if( null != params ){
+					for(String param : params){
+						request.setNotes(param);
 					}
 				}
 			}
