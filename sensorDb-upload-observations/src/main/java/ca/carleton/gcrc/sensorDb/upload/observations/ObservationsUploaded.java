@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 import ca.carleton.gcrc.upload.LoadedFile;
 import ca.carleton.gcrc.upload.OnUploadedListener;

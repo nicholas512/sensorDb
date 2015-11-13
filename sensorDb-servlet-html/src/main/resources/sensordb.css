@@ -3,3 +3,26 @@
 .sensordb_forms {
     margin: 10px;
 }
+
+/* --- Import Records --- */
+.sdb_importRecord {
+	margin: 0;
+	padding: 0;
+	border: 1px solid #000;
+}
+.sdb_importRecord:after {
+	display: block;
+	clear: both;
+	content: " ";
+}
+.sdb_importRecord_id, 
+.sdb_importRecord_date, 
+.sdb_importRecord_fileName, 
+.sdb_importRecord_importerName,
+.sdb_importRecord_initialOffset,
+.sdb_importRecord_finalOffset,
+.sdb_importRecord_originalFileName,
+.sdb_importRecord_notes {
+	float: left;
+	width: 300px;
+}

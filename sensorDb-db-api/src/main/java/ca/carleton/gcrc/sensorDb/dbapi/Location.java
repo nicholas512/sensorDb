@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.sensorDb.upload.observations;
+package ca.carleton.gcrc.sensorDb.dbapi;
 
 public class Location {
 

@@ -44,6 +44,12 @@ var HtmlFixer = $n2.Class({
 			var $elem = $(this);
 			_this._listLogEntries($elem);
 		});
+		
+		// Import Records
+		$set.filter('.sdb_insertImportRecords').each(function(){
+			var $elem = $(this);
+			_this._insertImportRecords($elem);
+		});
 	},
 	
 	_getLocationOptions: function($select){
@@ -184,6 +190,95 @@ var HtmlFixer = $n2.Class({
 
 			return false;
 		};
+	},
+	
+	_insertImportRecords: function($elem){
+		var _this = this;
+		
+		$elem.empty()
+			.addClass('sdb_importRecords');
+		
+		var elemId = $n2.utils.getElementIdentifier($elem);
+		
+		this.dbService.getImportRecords({
+			onSuccess: function(importRecords){
+				var $div = $('#'+elemId).empty();
+				
+				importRecords.sort(function(o1,o2){
+					if(o1.importTime < o2.importTime) return -1;
+					if(o1.importTime > o2.importTime) return 1;
+					return 0;
+				});
+				
+				for(var i=0,e=importRecords.length; i<e; ++i){
+					var importRecord = importRecords[i];
+					var ts = importRecord.importTime;
+					var d = new Date(ts);
+					var tsText = '' + d;
+					var id = importRecord.id;
+					var fileName = importRecord.fileName;
+					var importParameters = importRecord.importParameters;
+					
+					var importerName = undefined;
+					var initialOffset = undefined;
+					var finalOffset = undefined;
+					var originalFileName = undefined;
+					var notes = undefined;
+					
+					if( importParameters ){
+						importerName = importParameters.importerName;
+						initialOffset = importParameters.initialOffset;
+						finalOffset = importParameters.finalOffset;
+						originalFileName = importParameters.originalFileName;
+						notes = importParameters.notes;
+					};
+					
+					var $line = $('<div>')
+						.addClass('sdb_importRecord')
+						.appendTo($div);
+
+					$('<div>')
+						.addClass('sdb_importRecord_id')
+						.text(id)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_date')
+						.text(tsText)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_fileName')
+						.text(fileName)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_importerName')
+						.text(importerName)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_initialOffset')
+						.text(initialOffset)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_finalOffset')
+						.text(finalOffset)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_originalFileName')
+						.text(originalFileName)
+						.appendTo($line);
+
+					$('<div>')
+						.addClass('sdb_importRecord_notes')
+						.text(notes)
+						.appendTo($line);
+				};
+			}
+		});
 	}
 });	
 

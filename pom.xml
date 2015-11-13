@@ -40,5 +40,6 @@
 		<module>sensorDb-jdbc</module>
 		<module>sensorDb-servlet-db</module>
 		<module>sensorDb-upload-observations</module>
+		<module>sensorDb-db-api</module>
 	</modules>
 </project>

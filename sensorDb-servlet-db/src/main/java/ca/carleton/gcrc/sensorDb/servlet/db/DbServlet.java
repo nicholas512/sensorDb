@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
-//@SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class DbServlet extends HttpServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -81,6 +81,10 @@ public class DbServlet extends HttpServlet {
 
 			} else if( path.size() == 1 && path.get(0).equals("getListOfLogEntries") ) {
 				JSONObject result = actions.getListOfLogEntries();
+				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 && path.get(0).equals("getImportRecords") ) {
+				JSONObject result = actions.getImportRecords();
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("getLog") ) {
@@ -278,6 +282,7 @@ public class DbServlet extends HttpServlet {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private int getIntegerParameter(HttpServletRequest req, String paramName) throws Exception {
 		Integer value = optIntegerParameter(req, paramName);
 		if( null == value ){

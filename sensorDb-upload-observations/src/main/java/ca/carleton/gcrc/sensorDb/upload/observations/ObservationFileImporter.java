@@ -9,10 +9,8 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 
@@ -20,6 +18,10 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.Location;
+import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
 public class ObservationFileImporter {
@@ -27,9 +29,11 @@ public class ObservationFileImporter {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private DbConnection dbConn;
+	private DbAPI dbAPI;
 	
 	public ObservationFileImporter(DbConnection dbConn){
 		this.dbConn = dbConn;
+		this.dbAPI = dbConn.getAPI();
 	}
 	
 	public void importFile(ConversionRequest conversionRequest) throws Exception {
@@ -121,8 +125,21 @@ public class ObservationFileImporter {
 		
 		String deviceSerialNumber = obsReader.getDeviceSerialNumber();
 		
-		String device_id = getDeviceIdFromSerialNumber(deviceSerialNumber);
-		Map<String,Sensor> sensorsMap = getSensorsFromDeviceId(device_id);
+		String device_id = dbAPI.getDeviceIdFromSerialNumber(deviceSerialNumber);
+		List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
+		
+		// Make a map of sensors based on label
+		Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
+		for(Sensor sensor : sensors){
+			
+			if( sensorsMap.containsKey(sensor.getLabel()) ){
+				throw new Exception("Multiple sensors with same label ("+sensor.getLabel()
+					+") for device ("+deviceSerialNumber+")"
+				);
+			}
+			
+			sensorsMap.put(sensor.getLabel(), sensor);
+		}
 
 		// Check that sensors were found for all parsed columns
 		for(ObservationColumn column : obsReader.getColumns()){
@@ -173,9 +190,9 @@ public class ObservationFileImporter {
 		timeCorrector.setFinalOffsetInSec(finalOffset);
 		
 		// Get all the device locations for this device
-		List<DeviceLocation> deviceLocations = getDeviceLocationsFromDeviceId(device_id);
-		Map<String,Location> locationsById = getLocationsFromDeviceLocations(deviceLocations);
-		DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locationsById);
+		List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);
+		List<Location> locations = dbAPI.getLocationsFromDeviceLocations(deviceLocations);
+		DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
 		
 		// Start saving observations
 		for( Observation observation : observations ){
@@ -186,193 +203,6 @@ public class ObservationFileImporter {
 		}
 		
 		saveImportReport(report);
-	}
-
-	private String getDeviceIdFromSerialNumber(String serialNumber) throws Exception {
-		String device_id = null;
-		
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id FROM devices WHERE serial_number=?"
-			);
-			
-			pstmt.setString(1, serialNumber);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			boolean found = false;
-			while( resultSet.next() ){
-				if( found ){
-					resultSet.close();
-					throw new Exception("More than one device with serial number: "+serialNumber);
-				}
-				
-				found = true;
-				device_id = resultSet.getString(1);
-			}
-			
-			resultSet.close();
-			
-			if( !found ){
-				throw new Exception("Can not find device with serial number: "+serialNumber);
-			}
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving device (sn="+serialNumber+") from database", e);
-		}
-
-		return device_id;
-	}
-	
-	private Map<String,Sensor> getSensorsFromDeviceId(String device_id) throws Exception {
-		// Sensor UUID keyed by label
-		Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
-		
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
-				+ "accuracy,precision,height_in_metres,serial_number"
-				+ " FROM sensors"
-				+ " WHERE device_id=?"
-			);
-			
-			pstmt.setObject(1, UUID.fromString(device_id));
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
-				
-				if( null != sensorsMap.get(label) ){
-					resultSet.close();
-					throw new Exception("Sensor label ("+label+") reported more than once for device ("+device_id+")");
-				}
-				
-				Sensor sensor = new Sensor();
-				sensor.setId(id);
-				sensor.setDeviceId(deviceId);
-				sensor.setLabel(label);
-				sensor.setTypeOfMeasurement(typeOfMeasurement);
-				sensor.setUnitOfMeasurement(unitOfMeasurement);
-				sensor.setAccuracy(accuracy);
-				sensor.setPrecision(precision);
-				sensor.setHeightInMetres(heightInMetres);
-				sensor.setSerialNumber(serialNumber);
-				
-				sensorsMap.put(label, sensor);
-			}
-			
-			resultSet.close();
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving sensors for device (id="+device_id+") from database", e);
-		}
-
-		return sensorsMap;
-	}
-	
-	private List<DeviceLocation> getDeviceLocationsFromDeviceId(String device_id) throws Exception {
-		List<DeviceLocation> deviceLocations = new Vector<DeviceLocation>();
-		
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,location_id,timestamp,notes FROM devices_locations WHERE device_id=?"
-			);
-			
-			pstmt.setObject(1, UUID.fromString(device_id));
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String locationId = resultSet.getString(3);
-				Date timestamp = resultSet.getTimestamp(4);
-				String notes = resultSet.getString(5);
-
-				DeviceLocation deviceLocation = new DeviceLocation();
-				deviceLocation.setId(id);
-				deviceLocation.setDeviceId(deviceId);
-				deviceLocation.setLocationId(locationId);
-				deviceLocation.setTimestamp(timestamp);
-				deviceLocation.setNotes(notes);
-				
-				deviceLocations.add(deviceLocation);
-			}
-			
-			resultSet.close();
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving device locations for device (id="+device_id+") from database", e);
-		}
-
-		return deviceLocations;
-	}
-	
-	private Map<String,Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception {
-		Map<String,Location> locationsById = new HashMap<String,Location>();
-		
-		try {
-			// Accumulate all location ids
-			Set<String> locationIds = new HashSet<String>();
-			for(DeviceLocation deviceLocation : deviceLocations){
-				String locationId = deviceLocation.getLocationId();
-				if( null != locationId ){
-					locationIds.add(locationId);
-				}
-			}
-			
-			for(String locationId : locationIds){
-				Location location = getLocationFromLocationId(locationId);
-				locationsById.put(locationId, location);
-			}
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving locations for device locations from database", e);
-		}
-
-		return locationsById;
-	}
-	
-	private Location getLocationFromLocationId(String locationId) throws Exception {
-		Location location = null;
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation FROM locations WHERE id=?"
-			);
-			
-			pstmt.setObject(1, UUID.fromString(locationId));
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String location_id = resultSet.getString(1);
-				String name = resultSet.getString(2);
-				String geometry = resultSet.getString(3);
-				int elevation = resultSet.getInt(4);
-				
-				location = new Location();
-				location.setLocationId(location_id);
-				location.setName(name);
-				location.setGeometry(geometry);
-				location.setElevation(elevation);
-			}
-			
-			resultSet.close();
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving location (id="+locationId+") from database", e);
-		}
-
-		return location;
 	}
 
 	private boolean isObservationInDatabase(Observation observation) throws Exception {

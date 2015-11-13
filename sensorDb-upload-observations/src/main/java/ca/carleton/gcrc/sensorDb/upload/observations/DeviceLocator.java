@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.Location;
 
 public class DeviceLocator {
 
@@ -14,10 +18,10 @@ public class DeviceLocator {
 	
 	public DeviceLocator(
 			List<DeviceLocation> deviceLocations,
-			Map<String,Location> locationsById
+			List<Location> locations
 			){
 		this.deviceLocations = new ArrayList<DeviceLocation>(deviceLocations);
-		this.locationsById = locationsById;
+		this.locationsById = new HashMap<String,Location>();
 		
 		// Sort device locations by time
 		Collections.sort(deviceLocations, new Comparator<DeviceLocation>(){
@@ -43,6 +47,10 @@ public class DeviceLocator {
 			}
 			
 		});
+		
+		for(Location location : locations){
+			this.locationsById.put(location.getLocationId(), location);
+		}
 	}
 	
 	public Location getLocationFromTimestamp(Date timestamp){

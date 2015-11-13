@@ -7,6 +7,8 @@ import java.sql.DriverManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+
 public class DbConnection {
 
 	final static protected Logger logger = LoggerFactory.getLogger(DbConnection.class);
@@ -44,5 +46,9 @@ public class DbConnection {
 	
 	public Connection getConnection(){
 		return this.connection;
+	}
+	
+	public DbAPI getAPI(){
+		return new DbApiImpl(this);
 	}
 }

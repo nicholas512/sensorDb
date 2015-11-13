@@ -162,6 +162,45 @@ var Database = $n2.Class({
 				opts.onError('Error obtaining log '+opts.id+': '+errStr);
 			}
 		});
+	},
+	
+	getImportRecords: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,onSuccess: function(importRecords){}
+			,onError: function(err){}
+		},opts_);
+		
+		$.ajax({
+			url: this.dbUrl + 'getImportRecords'
+			,type: 'get'
+			,async: true
+			,dataType: 'json'
+			,data: {
+				id: opts.id
+			}
+			,success: function(res) {
+				if( res.ok ) {
+					var importRecords = [];
+				
+					if( res.importRecords ){
+						for(var i=0,e=res.importRecords.length; i<e; ++i){
+							var importRecord = res.importRecords[i];
+							importRecords.push(importRecord);
+						};
+					};
+					
+					opts.onSuccess(importRecords);
+
+				} else {
+					opts.onError('Malformed response');
+				};
+			}
+			,error: function(XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error obtaining import records: '+errStr);
+			}
+		});
 	}
 });	
 

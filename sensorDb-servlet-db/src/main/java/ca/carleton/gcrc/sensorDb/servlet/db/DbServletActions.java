@@ -15,6 +15,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
 public class DbServletActions {
@@ -23,9 +25,11 @@ public class DbServletActions {
 
 	private JSONObject cached_welcome = null;
 	private DbConnection dbConn = null;
+	private DbAPI dbAPI = null;
 
 	public DbServletActions(DbConnection dbConn){
 		this.dbConn = dbConn;
+		this.dbAPI = dbConn.getAPI();
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -988,6 +992,30 @@ public class DbServletActions {
 		device.put("location_id", location_id);
 		device.put("notes", notes);
 		return device;
+	}
+	
+	public JSONObject getImportRecords() throws Exception {
+		
+		JSONObject result = new JSONObject();
+		
+		try {
+			List<ImportRecord> importRecords = dbAPI.getImportRecords();
+			
+			JSONArray importRecordsArr = new JSONArray();
+			result.put("importRecords", importRecordsArr);
+
+			for(ImportRecord importRecord : importRecords){
+				JSONObject jsonImport = importRecord.toJSON();
+				importRecordsArr.put(jsonImport);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all log entries from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
 	}
 	
 	public JSONObject getListOfLogEntries(
