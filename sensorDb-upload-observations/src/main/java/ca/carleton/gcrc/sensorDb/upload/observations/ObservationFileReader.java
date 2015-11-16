@@ -71,6 +71,12 @@ public class ObservationFileReader {
 			reachedEnd = true;
 			return null;
 		}
+		
+		// If line starts with "(Parameter", then it should be ignored
+		if( line.startsWith("(Parameter") ){
+			// Ignore this line. Re-enter
+			return read();
+		}
 
 		// Parse line
 		String[] fields = line.split(",");

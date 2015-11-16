@@ -121,88 +121,103 @@ public class ObservationFileImporter {
 			,int finalOffset
 			) throws Exception {
 
-		ObservationFileReader obsReader = new ObservationFileReader(reader);
-		
-		String deviceSerialNumber = obsReader.getDeviceSerialNumber();
-		
-		String device_id = dbAPI.getDeviceIdFromSerialNumber(deviceSerialNumber);
-		List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
-		
-		// Make a map of sensors based on label
-		Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
-		for(Sensor sensor : sensors){
-			
-			if( sensorsMap.containsKey(sensor.getLabel()) ){
-				throw new Exception("Multiple sensors with same label ("+sensor.getLabel()
-					+") for device ("+deviceSerialNumber+")"
-				);
-			}
-			
-			sensorsMap.put(sensor.getLabel(), sensor);
-		}
-
-		// Check that sensors were found for all parsed columns
-		for(ObservationColumn column : obsReader.getColumns()){
-			if( column.isValue() ){
-				if( null == sensorsMap.get( column.getName() ) ){
-					throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+deviceSerialNumber+")");
-				}
-			}
-		}
-
 		ObservationFileImportReport report = new ObservationFileImportReportMemory();
-		report.setImportId(importUUID);
-		
-		// Get all observations that should be saved
-		List<Observation> observations = new Vector<Observation>();
-		Date firstTime = null;
-		Date lastTime = null;
-		{
-			Observation observation = obsReader.read();
-			while( null != observation ){
-				if( isObservationInDatabase(observation) ) {
-					report.skippedObservation(observation);
-				} else {
-					observations.add(observation);
-					
-					Date currentTime = observation.getTime();
-					if( null == firstTime ){
-						firstTime = currentTime;
-					} else if( currentTime.getTime() < firstTime.getTime() ){
-						firstTime = currentTime;
-					}
-					if( null == lastTime ){
-						lastTime = currentTime;
-					} else if( currentTime.getTime() > lastTime.getTime() ){
-						lastTime = currentTime;
+
+		try {
+			ObservationFileReader obsReader = new ObservationFileReader(reader);
+			
+			String deviceSerialNumber = obsReader.getDeviceSerialNumber();
+			
+			String device_id = dbAPI.getDeviceIdFromSerialNumber(deviceSerialNumber);
+			List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
+			
+			// Make a map of sensors based on label
+			Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
+			for(Sensor sensor : sensors){
+				
+				if( sensorsMap.containsKey(sensor.getLabel()) ){
+					throw new Exception("Multiple sensors with same label ("+sensor.getLabel()
+						+") for device ("+deviceSerialNumber+")"
+					);
+				}
+				
+				sensorsMap.put(sensor.getLabel(), sensor);
+			}
+
+			// Check that sensors were found for all parsed columns
+			for(ObservationColumn column : obsReader.getColumns()){
+				if( column.isValue() ){
+					if( null == sensorsMap.get( column.getName() ) ){
+						throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+deviceSerialNumber+")");
 					}
 				}
+			}
 
-				observation = obsReader.read();
+			report.setImportId(importUUID);
+			
+			// Get all observations that should be saved
+			List<Observation> observations = new Vector<Observation>();
+			Date firstTime = null;
+			Date lastTime = null;
+			{
+				Observation observation = obsReader.read();
+				while( null != observation ){
+					if( isObservationInDatabase(observation) ) {
+						report.skippedObservation(observation);
+					} else {
+						observations.add(observation);
+						
+						Date currentTime = observation.getTime();
+						if( null == firstTime ){
+							firstTime = currentTime;
+						} else if( currentTime.getTime() < firstTime.getTime() ){
+							firstTime = currentTime;
+						}
+						if( null == lastTime ){
+							lastTime = currentTime;
+						} else if( currentTime.getTime() > lastTime.getTime() ){
+							lastTime = currentTime;
+						}
+					}
+
+					observation = obsReader.read();
+				}
+			}
+			
+			// Compute a time corrector
+			TimeCorrector timeCorrector = new TimeCorrector();
+			timeCorrector.setStartTime(firstTime);
+			timeCorrector.setEndTime(lastTime);
+			timeCorrector.setInitialOffsetInSec(initialOffset);
+			timeCorrector.setFinalOffsetInSec(finalOffset);
+			
+			// Get all the device locations for this device
+			List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);
+			List<Location> locations = dbAPI.getLocationsFromDeviceLocations(deviceLocations);
+			DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
+			
+			// Start saving observations
+			for( Observation observation : observations ){
+				String sensor_label = observation.getColumn().getName();
+				Sensor sensor = sensorsMap.get( sensor_label );
+				
+				insertObservation(importUUID, device_id, sensor, observation, timeCorrector, deviceLocator, report);
+			}
+
+		} catch (Exception e) {
+			
+			report.setError(e);
+			throw new Exception("Error during import process",e);
+
+		} finally {
+			try {
+				saveImportReport(report);
+			} catch(Exception e2) {
+				// Ignore
+				logger.error("Unable to save log",e2);
 			}
 		}
 		
-		// Compute a time corrector
-		TimeCorrector timeCorrector = new TimeCorrector();
-		timeCorrector.setStartTime(firstTime);
-		timeCorrector.setEndTime(lastTime);
-		timeCorrector.setInitialOffsetInSec(initialOffset);
-		timeCorrector.setFinalOffsetInSec(finalOffset);
-		
-		// Get all the device locations for this device
-		List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);
-		List<Location> locations = dbAPI.getLocationsFromDeviceLocations(deviceLocations);
-		DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
-		
-		// Start saving observations
-		for( Observation observation : observations ){
-			String sensor_label = observation.getColumn().getName();
-			Sensor sensor = sensorsMap.get( sensor_label );
-			
-			insertObservation(importUUID, device_id, sensor, observation, timeCorrector, deviceLocator, report);
-		}
-		
-		saveImportReport(report);
 	}
 
 	private boolean isObservationInDatabase(Observation observation) throws Exception {

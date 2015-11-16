@@ -15,6 +15,7 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	private int skippedObservations = 0;
 	private DateFormat dateFormatter;
 	private Map<String,Integer> observedTextFields = new HashMap<String,Integer>();
+	private Throwable reportedError = null;
 	
 	public ObservationFileImportReportMemory() {
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
@@ -53,6 +54,11 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	}
 
 	@Override
+	public void setError(Throwable err) {
+		this.reportedError = err;
+	}
+
+	@Override
 	public String produceReport() throws Exception {
 		JSONObject jsonReport = new JSONObject();
 		
@@ -73,6 +79,11 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 			jsonReport.put("problems", jsonProblems);
 		}
 		
+		if( null != reportedError ){
+			JSONObject jsonErr = errorToJSON(reportedError);
+			jsonReport.put("error", jsonErr);
+		}
+		
 		return jsonReport.toString();
 	}
 
@@ -82,5 +93,28 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 
 	public int getSkippedObservations() {
 		return skippedObservations;
+	}
+	
+	private JSONObject errorToJSON(Throwable t){
+		JSONObject errorObj = new JSONObject();
+		errorObj.put("error", t.getMessage());
+		
+		int limit = 15;
+		Throwable cause = t;
+		JSONObject causeObj = errorObj;
+		while( null != cause && limit > 0 ){
+			--limit;
+			cause = cause.getCause();
+			
+			if( null != cause ){
+				JSONObject causeErr = new JSONObject();
+				causeErr.put("error", cause.getMessage());
+				causeObj.put("cause", causeErr);
+				
+				causeObj = causeErr;
+			}
+		}
+		
+		return errorObj;
 	}
 }

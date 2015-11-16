@@ -8,5 +8,7 @@ public interface ObservationFileImportReport {
 
 	void skippedObservation(Observation observation);
 	
+	void setError(Throwable err);
+	
 	String produceReport() throws Exception;
 }
