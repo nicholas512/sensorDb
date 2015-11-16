@@ -201,6 +201,10 @@ var Database = $n2.Class({
 				opts.onError('Error obtaining import records: '+errStr);
 			}
 		});
+	},
+	
+	getImportFileUrl: function(id){
+		return this.dbUrl + 'getImportFile/' + id;
 	}
 });	
 

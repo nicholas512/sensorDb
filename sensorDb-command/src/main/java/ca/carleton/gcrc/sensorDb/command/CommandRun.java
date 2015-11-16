@@ -152,7 +152,7 @@ public class CommandRun implements Command {
 
         // Servlet for db
         {
-        	ServletHolder servletHolder = new ServletHolder(new DbServlet(dbConnection));
+        	ServletHolder servletHolder = new ServletHolder(new DbServlet(dbConnection, mediaDir));
         	servletHolder.setInitOrder(1);
         	context.addServlet(servletHolder,"/db/*");
         }

@@ -1010,12 +1010,29 @@ public class DbServletActions {
 			}
 			
 		} catch (Exception e) {
-			throw new Exception("Error retrieving all log entries from database", e);
+			throw new Exception("Error retrieving all import records from database", e);
 		}
 		
 		result.put("ok", true);
 
 		return result;
+	}
+	
+	public String getImportFileNameFromImportId(String importId) throws Exception {
+		
+		String fileName = null;
+		
+		try {
+			ImportRecord importRecord = dbAPI.getImportRecordFromImportId(importId);
+			if( null != importRecord ){
+				fileName = importRecord.getFileName();
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving file name from import record", e);
+		}
+		
+		return fileName;
 	}
 	
 	public JSONObject getListOfLogEntries(

@@ -247,4 +247,43 @@ public class DbApiImpl implements DbAPI {
 
 		return importRecords;
 	}
+
+	@Override
+	public ImportRecord getImportRecordFromImportId(String importId) throws Exception {
+		ImportRecord importRecord = null;
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,import_time,filename,import_parameters"
+				+ " FROM imports"
+				+ " WHERE id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(importId));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				Date importTime = resultSet.getDate(2);
+				String fileName = resultSet.getString(3);
+				String importParametersStr = resultSet.getString(4);
+				
+				JSONObject importParameters = new JSONObject(importParametersStr);
+
+				importRecord = new ImportRecord();
+				importRecord.setId(id);
+				importRecord.setImportTime(importTime);
+				importRecord.setFileName(fileName);
+				importRecord.setImportParameters(importParameters);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving import record (id="+importId+") from database", e);
+		}
+
+		return importRecord;
+	}
 }

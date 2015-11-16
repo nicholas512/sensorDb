@@ -267,10 +267,14 @@ var HtmlFixer = $n2.Class({
 						.text(finalOffset)
 						.appendTo($line);
 
-					$('<div>')
+					var $originalDiv = $('<div>')
 						.addClass('sdb_importRecord_originalFileName')
-						.text(originalFileName)
 						.appendTo($line);
+					
+					$('<a>')
+						.attr('href',_this.dbService.getImportFileUrl(id)+'/'+originalFileName)
+						.text(originalFileName)
+						.appendTo($originalDiv);
 
 					$('<div>')
 						.addClass('sdb_importRecord_notes')

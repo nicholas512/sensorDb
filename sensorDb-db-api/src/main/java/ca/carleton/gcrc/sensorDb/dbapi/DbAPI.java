@@ -15,4 +15,6 @@ public interface DbAPI {
 	Location getLocationFromLocationId(String locationId) throws Exception;
 
 	List<ImportRecord> getImportRecords() throws Exception;
+
+	ImportRecord getImportRecordFromImportId(String importId) throws Exception;
 }

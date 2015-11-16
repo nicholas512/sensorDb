@@ -1,5 +1,7 @@
 package ca.carleton.gcrc.sensorDb.servlet.db;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Date;
@@ -8,6 +10,7 @@ import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,11 +28,13 @@ public class DbServlet extends HttpServlet {
 
 //	private DbConnection dbConn = null;
 	private DbServletActions actions = null;
+	private File mediaDir = null;
 	
-	public DbServlet(DbConnection dbConn){
+	public DbServlet(DbConnection dbConn, File mediaDir){
 //		this.dbConn = dbConn;
 		
 		this.actions = new DbServletActions(dbConn);
+		this.mediaDir = mediaDir;
 	}
 	
 	public void init(ServletConfig config) throws ServletException {
@@ -86,6 +91,41 @@ public class DbServlet extends HttpServlet {
 			} else if( path.size() == 1 && path.get(0).equals("getImportRecords") ) {
 				JSONObject result = actions.getImportRecords();
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() >= 2 && path.get(0).equals("getImportFile") ) {
+				String importId = path.get(1);
+				
+				String fileName = actions.getImportFileNameFromImportId(importId);
+				File file = null;
+				if( null != fileName ){
+					file = new File(mediaDir, fileName);
+					
+					if( false == file.exists() ){
+						throw new Exception("File "+fileName+" with import "+importId+" is not found");
+					}
+				}
+
+				if( null == file ) {
+					resp.setStatus(404); // not found
+				} else {
+					resp.setStatus(200);
+				}
+				
+				resp.setContentType("text/file");
+				resp.setCharacterEncoding("utf-8");
+				resp.addHeader("Cache-Control", "no-cache");
+				resp.addHeader("Pragma", "no-cache");
+				resp.addHeader("Expires", "-1");
+				
+				ServletOutputStream os = resp.getOutputStream();
+				FileInputStream fis = new FileInputStream(file);
+				int b = fis.read();
+				while( b >= 0 ){
+					os.write(b);
+					b = fis.read();
+				}
+				os.flush();
+				fis.close();
 
 			} else if( path.size() == 1 && path.get(0).equals("getLog") ) {
 				String id = getStringParameter(req, "id");
