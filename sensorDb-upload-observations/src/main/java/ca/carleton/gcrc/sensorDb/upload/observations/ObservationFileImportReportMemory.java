@@ -2,6 +2,8 @@ package ca.carleton.gcrc.sensorDb.upload.observations;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.json.JSONObject;
@@ -12,6 +14,7 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	private int insertedObservations = 0;
 	private int skippedObservations = 0;
 	private DateFormat dateFormatter;
+	private Map<String,Integer> observedTextFields = new HashMap<String,Integer>();
 	
 	public ObservationFileImportReportMemory() {
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
@@ -30,6 +33,18 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	@Override
 	public void insertedObservation(Observation observation) {
 		++insertedObservations;
+		
+		if( null != observation.getText() ){
+			// Accumulate the text fields and count them
+			String text = observation.getText();
+			if( false == observedTextFields.containsKey(text) ){
+				observedTextFields.put(text,0);
+			}
+			
+			int count = observedTextFields.get(text);
+			++count;
+			observedTextFields.put(text,count);
+		}
 	}
 
 	@Override
@@ -45,6 +60,18 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 		jsonReport.put("importId", importId);
 		jsonReport.put("insertedCount", insertedObservations);
 		jsonReport.put("skippedCount", skippedObservations);
+		
+		JSONObject jsonProblems = new JSONObject();
+		int problemCount = 0;
+		for(String errorText : observedTextFields.keySet()){
+			int count = observedTextFields.get(errorText);
+			problemCount += count;
+			jsonProblems.put(errorText, count);
+		}
+		if( problemCount > 0 ){
+			jsonReport.put("problemCount", problemCount);
+			jsonReport.put("problems", jsonProblems);
+		}
 		
 		return jsonReport.toString();
 	}

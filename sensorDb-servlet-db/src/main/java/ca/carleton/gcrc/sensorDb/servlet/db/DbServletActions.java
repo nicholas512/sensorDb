@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
 public class DbServletActions {
@@ -1044,22 +1045,12 @@ public class DbServletActions {
 			JSONArray logEntriesArr = new JSONArray();
 			result.put("logEntries", logEntriesArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,timestamp FROM logs"
-			);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				Date res_timestamp = new Date( resultSet.getTimestamp(2).getTime() );
-					
-				JSONObject logEntry = buildLogEntryJson(res_id,res_timestamp);
+			List<LogRecord> logRecords = dbAPI.getLogRecords();
+			for(LogRecord logRecord : logRecords){
+				JSONObject logEntry = buildLogEntryJson(logRecord);
 				
 				logEntriesArr.put(logEntry);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all log entries from database", e);
@@ -1068,19 +1059,6 @@ public class DbServletActions {
 		result.put("ok", true);
 
 		return result;
-	}
-
-	private JSONObject buildLogEntryJson(
-			String id, 
-			Date time
-			){
-		
-		JSONObject logEntry = new JSONObject();
-		logEntry.put("type", "logEntry");
-		logEntry.put("id", id);
-		logEntry.put("timestamp", time.getTime());
-		logEntry.put("timestamp_text", DateUtils.getUtcDateString(time));
-		return logEntry;
 	}
 
 	public JSONObject getLogFromId(
@@ -1093,25 +1071,11 @@ public class DbServletActions {
 			JSONArray logsArr = new JSONArray();
 			result.put("logs", logsArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,timestamp,log FROM logs WHERE id=?"
-			);
-			
-			pstmt.setObject(1, UUID.fromString(id));
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				Date res_timestamp = new Date( resultSet.getTimestamp(2).getTime() );
-				String res_log = resultSet.getString(3);
-					
-				JSONObject log = buildLogJson(res_id,res_timestamp,res_log);
-				
-				logsArr.put(log);
+			LogRecord logRecord = dbAPI.getLogRecordFromId(id);
+			if( null != logRecord ){
+				JSONObject logEntry = buildLogEntryJson(logRecord);
+				logsArr.put(logEntry);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving log "+id+" from database", e);
@@ -1122,18 +1086,22 @@ public class DbServletActions {
 		return result;
 	}
 
-	private JSONObject buildLogJson(
-			String id, 
-			Date time,
-			String log
-			){
+	private JSONObject buildLogEntryJson(LogRecord logRecord){
 		
 		JSONObject logEntry = new JSONObject();
-		logEntry.put("type", "log");
-		logEntry.put("id", id);
-		logEntry.put("timestamp", time.getTime());
-		logEntry.put("timestamp_text", DateUtils.getUtcDateString(time));
-		logEntry.put("log", log);
+		logEntry.put("type", "logEntry");
+		logEntry.put("id", logRecord.getId());
+		
+		if( null != logRecord.getTimestamp() ){
+			Date time = logRecord.getTimestamp();
+			logEntry.put("timestamp", time.getTime());
+			logEntry.put("timestamp_text", DateUtils.getUtcDateString(time));
+		}
+		
+		if( null != logRecord.getLog() ){
+			logEntry.put("log", logRecord.getLog());
+		}
+
 		return logEntry;
 	}
 }

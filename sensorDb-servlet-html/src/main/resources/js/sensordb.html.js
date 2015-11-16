@@ -182,9 +182,16 @@ var HtmlFixer = $n2.Class({
 					var $div = $('#'+elemId)
 						.empty();
 					
-					$('<pre>')
-						.text(log.log)
-						.appendTo($div);
+					if( typeof log.log === 'string' ){
+						$('<pre>')
+							.text(log.log)
+							.appendTo($div);
+					} else if( typeof log.log === 'object' ) {
+						var txt = JSON.stringify(log.log, null, 3);
+						$('<pre>')
+							.text(txt)
+							.appendTo($div);
+					};
 				}
 			});
 

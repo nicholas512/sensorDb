@@ -15,6 +15,7 @@ import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
+import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
 public class DbApiImpl implements DbAPI {
@@ -224,7 +225,7 @@ public class DbApiImpl implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				Date importTime = resultSet.getDate(2);
+				Date importTime = resultSet.getTimestamp(2);
 				String fileName = resultSet.getString(3);
 				String importParametersStr = resultSet.getString(4);
 				
@@ -265,7 +266,7 @@ public class DbApiImpl implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				Date importTime = resultSet.getDate(2);
+				Date importTime = resultSet.getTimestamp(2);
 				String fileName = resultSet.getString(3);
 				String importParametersStr = resultSet.getString(4);
 				
@@ -285,5 +286,75 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return importRecord;
+	}
+
+	@Override
+	public List<LogRecord> getLogRecords() throws Exception {
+		List<LogRecord> logRecords = new Vector<LogRecord>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,timestamp,log FROM logs"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				Date timestamp = resultSet.getTimestamp(2);
+				String logText = resultSet.getString(3);
+				
+				JSONObject logObj = new JSONObject(logText);
+
+				LogRecord logRecord = new LogRecord();
+				logRecord.setId(id);
+				logRecord.setTimestamp(timestamp);
+				logRecord.setLog(logObj);
+				
+				logRecords.add(logRecord);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving log records from database", e);
+		}
+
+		return logRecords;
+	}
+
+	@Override
+	public LogRecord getLogRecordFromId(String logId) throws Exception {
+		LogRecord logRecord = null;
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,timestamp,log FROM logs WHERE id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(logId));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				Date timestamp = resultSet.getTimestamp(2);
+				String logText = resultSet.getString(3);
+				
+				JSONObject logObj = new JSONObject(logText);
+
+				logRecord = new LogRecord();
+				logRecord.setId(id);
+				logRecord.setTimestamp(timestamp);
+				logRecord.setLog(logObj);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving log record (id="+logId+") from database", e);
+		}
+
+		return logRecord;
 	}
 }

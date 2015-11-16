@@ -17,4 +17,8 @@ public interface DbAPI {
 	List<ImportRecord> getImportRecords() throws Exception;
 
 	ImportRecord getImportRecordFromImportId(String importId) throws Exception;
+
+	List<LogRecord> getLogRecords() throws Exception;
+
+	LogRecord getLogRecordFromId(String logId) throws Exception;
 }
