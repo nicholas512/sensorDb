@@ -72,6 +72,8 @@ CREATE TABLE public.locations(
 	name character varying,
 	coordinates geometry NOT NULL,
 	elevation integer NOT NULL,
+	comment text,
+	record_observations boolean NOT NULL DEFAULT TRUE,
 	CONSTRAINT locations_pk PRIMARY KEY (id)
 
 );
@@ -125,7 +127,8 @@ CREATE TABLE public.observations (
     text_value text,
     logged_time timestamp with time zone,
     corrected_utc_time timestamp with time zone NOT NULL,
-    location geometry(GEOMETRY,4326),
+    location geometry(GEOMETRY,4326) NOT NULL,
+	elevation integer NOT NULL,
     height_min_metres numeric,
     height_max_metres numeric
 );

@@ -8,7 +8,7 @@ import java.util.TimeZone;
 
 import org.json.JSONObject;
 
-public class ObservationFileImportReportMemory implements ObservationFileImportReport {
+public class SensorFileImportReportMemory implements SensorFileImportReport {
 
 	private String importId;
 	private int insertedObservations = 0;
@@ -17,7 +17,7 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	private Map<String,Integer> observedTextFields = new HashMap<String,Integer>();
 	private Throwable reportedError = null;
 	
-	public ObservationFileImportReportMemory() {
+	public SensorFileImportReportMemory() {
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 	    dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));	
 	}
@@ -32,7 +32,7 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	}
 
 	@Override
-	public void insertedObservation(Observation observation) {
+	public void insertedObservation(Sample observation) {
 		++insertedObservations;
 		
 		if( null != observation.getText() ){
@@ -49,7 +49,7 @@ public class ObservationFileImportReportMemory implements ObservationFileImportR
 	}
 
 	@Override
-	public void skippedObservation(Observation observation) {
+	public void skippedObservation(Sample observation) {
 		++skippedObservations;
 	}
 

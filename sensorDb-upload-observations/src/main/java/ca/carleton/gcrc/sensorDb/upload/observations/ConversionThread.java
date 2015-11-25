@@ -16,9 +16,9 @@ public class ConversionThread extends Thread {
 	private boolean isShuttingDown = false;
 	private String threadName = null;
 	private List<ConversionRequest> conversionRequests = new Vector<ConversionRequest>();
-	private ObservationFileImporter importer = null;
+	private SensorFileImporter importer = null;
 	
-	public ConversionThread(ObservationFileImporter importer){
+	public ConversionThread(SensorFileImporter importer){
 		this.importer = importer;
 	}
 	

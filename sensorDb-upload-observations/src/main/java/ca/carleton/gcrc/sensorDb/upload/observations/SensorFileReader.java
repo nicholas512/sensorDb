@@ -24,20 +24,20 @@ Two sensors:
 Each line has a date and a number of variables readings. 
  */
 
-public class ObservationFileReader {
+public class SensorFileReader {
 
 	static private Pattern patternFirstLine = Pattern.compile("^Logger:\\s*#([^']*)'.*$");
 	static private Pattern patternTextNumber = Pattern.compile("^\\s*-?[0-9]+(\\.[0-9]+)\\s*$");
 
 	private BufferedReader bufReader;
 	private String deviceSerialNumber = null;
-	private List<ObservationColumn> columns = new Vector<ObservationColumn>();
+	private List<SampleColumn> columns = new Vector<SampleColumn>();
 	private int timeColumnIndex;
 	private boolean reachedEnd = false;
-	private List<Observation> cachedObservations = new Vector<Observation>();
+	private List<Sample> cachedObservations = new Vector<Sample>();
 	int lineNumber = 0;
 	
-	public ObservationFileReader(Reader reader) throws Exception {
+	public SensorFileReader(Reader reader) throws Exception {
 		bufReader = new BufferedReader(reader);
 		
 		readPreamble();
@@ -47,11 +47,11 @@ public class ObservationFileReader {
 		return deviceSerialNumber;
 	}
 
-	public List<ObservationColumn> getColumns() {
+	public List<SampleColumn> getColumns() {
 		return columns;
 	}
 	
-	public Observation read() throws Exception {
+	public Sample read() throws Exception {
 		// If end is reached, keep returning null
 		if( reachedEnd ){
 			return null;
@@ -59,7 +59,7 @@ public class ObservationFileReader {
 		
 		// Picked what we have already parsed
 		if( cachedObservations.size() > 0 ){
-			Observation obs = cachedObservations.remove(0);
+			Sample obs = cachedObservations.remove(0);
 			return obs;
 		}
 		
@@ -98,17 +98,17 @@ public class ObservationFileReader {
 		// Create an observation for each value
 		for(int index=0; index<fields.length; ++index){
 			String fieldStr = fields[index];
-			ObservationColumn column = columns.get(index);
+			SampleColumn column = columns.get(index);
 			
 			if( column.isValue() ){
-				Observation obs = null;
+				Sample obs = null;
 
 				Matcher matcherTextNumber = patternTextNumber.matcher(fieldStr);
 				if( matcherTextNumber.matches() ){
 					double value = Double.parseDouble(fieldStr.trim());
-					obs = new Observation(time, column, value);
+					obs = new Sample(time, column, value);
 				} else {
-					obs = new Observation(time, column, fieldStr.trim());
+					obs = new Sample(time, column, fieldStr.trim());
 				}
 				
 				if( null != obs ){
@@ -144,7 +144,7 @@ public class ObservationFileReader {
 			++lineNumber;
 			String[] columnStrings = line.split(",");
 			for(String columnString : columnStrings){
-				ObservationColumn column = ObservationColumn.parseColumnString(columnString);
+				SampleColumn column = SampleColumn.parseColumnString(columnString);
 				this.columns.add(column);
 			}
 		}
@@ -153,7 +153,7 @@ public class ObservationFileReader {
 		{
 			boolean dateProvided = false;
 			int index = 0;
-			for(ObservationColumn column : columns){
+			for(SampleColumn column : columns){
 				if( column.isTime() ){
 					if( dateProvided ){
 						throw new Exception("Multiple time columns reported");

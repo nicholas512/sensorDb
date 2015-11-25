@@ -1,12 +1,12 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
-public interface ObservationFileImportReport {
+public interface SensorFileImportReport {
 	
 	void setImportId(String importId);
 
-	void insertedObservation(Observation observation);
+	void insertedObservation(Sample observation);
 
-	void skippedObservation(Observation observation);
+	void skippedObservation(Sample observation);
 	
 	void setError(Throwable err);
 	

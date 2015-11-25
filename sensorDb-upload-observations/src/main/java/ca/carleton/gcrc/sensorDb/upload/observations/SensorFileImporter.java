@@ -24,14 +24,14 @@ import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
-public class ObservationFileImporter {
+public class SensorFileImporter {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private DbConnection dbConn;
 	private DbAPI dbAPI;
 	
-	public ObservationFileImporter(DbConnection dbConn){
+	public SensorFileImporter(DbConnection dbConn){
 		this.dbConn = dbConn;
 		this.dbAPI = dbConn.getAPI();
 	}
@@ -121,10 +121,10 @@ public class ObservationFileImporter {
 			,int finalOffset
 			) throws Exception {
 
-		ObservationFileImportReport report = new ObservationFileImportReportMemory();
+		SensorFileImportReport report = new SensorFileImportReportMemory();
 
 		try {
-			ObservationFileReader obsReader = new ObservationFileReader(reader);
+			SensorFileReader obsReader = new SensorFileReader(reader);
 			
 			String deviceSerialNumber = obsReader.getDeviceSerialNumber();
 			
@@ -145,7 +145,7 @@ public class ObservationFileImporter {
 			}
 
 			// Check that sensors were found for all parsed columns
-			for(ObservationColumn column : obsReader.getColumns()){
+			for(SampleColumn column : obsReader.getColumns()){
 				if( column.isValue() ){
 					if( null == sensorsMap.get( column.getName() ) ){
 						throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+deviceSerialNumber+")");
@@ -156,11 +156,11 @@ public class ObservationFileImporter {
 			report.setImportId(importUUID);
 			
 			// Get all observations that should be saved
-			List<Observation> observations = new Vector<Observation>();
+			List<Sample> observations = new Vector<Sample>();
 			Date firstTime = null;
 			Date lastTime = null;
 			{
-				Observation observation = obsReader.read();
+				Sample observation = obsReader.read();
 				while( null != observation ){
 					if( isObservationInDatabase(observation) ) {
 						report.skippedObservation(observation);
@@ -197,7 +197,7 @@ public class ObservationFileImporter {
 			DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
 			
 			// Start saving observations
-			for( Observation observation : observations ){
+			for( Sample observation : observations ){
 				String sensor_label = observation.getColumn().getName();
 				Sensor sensor = sensorsMap.get( sensor_label );
 				
@@ -220,7 +220,7 @@ public class ObservationFileImporter {
 		
 	}
 
-	private boolean isObservationInDatabase(Observation observation) throws Exception {
+	private boolean isObservationInDatabase(Sample observation) throws Exception {
 		try {
 			boolean inDatabase = false;
 			
@@ -252,10 +252,10 @@ public class ObservationFileImporter {
 			String importUUID,
 			String device_id,
 			Sensor sensor,
-			Observation observation, 
+			Sample observation, 
 			TimeCorrector timeCorrector,
 			DeviceLocator deviceLocator,
-			ObservationFileImportReport report
+			SensorFileImportReport report
 			) throws Exception {
 		
 		// insert into observations (device_id,sensor_id,location) values ('123','456',ST_GeomFromEWKT('srid=4326;POINT(0 0)'));
@@ -313,7 +313,7 @@ public class ObservationFileImporter {
 		}
 	}
 
-	private void saveImportReport(ObservationFileImportReport report) throws Exception {
+	private void saveImportReport(SensorFileImportReport report) throws Exception {
 		Date time = new Date(); // now
 		
 		try {

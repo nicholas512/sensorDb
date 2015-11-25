@@ -9,24 +9,24 @@ import java.util.Date;
 
 import org.apache.commons.codec.binary.Base64;
 
-public class Observation {
+public class Sample {
 
 	private Date time;
-	private ObservationColumn column;
+	private SampleColumn column;
 	private Double value;
 	private String text;
 	private String line;
 	private String deviceSerialNumber;
 	private String importKey;
 
-	public Observation(Date time, ObservationColumn column, double value){
+	public Sample(Date time, SampleColumn column, double value){
 		this.time = time;
 		this.column = column;
 		this.value = new Double(value);
 		this.text = null;
 	}
 
-	public Observation(Date time, ObservationColumn column, String text){
+	public Sample(Date time, SampleColumn column, String text){
 		this.time = time;
 		this.column = column;
 		this.value = null;
@@ -37,7 +37,7 @@ public class Observation {
 		return time;
 	}
 
-	public ObservationColumn getColumn() {
+	public SampleColumn getColumn() {
 		return column;
 	}
 

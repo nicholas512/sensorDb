@@ -6,6 +6,8 @@ public class Location {
 	private String name;
 	private String geometry;
 	private int elevation;
+	private String comment;
+	private boolean recordingObservations;
 	
 	public String getLocationId() {
 		return locationId;
@@ -30,5 +32,17 @@ public class Location {
 	}
 	public void setElevation(int elevation) {
 		this.elevation = elevation;
+	}
+	public String getComment() {
+		return comment;
+	}
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+	public boolean isRecordingObservations() {
+		return recordingObservations;
+	}
+	public void setRecordingObservations(boolean recordingObservations) {
+		this.recordingObservations = recordingObservations;
 	}
 }

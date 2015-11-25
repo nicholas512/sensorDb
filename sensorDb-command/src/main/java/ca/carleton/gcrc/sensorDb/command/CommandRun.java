@@ -20,7 +20,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import ca.carleton.gcrc.sensorDb.html.HtmlServletFactory;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 import ca.carleton.gcrc.sensorDb.servlet.db.DbServlet;
-import ca.carleton.gcrc.sensorDb.upload.observations.ObservationsUploaded;
+import ca.carleton.gcrc.sensorDb.upload.observations.SensorFileUploaded;
 import ca.carleton.gcrc.upload.OnUploadedListener;
 import ca.carleton.gcrc.upload.UploadServlet;
 
@@ -159,7 +159,7 @@ public class CommandRun implements Command {
 
         // Servlet for uploading observations
         {
-        	OnUploadedListener onUploadedListener = new ObservationsUploaded(dbConnection);
+        	OnUploadedListener onUploadedListener = new SensorFileUploaded(dbConnection);
         	
         	UploadServlet uploadServlet = new UploadServlet();
         	uploadServlet.setOnUploadedListener(onUploadedListener);

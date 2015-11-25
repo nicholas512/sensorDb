@@ -183,7 +183,9 @@ public class DbApiImpl implements DbAPI {
 		Location location = null;
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation FROM locations WHERE id=?"
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation,comment,record_observations"
+				+ " FROM locations"
+				+ " WHERE id=?"
 			);
 			
 			pstmt.setObject(1, UUID.fromString(locationId));
@@ -195,12 +197,16 @@ public class DbApiImpl implements DbAPI {
 				String name = resultSet.getString(2);
 				String geometry = resultSet.getString(3);
 				int elevation = resultSet.getInt(4);
+				String comment = resultSet.getString(5);
+				boolean recordingObservations = resultSet.getBoolean(6);
 				
 				location = new Location();
 				location.setLocationId(location_id);
 				location.setName(name);
 				location.setGeometry(geometry);
 				location.setElevation(elevation);
+				location.setComment(comment);
+				location.setRecordingObservations(recordingObservations);
 			}
 			
 			resultSet.close();

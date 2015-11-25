@@ -10,20 +10,19 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 import ca.carleton.gcrc.upload.LoadedFile;
 import ca.carleton.gcrc.upload.OnUploadedListener;
 import ca.carleton.gcrc.upload.OnUploadedRequiresShutdown;
 
-public class ObservationsUploaded implements OnUploadedListener,OnUploadedRequiresShutdown {
+public class SensorFileUploaded implements OnUploadedListener,OnUploadedRequiresShutdown {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private ConversionThread conversionThread = null;
 	
-	public ObservationsUploaded(DbConnection dbConn){
-		ObservationFileImporter importer = new ObservationFileImporter(dbConn);
+	public SensorFileUploaded(DbConnection dbConn){
+		SensorFileImporter importer = new SensorFileImporter(dbConn);
 		this.conversionThread = new ConversionThread(importer);
 		this.conversionThread.start();
 	}

@@ -3,12 +3,12 @@ package ca.carleton.gcrc.sensorDb.upload.observations;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ObservationColumn {
+public class SampleColumn {
 
 	static private Pattern patternValue = Pattern.compile("^(#.*)$");
 	
-	static public ObservationColumn parseColumnString(String str) throws Exception {
-		ObservationColumn column = new ObservationColumn();
+	static public SampleColumn parseColumnString(String str) throws Exception {
+		SampleColumn column = new SampleColumn();
 		
 		Matcher matcherValue = patternValue.matcher( str );
 		
@@ -34,7 +34,7 @@ public class ObservationColumn {
 	private boolean isSerial = false;
 	private String name = null;
 
-	public ObservationColumn(){
+	public SampleColumn(){
 		
 	}
 	
