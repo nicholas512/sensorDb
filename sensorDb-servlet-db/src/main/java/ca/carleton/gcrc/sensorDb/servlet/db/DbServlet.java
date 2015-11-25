@@ -156,12 +156,16 @@ public class DbServlet extends HttpServlet {
 				double lat = getDoubleParameter(req, "lat");
 				double lng = getDoubleParameter(req, "lng");
 				Integer elevation = optIntegerParameter(req, "elevation");
+				String comment = optStringParameter(req, "comment");
+				boolean recordingObservations = getCheckboxParameter(req, "record_observations");
 
 				JSONObject result = actions.createLocation(
 						name
 						,lat
 						,lng
 						,elevation
+						,comment
+						,recordingObservations
 						);
 				sendJsonResponse(resp, result);
 
@@ -320,6 +324,15 @@ public class DbServlet extends HttpServlet {
 		} catch (Exception e) {
 			throw new Exception("'"+paramName+"' parameter must be an integer number",e);
 		}
+	}
+	
+	private boolean getCheckboxParameter(HttpServletRequest req, String paramName) throws Exception {
+		String strValue = optStringParameter(req, paramName);
+		if( null == strValue ){
+			return false;
+		}
+		
+		return true;
 	}
 	
 	@SuppressWarnings("unused")

@@ -56,7 +56,9 @@ public class DbServletActions {
 			String name, 
 			double lat, 
 			double lng, 
-			Integer elevation
+			Integer elevation,
+			String comment,
+			boolean recordingObservations
 			) throws Exception {
 
 		JSONObject result = new JSONObject();
@@ -65,8 +67,8 @@ public class DbServletActions {
 			String geom = String.format("POINT(%f %f)", lng, lat);
 			
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO locations (name,coordinates,elevation)"
-				+" VALUES (?,ST_GeomFromText(?,4326),?)"
+				"INSERT INTO locations (name,coordinates,elevation,comment,record_observations)"
+				+" VALUES (?,ST_GeomFromText(?,4326),?,?,?)"
 				+" RETURNING id,name,ST_AsText(coordinates),elevation"
 			);
 			
@@ -77,6 +79,12 @@ public class DbServletActions {
 			} else {
 				pstmt.setInt(3, elevation);
 			}
+			if( null == comment ){
+				pstmt.setNull(4,java.sql.Types.VARCHAR);
+			} else {
+				pstmt.setString(4, comment);
+			}
+			pstmt.setBoolean(5, recordingObservations);
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
