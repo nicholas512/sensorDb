@@ -37,9 +37,13 @@ public interface DbAPI {
 
 	Collection<Location> getLocations() throws Exception;
 
+	Observation createObservation(Observation observation) throws Exception;
+
 	List<ImportRecord> getImportRecords() throws Exception;
 
 	ImportRecord getImportRecordFromImportId(String importId) throws Exception;
+
+	LogRecord createLogRecord(LogRecord logRecord) throws Exception;
 
 	List<LogRecord> getLogRecords() throws Exception;
 

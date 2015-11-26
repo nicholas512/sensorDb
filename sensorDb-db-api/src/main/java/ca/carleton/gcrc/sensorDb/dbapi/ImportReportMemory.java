@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.sensorDb.upload.observations;
+package ca.carleton.gcrc.sensorDb.dbapi;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -8,7 +8,7 @@ import java.util.TimeZone;
 
 import org.json.JSONObject;
 
-public class SensorFileImportReportMemory implements SensorFileImportReport {
+public class ImportReportMemory implements ImportReport {
 
 	private String importId;
 	private int insertedObservations = 0;
@@ -17,7 +17,7 @@ public class SensorFileImportReportMemory implements SensorFileImportReport {
 	private Map<String,Integer> observedTextFields = new HashMap<String,Integer>();
 	private Throwable reportedError = null;
 	
-	public SensorFileImportReportMemory() {
+	public ImportReportMemory() {
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 	    dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));	
 	}
@@ -32,12 +32,12 @@ public class SensorFileImportReportMemory implements SensorFileImportReport {
 	}
 
 	@Override
-	public void insertedObservation(Sample observation) {
+	public void insertedObservation(Observation observation) {
 		++insertedObservations;
 		
-		if( null != observation.getText() ){
+		if( null != observation.getTextValue() ){
 			// Accumulate the text fields and count them
-			String text = observation.getText();
+			String text = observation.getTextValue();
 			if( false == observedTextFields.containsKey(text) ){
 				observedTextFields.put(text,0);
 			}
@@ -49,7 +49,7 @@ public class SensorFileImportReportMemory implements SensorFileImportReport {
 	}
 
 	@Override
-	public void skippedObservation(Sample observation) {
+	public void skippedObservation(Observation observation) {
 		++skippedObservations;
 	}
 
@@ -59,7 +59,7 @@ public class SensorFileImportReportMemory implements SensorFileImportReport {
 	}
 
 	@Override
-	public String produceReport() throws Exception {
+	public JSONObject produceReport() throws Exception {
 		JSONObject jsonReport = new JSONObject();
 		
 		jsonReport.put("type", "import");
@@ -84,7 +84,7 @@ public class SensorFileImportReportMemory implements SensorFileImportReport {
 			jsonReport.put("error", jsonErr);
 		}
 		
-		return jsonReport.toString();
+		return jsonReport;
 	}
 
 	public int getInsertedObservations() {

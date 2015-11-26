@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.Vector;
 
 import org.json.JSONObject;
@@ -21,7 +20,11 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.ImportReport;
+import ca.carleton.gcrc.sensorDb.dbapi.ImportReportMemory;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
+import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.Observation;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
@@ -122,7 +125,7 @@ public class SensorFileImporter {
 			,int finalOffset
 			) throws Exception {
 
-		SensorFileImportReport report = new SensorFileImportReportMemory();
+		ImportReport report = new ImportReportMemory();
 
 		try {
 			SensorFileReader obsReader = new SensorFileReader(reader);
@@ -164,22 +167,18 @@ public class SensorFileImporter {
 			{
 				Sample sample = obsReader.read();
 				while( null != sample ){
-					if( isSampleInDatabase(sample) ) {
-						report.skippedObservation(sample);
-					} else {
-						samples.add(sample);
-						
-						Date currentTime = sample.getTime();
-						if( null == firstTime ){
-							firstTime = currentTime;
-						} else if( currentTime.getTime() < firstTime.getTime() ){
-							firstTime = currentTime;
-						}
-						if( null == lastTime ){
-							lastTime = currentTime;
-						} else if( currentTime.getTime() > lastTime.getTime() ){
-							lastTime = currentTime;
-						}
+					samples.add(sample);
+					
+					Date currentTime = sample.getTime();
+					if( null == firstTime ){
+						firstTime = currentTime;
+					} else if( currentTime.getTime() < firstTime.getTime() ){
+						firstTime = currentTime;
+					}
+					if( null == lastTime ){
+						lastTime = currentTime;
+					} else if( currentTime.getTime() > lastTime.getTime() ){
+						lastTime = currentTime;
 					}
 
 					sample = obsReader.read();
@@ -199,11 +198,11 @@ public class SensorFileImporter {
 			DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
 			
 			// Start saving observations
-			for( Sample observation : samples ){
-				String sensor_label = observation.getColumn().getName();
+			for( Sample sample : samples ){
+				String sensor_label = sample.getColumn().getName();
 				Sensor sensor = sensorsMap.get( sensor_label );
 				
-				insertSample(importUUID, device_id, sensor, observation, timeCorrector, deviceLocator, report);
+				insertSample(importUUID, device_id, sensor, sample, timeCorrector, deviceLocator, report);
 			}
 
 		} catch (Exception e) {
@@ -219,34 +218,36 @@ public class SensorFileImporter {
 				logger.error("Unable to save log",e2);
 			}
 		}
-		
 	}
 
-	private boolean isSampleInDatabase(Sample sample) throws Exception {
+	private boolean isObservationInDatabase(Observation obervation) throws Exception {
+		String importKey = null;
+
 		try {
 			boolean inDatabase = false;
 			
-			String importKey = sample.computeImportKey();
-			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT sensor_id"
-				+" FROM observations"
-				+" WHERE import_key=?"
-			);
-			
-			pstmt.setString(1, importKey);
-			
-			ResultSet res = pstmt.executeQuery();
-			
-			while( res.next() ){
-				// If something matches, we should not insert
-				inDatabase = true;
+			importKey = obervation.getImportKey();
+			if( null != importKey ){
+				PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+					"SELECT id"
+					+" FROM observations"
+					+" WHERE import_key=?"
+				);
+				
+				pstmt.setString(1, importKey);
+				
+				ResultSet res = pstmt.executeQuery();
+				
+				while( res.next() ){
+					// If something matches, we should not insert
+					inDatabase = true;
+				}
 			}
 			
 			return inDatabase;
 			
 		} catch (Exception e) {
-			throw new Exception("Error while looking for matching observation: "+sample.getLine(), e);
+			throw new Exception("Error while looking for matching observation: "+importKey, e);
 		}
 	}
 
@@ -257,19 +258,11 @@ public class SensorFileImporter {
 			Sample sample, 
 			TimeCorrector timeCorrector,
 			DeviceLocator deviceLocator,
-			SensorFileImportReport report
+			ImportReport report
 			) throws Exception {
 		
 		// insert into observations (device_id,sensor_id,location) values ('123','456',ST_GeomFromEWKT('srid=4326;POINT(0 0)'));
 		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO observations"
-				+ " (device_id,sensor_id,import_id,import_key,observation_type,unit_of_measure,accuracy,"
-				+ "precision,numeric_value,text_value,logged_time,corrected_utc_time,location,elevation_in_metres,"
-				+ "height_min_metres,height_max_metres)"
-				+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?,?)"
-			);
-			
 			Date loggerTime = sample.getTime();
 			Date correctedTime = timeCorrector.correctTime(loggerTime);
 			
@@ -277,46 +270,41 @@ public class SensorFileImporter {
 			if( null == location ){
 				throw new Exception("Can not find location of device (id="+device_id+") for time "+correctedTime.toString());
 			}
+
+			String geometry = location.getGeometry();
+			
+			Observation observation = new Observation();
+			observation.setDeviceId( device_id );
+			observation.setSensorId( sensor.getId() );
+			observation.setImportId( importUUID );
+			observation.setImportKey( sample.computeImportKey() );
+			observation.setObservationType( sensor.getTypeOfMeasurement() );
+			observation.setUnitOfMeasure( sensor.getUnitOfMeasurement() );
+			observation.setAccuracy( sensor.getAccuracy() );
+			observation.setPrecision( sensor.getPrecision() );
+			observation.setNumericValue( sample.getValue() );
+			observation.setTextValue( sample.getText() );
+			observation.setLoggedTime( loggerTime );
+			observation.setCorrectedTime( correctedTime );
+			observation.setLocation( geometry );
+			observation.setElevation( location.getElevation() );
+			observation.setMinHeight( sensor.getHeightInMetres() );
+			observation.setMaxHeight( sensor.getHeightInMetres() );
 			
 			// Insert observation only if this location is meant to record observations.
 			// "In Transit" locations should not be saved.
 			if( location.isRecordingObservations() ){
-				String geometry = location.getGeometry();
-				
-				pstmt.setObject(1, UUID.fromString(device_id)); // device_id
-				pstmt.setObject(2, UUID.fromString(sensor.getId())); // sensor_id
-				pstmt.setObject(3, UUID.fromString(importUUID)); // import_id
-				pstmt.setString(4, sample.computeImportKey()); // import_key
-				pstmt.setString(5, sensor.getTypeOfMeasurement()); // observation_type
-				pstmt.setString(6, sensor.getUnitOfMeasurement()); // unit_of_measure
-				pstmt.setDouble(7, sensor.getAccuracy()); // accuracy
-				pstmt.setDouble(8, sensor.getPrecision()); // precision
 
-				if( null == sample.getValue() ){
-					pstmt.setNull(9, java.sql.Types.DOUBLE); // numeric value
+				if( isObservationInDatabase(observation) ){
+					report.skippedObservation(observation);
 				} else {
-					pstmt.setDouble(9, sample.getValue()); // numeric value
+					observation = dbAPI.createObservation(observation);
+					
+					report.insertedObservation(observation);
 				}
-
-				if( null == sample.getText() ){
-					pstmt.setNull(10, java.sql.Types.VARCHAR); // text value
-				} else {
-					pstmt.setString(10, sample.getText()); // text value
-				}
-
-				pstmt.setTimestamp(11, new Timestamp(loggerTime.getTime())); // logged_time
-				pstmt.setTimestamp(12, new Timestamp(correctedTime.getTime())); // corrected_utc_time
-				pstmt.setString(13, geometry); // location
-				pstmt.setDouble(14, location.getElevation()); // elevation_in_metres
-				pstmt.setDouble(15, sensor.getHeightInMetres()); // height_min_metres
-				pstmt.setDouble(16, sensor.getHeightInMetres()); // height_max_metres
-				
-				pstmt.executeUpdate();
-				
-				report.insertedObservation(sample);
 
 			} else {
-				report.skippedObservation(sample);
+				report.skippedObservation(observation);
 			};
 			
 		} catch (Exception e) {
@@ -324,20 +312,15 @@ public class SensorFileImporter {
 		}
 	}
 
-	private void saveImportReport(SensorFileImportReport report) throws Exception {
-		Date time = new Date(); // now
-		
+	private void saveImportReport(ImportReport report) throws Exception {
 		try {
-			String log = report.produceReport();
+			JSONObject jsonLog = report.produceReport();
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO logs (timestamp,log) VALUES (?,?)"
-			);
+			LogRecord logRecord = new LogRecord();
+			logRecord.setTimestamp( new Date() ); // now
+			logRecord.setLog(jsonLog);
 			
-			pstmt.setTimestamp(1, new Timestamp(time.getTime()));
-			pstmt.setString(2, log);
-			
-			pstmt.executeUpdate();
+			dbAPI.createLogRecord(logRecord);
 			
 		} catch (Exception e) {
 			throw new Exception("Error inserting log to database", e);

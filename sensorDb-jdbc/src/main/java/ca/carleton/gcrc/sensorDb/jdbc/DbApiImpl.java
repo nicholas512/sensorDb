@@ -20,6 +20,7 @@ import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.Observation;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
 public class DbApiImpl implements DbAPI {
@@ -153,6 +154,8 @@ public class DbApiImpl implements DbAPI {
 			result.setAccuracy( resultSet.getDouble(6) );
 			result.setPrecision( resultSet.getDouble(7) );
 			result.setHeightInMetres( resultSet.getDouble(8) );
+
+			resultSet.close();
 				
 		} catch(Exception e) {
 			throw new Exception("Error while creating sensor ("+sensor.getLabel()+") for device ("+sensor.getDeviceId()+")",e);
@@ -309,6 +312,8 @@ public class DbApiImpl implements DbAPI {
 			result.setManufacturerDeviceName( resultSet.getString(6) );
 			result.setAcquiredOn( resultSet.getTimestamp(7) );
 			result.setNotes( resultSet.getString(8) );
+
+			resultSet.close();
 				
 			// Create sensors for this device...
 			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
@@ -516,6 +521,8 @@ public class DbApiImpl implements DbAPI {
 			result.setDeviceId( resultSet.getString(3) );
 			result.setLocationId( resultSet.getString(4) );
 			result.setNotes( resultSet.getString(5) );
+
+			resultSet.close();
 				
 		} catch (Exception e) {
 			throw new Exception("Error inserting deviceLocation into database", e);
@@ -626,6 +633,78 @@ public class DbApiImpl implements DbAPI {
 
 		return locations;
 	}
+
+	@Override
+	public Observation createObservation(Observation observation) throws Exception {
+		
+		Observation result = null;
+		
+		if( null != observation.getId() ){
+			throw new Exception("Id should not be set when creating an observation");
+		}
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO observations"
+				+" (device_id,sensor_id,import_id,import_key,observation_type,"
+				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
+				+" logged_time,corrected_utc_time,location,height_min_metres,"
+				+" height_max_metres,elevation_in_metres)"
+				+" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?,?)"
+				+" RETURNING id,device_id,sensor_id,import_id,import_key,observation_type,"
+				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
+				+" logged_time,corrected_utc_time,ST_AsEWKT(location),height_min_metres,"
+				+" height_max_metres,elevation_in_metres"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(observation.getDeviceId()));
+			pstmt.setObject(2, UUID.fromString(observation.getSensorId()));
+			pstmt.setObject(3, UUID.fromString(observation.getImportId()));
+			pstmt.setString(4, observation.getImportKey());
+			pstmt.setString(5, observation.getObservationType());
+			pstmt.setString(6, observation.getUnitOfMeasure());
+			pstmt.setDouble(7, observation.getAccuracy());
+			pstmt.setDouble(8, observation.getPrecision());
+			pstmt.setDouble(9, observation.getNumericValue());
+			pstmt.setString(10, observation.getTextValue());
+			pstmt.setTimestamp(11, new Timestamp(observation.getLoggedTime().getTime()));
+			pstmt.setTimestamp(12, new Timestamp(observation.getCorrectedTime().getTime()));
+			pstmt.setString(13, observation.getLocation());
+			pstmt.setDouble(14, observation.getMinHeight());
+			pstmt.setDouble(15, observation.getMaxHeight());
+			pstmt.setDouble(16, observation.getElevation());
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new Observation();
+			result.setId( resultSet.getString(1) );
+			result.setDeviceId( resultSet.getString(2) );
+			result.setSensorId( resultSet.getString(3) );
+			result.setImportId( resultSet.getString(4) );
+			result.setImportKey( resultSet.getString(5) );
+			result.setObservationType( resultSet.getString(6) );
+			result.setUnitOfMeasure( resultSet.getString(7) );
+			result.setAccuracy( resultSet.getDouble(8) );
+			result.setPrecision( resultSet.getDouble(9) );
+			result.setNumericValue( resultSet.getDouble(10) );
+			result.setTextValue( resultSet.getString(11) );
+			result.setLoggedTime( resultSet.getTimestamp(12) );
+			result.setCorrectedTime( resultSet.getTimestamp(13) );
+			result.setLocation( resultSet.getString(14) );
+			result.setMinHeight( resultSet.getDouble(15) );
+			result.setMaxHeight( resultSet.getDouble(16) );
+			result.setElevation( resultSet.getDouble(17) );
+
+			resultSet.close();
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting observation into database", e);
+		}
+
+		return result;
+	}
 	
 	@Override
 	public Location createLocation(Location location) throws Exception {
@@ -639,8 +718,8 @@ public class DbApiImpl implements DbAPI {
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO locations (name,coordinates,elevation_in_metres,comment,record_observations)"
-				+" VALUES (?,ST_GeomFromText(?,4326),?,?,?)"
-				+" RETURNING id,name,ST_AsText(coordinates),elevation_in_metres,comment,record_observations"
+				+" VALUES (?,ST_GeomFromEWKT(?),?,?,?)"
+				+" RETURNING id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
 			);
 			
 			pstmt.setString(1, location.getName());
@@ -660,6 +739,8 @@ public class DbApiImpl implements DbAPI {
 			result.setElevation( resultSet.getDouble(4) );
 			result.setComment( resultSet.getString(5) );
 			result.setRecordingObservations( resultSet.getBoolean(6) );
+
+			resultSet.close();
 				
 		} catch (Exception e) {
 			throw new Exception("Error inserting location ("+location.getName()+") into database", e);
@@ -815,6 +896,57 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return importRecord;
+	}
+
+	@Override
+	public LogRecord createLogRecord(LogRecord logRecord) throws Exception {
+
+		if( null != logRecord.getId() ){
+			throw new Exception("Id should not be set when creating an log record");
+		}
+		
+		LogRecord result = null;
+
+		Date time = new Date(); // now
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO logs"
+				+" (timestamp,log)"
+				+" VALUES (?,?)"
+				+" RETURNING id,timestamp,log"
+			);
+			
+			String logStr = null;
+			JSONObject jsonLog = logRecord.getLog();
+			if( null != jsonLog ){
+				logStr = jsonLog.toString();
+			};
+			
+			pstmt.setTimestamp(1, new Timestamp(time.getTime()));
+			pstmt.setString(2, logStr);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+
+			resultSet.next();
+			
+			result = new LogRecord();
+			result.setId( resultSet.getString(1) );
+			result.setTimestamp( resultSet.getTimestamp(2) );
+			
+			logStr = resultSet.getString(3);
+			if( null != logStr ){
+				jsonLog = new JSONObject(logStr);
+				result.setLog(jsonLog);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting log record to database", e);
+		}
+		
+		return result;
 	}
 
 	@Override
