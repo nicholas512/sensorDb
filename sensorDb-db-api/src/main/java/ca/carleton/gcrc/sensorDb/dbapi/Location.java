@@ -2,18 +2,18 @@ package ca.carleton.gcrc.sensorDb.dbapi;
 
 public class Location {
 
-	private String locationId;
+	private String id;
 	private String name;
 	private String geometry;
-	private int elevation;
+	private double elevation;
 	private String comment;
 	private boolean recordingObservations;
 	
-	public String getLocationId() {
-		return locationId;
+	public String getId() {
+		return id;
 	}
-	public void setLocationId(String locationId) {
-		this.locationId = locationId;
+	public void setId(String id) {
+		this.id = id;
 	}
 	public String getName() {
 		return name;
@@ -27,10 +27,10 @@ public class Location {
 	public void setGeometry(String geometry) {
 		this.geometry = geometry;
 	}
-	public int getElevation() {
+	public double getElevation() {
 		return elevation;
 	}
-	public void setElevation(int elevation) {
+	public void setElevation(double elevation) {
 		this.elevation = elevation;
 	}
 	public String getComment() {

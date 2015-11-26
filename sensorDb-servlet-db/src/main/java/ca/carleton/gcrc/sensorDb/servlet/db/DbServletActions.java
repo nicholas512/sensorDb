@@ -162,7 +162,7 @@ public class DbServletActions {
 		
 		JSONObject result = new JSONObject();
 		result.put("type", "location");
-		result.put("id", location.getLocationId());
+		result.put("id", location.getId());
 		result.put("name", location.getName());
 		result.put("coordinates", location.getGeometry());
 		result.put("elevation", location.getElevation());

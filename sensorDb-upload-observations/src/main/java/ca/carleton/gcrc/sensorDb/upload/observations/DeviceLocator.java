@@ -49,7 +49,7 @@ public class DeviceLocator {
 		});
 		
 		for(Location location : locations){
-			this.locationsById.put(location.getLocationId(), location);
+			this.locationsById.put(location.getId(), location);
 		}
 	}
 	

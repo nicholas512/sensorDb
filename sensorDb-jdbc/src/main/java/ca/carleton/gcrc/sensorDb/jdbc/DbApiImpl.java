@@ -118,6 +118,10 @@ public class DbApiImpl implements DbAPI {
 
 		Sensor result = null;
 		
+		if( null != sensor.getId() ){
+			throw new Exception("Id should not be set when creating a sensor");
+		}
+		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 					"INSERT INTO sensors"
@@ -258,6 +262,10 @@ public class DbApiImpl implements DbAPI {
 	public Device createDevice(Device device) throws Exception {
 
 		Device result = null;
+		
+		if( null != device.getId() ){
+			throw new Exception("Id should not be set when creating a device");
+		}
 		
 		try {
 			Collection<DeviceSensorProfile> deviceSensorProfiles = 
@@ -456,6 +464,10 @@ public class DbApiImpl implements DbAPI {
 
 		DeviceLocation result = null;
 		
+		if( null != deviceLocation.getId() ){
+			throw new Exception("Id should not be set when creating a device location");
+		}
+		
 		try {
 			// Check if device_id is valid
 			try {
@@ -620,16 +632,20 @@ public class DbApiImpl implements DbAPI {
 		
 		Location result = null;
 		
+		if( null != location.getId() ){
+			throw new Exception("Id should not be set when creating a location");
+		}
+		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO locations (name,coordinates,elevation,comment,record_observations)"
+				"INSERT INTO locations (name,coordinates,elevation_in_metres,comment,record_observations)"
 				+" VALUES (?,ST_GeomFromText(?,4326),?,?,?)"
-				+" RETURNING id,name,ST_AsText(coordinates),elevation,comment,record_observations"
+				+" RETURNING id,name,ST_AsText(coordinates),elevation_in_metres,comment,record_observations"
 			);
 			
 			pstmt.setString(1, location.getName());
 			pstmt.setString(2, location.getGeometry());
-			pstmt.setInt(3, location.getElevation());
+			pstmt.setDouble(3, location.getElevation());
 			pstmt.setString(4, location.getComment());
 			pstmt.setBoolean(5, location.isRecordingObservations());
 			
@@ -638,10 +654,10 @@ public class DbApiImpl implements DbAPI {
 			resultSet.next();
 			
 			result = new Location();
-			result.setLocationId( resultSet.getString(1) );
+			result.setId( resultSet.getString(1) );
 			result.setName( resultSet.getString(2) );
 			result.setGeometry( resultSet.getString(3) );
-			result.setElevation( resultSet.getInt(4) );
+			result.setElevation( resultSet.getDouble(4) );
 			result.setComment( resultSet.getString(5) );
 			result.setRecordingObservations( resultSet.getBoolean(6) );
 				
@@ -657,7 +673,7 @@ public class DbApiImpl implements DbAPI {
 		Location location = null;
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation,comment,record_observations"
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
 				+ " FROM locations"
 				+ " WHERE id=?"
 			);
@@ -670,12 +686,12 @@ public class DbApiImpl implements DbAPI {
 				String location_id = resultSet.getString(1);
 				String name = resultSet.getString(2);
 				String geometry = resultSet.getString(3);
-				int elevation = resultSet.getInt(4);
+				double elevation = resultSet.getDouble(4);
 				String comment = resultSet.getString(5);
 				boolean recordingObservations = resultSet.getBoolean(6);
 				
 				location = new Location();
-				location.setLocationId(location_id);
+				location.setId(location_id);
 				location.setName(name);
 				location.setGeometry(geometry);
 				location.setElevation(elevation);
@@ -698,7 +714,7 @@ public class DbApiImpl implements DbAPI {
 
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation,comment,record_observations"
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
 				+ " FROM locations"
 			);
 			
@@ -706,10 +722,10 @@ public class DbApiImpl implements DbAPI {
 			
 			while( resultSet.next() ){
 				Location location = new Location();
-				location.setLocationId( resultSet.getString(1) );
+				location.setId( resultSet.getString(1) );
 				location.setName( resultSet.getString(2) );
 				location.setGeometry( resultSet.getString(3) );
-				location.setElevation( resultSet.getInt(4) );
+				location.setElevation( resultSet.getDouble(4) );
 				location.setComment( resultSet.getString(5) );
 				location.setRecordingObservations( resultSet.getBoolean(6) );
 				

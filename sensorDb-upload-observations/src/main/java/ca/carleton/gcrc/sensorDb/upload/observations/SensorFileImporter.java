@@ -265,7 +265,7 @@ public class SensorFileImporter {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"INSERT INTO observations"
 				+ " (device_id,sensor_id,import_id,import_key,observation_type,unit_of_measure,accuracy,"
-				+ "precision,numeric_value,text_value,logged_time,corrected_utc_time,location,elevation,"
+				+ "precision,numeric_value,text_value,logged_time,corrected_utc_time,location,elevation_in_metres,"
 				+ "height_min_metres,height_max_metres)"
 				+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?,?)"
 			);
@@ -307,7 +307,7 @@ public class SensorFileImporter {
 				pstmt.setTimestamp(11, new Timestamp(loggerTime.getTime())); // logged_time
 				pstmt.setTimestamp(12, new Timestamp(correctedTime.getTime())); // corrected_utc_time
 				pstmt.setString(13, geometry); // location
-				pstmt.setInt(14, location.getElevation()); // elevation
+				pstmt.setDouble(14, location.getElevation()); // elevation_in_metres
 				pstmt.setDouble(15, sensor.getHeightInMetres()); // height_min_metres
 				pstmt.setDouble(16, sensor.getHeightInMetres()); // height_max_metres
 				
