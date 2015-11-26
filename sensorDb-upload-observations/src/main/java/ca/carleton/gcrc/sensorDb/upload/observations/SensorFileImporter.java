@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
@@ -128,7 +129,8 @@ public class SensorFileImporter {
 			
 			String deviceSerialNumber = obsReader.getDeviceSerialNumber();
 			
-			String device_id = dbAPI.getDeviceIdFromSerialNumber(deviceSerialNumber);
+			Device device = dbAPI.getDeviceFromSerialNumber(deviceSerialNumber);
+			String device_id = device.getId();
 			List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
 			
 			// Make a map of sensors based on label

@@ -3,6 +3,7 @@ package ca.carleton.gcrc.sensorDb.servlet.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+import ca.carleton.gcrc.sensorDb.dbapi.Device;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
 public class DbServletActions {
@@ -65,37 +70,18 @@ public class DbServletActions {
 		
 		try {
 			String geom = String.format("POINT(%f %f)", lng, lat);
-			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO locations (name,coordinates,elevation,comment,record_observations)"
-				+" VALUES (?,ST_GeomFromText(?,4326),?,?,?)"
-				+" RETURNING id,name,ST_AsText(coordinates),elevation"
-			);
-			
-			pstmt.setString(1, name);
-			pstmt.setString(2, geom);
-			if( null == elevation ){
-				pstmt.setNull(3,java.sql.Types.INTEGER);
-			} else {
-				pstmt.setInt(3, elevation);
-			}
-			if( null == comment ){
-				pstmt.setNull(4,java.sql.Types.VARCHAR);
-			} else {
-				pstmt.setString(4, comment);
-			}
-			pstmt.setBoolean(5, recordingObservations);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			resultSet.next();
-			String res_id = resultSet.getString(1);
-			String res_name = resultSet.getString(2);
-			String res_coordinates = resultSet.getString(3);
-			int res_elevation = resultSet.getInt(4);
+
+			Location location = new Location();
+			location.setName(name);
+			location.setGeometry(geom);
+			location.setElevation(elevation);
+			location.setComment(comment);
+			location.setRecordingObservations(recordingObservations);
+
+			location = dbAPI.createLocation(location);
 				
-			JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
-			result.put("location", location);
+			JSONObject jsonLocation = buildLocationJson(location);
+			result.put("location", jsonLocation);
 			
 		} catch (Exception e) {
 			throw new Exception("Error inserting location into database", e);
@@ -120,24 +106,13 @@ public class DbServletActions {
 			JSONArray locationArr = new JSONArray();
 			result.put("locations", locationArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsText(coordinates),elevation FROM locations"
-			);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_name = resultSet.getString(2);
-				String res_coordinates = resultSet.getString(3);
-				int res_elevation = resultSet.getInt(4);
-					
-				JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
+			Collection<Location> locations = dbAPI.getLocations();
+
+			for(Location location : locations){
+				JSONObject jsonLocation = buildLocationJson(location);
 				
-				locationArr.put(location);
+				locationArr.put(jsonLocation);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all locations from database", e);
@@ -164,28 +139,13 @@ public class DbServletActions {
 			JSONArray locationArr = new JSONArray();
 			result.put("locations", locationArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsText(coordinates),elevation FROM locations WHERE id=?"
-			);
 			
-			UUID uuid = UUID.fromString(location_id);
-			
-			pstmt.setObject(1, uuid);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_name = resultSet.getString(2);
-				String res_coordinates = resultSet.getString(3);
-				int res_elevation = resultSet.getInt(4);
-					
-				JSONObject location = buildLocationJson(res_id,res_name,res_coordinates,res_elevation);
+			Location location = dbAPI.getLocationFromLocationId(location_id);
+			if( null != location ){
+				JSONObject jsonLocation = buildLocationJson(location);
 				
-				locationArr.put(location);
+				locationArr.put(jsonLocation);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving location ("+location_id+") from database", e);
@@ -198,26 +158,20 @@ public class DbServletActions {
 	
 	/**
 	 * Create JSON representation of a location record
-	 * @param id
-	 * @param name
-	 * @param responsible
-	 * @param coordinates
-	 * @param elevation
+	 * @param location
 	 * @return
 	 */
-	private JSONObject buildLocationJson(
-			String id, 
-			String name, 
-			String coordinates, 
-			int elevation ){
+	private JSONObject buildLocationJson(Location location){
 		
-		JSONObject location = new JSONObject();
-		location.put("type", "location");
-		location.put("id", id);
-		location.put("name", name);
-		location.put("coordinates", coordinates);
-		location.put("elevation", elevation);
-		return location;
+		JSONObject result = new JSONObject();
+		result.put("type", "location");
+		result.put("id", location.getLocationId());
+		result.put("name", location.getName());
+		result.put("coordinates", location.getGeometry());
+		result.put("elevation", location.getElevation());
+		result.put("comment", location.getComment());
+		result.put("record_observations", location.isRecordingObservations());
+		return result;
 	}
 	
 	/**
@@ -234,47 +188,27 @@ public class DbServletActions {
 			JSONArray deviceTypesArr = new JSONArray();
 			result.put("deviceTypes", deviceTypesArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
-				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
-				+ "sensor_precision,sensor_height_in_metres FROM device_sensor_profiles"
-			);
+			Collection<DeviceSensorProfile> profiles = dbAPI.getDeviceSensorProfiles();
 			
-			ResultSet resultSet = pstmt.executeQuery();
+			Map<String,List<DeviceSensorProfile>> profilesByManufacturerName = 
+					new HashMap<String,List<DeviceSensorProfile>>();
 			
-			Map<String,List<DeviceTypeFields>> listOfFieldsByType = 
-					new HashMap<String,List<DeviceTypeFields>>();
-			
-			while( resultSet.next() ){
-				DeviceTypeFields fields = new DeviceTypeFields();
-				
-				fields.id = resultSet.getString(1);
-				fields.device_type = resultSet.getString(2);
-				fields.manufacturer = resultSet.getString(3);
-				fields.manufacturer_device_name = resultSet.getString(4);
-				fields.sensor_label = resultSet.getString(5);
-				fields.sensor_type_of_measurement = resultSet.getString(6);
-				fields.sensor_unit_of_measurement = resultSet.getString(7);
-				fields.sensor_accuracy = resultSet.getDouble(8);
-				fields.sensor_precision = resultSet.getDouble(9);
-				fields.sensor_height_in_metres = resultSet.getDouble(10);
-					
-				List<DeviceTypeFields> listOfFields = listOfFieldsByType.get(fields.manufacturer_device_name);
-				if( null == listOfFields ){
-					listOfFields = new Vector<DeviceTypeFields>();
-					listOfFieldsByType.put(fields.manufacturer_device_name, listOfFields);
+			for(DeviceSensorProfile profile : profiles){
+				List<DeviceSensorProfile> profilesForName = 
+						profilesByManufacturerName.get(profile.getManufacturerDeviceName());
+				if( null == profilesForName ){
+					profilesForName = new Vector<DeviceSensorProfile>();
+					profilesByManufacturerName.put(profile.getManufacturerDeviceName(), profilesForName);
 				}
 				
-				listOfFields.add(fields);
+				profilesForName.add(profile);
 			}
 
-			for(List<DeviceTypeFields> listOfFields : listOfFieldsByType.values()){
-				JSONObject deviceType = buildDeviceTypeJson(listOfFields);
+			for(List<DeviceSensorProfile> profilesForName : profilesByManufacturerName.values()){
+				JSONObject deviceType = buildDeviceTypeJson(profilesForName);
 				
 				deviceTypesArr.put(deviceType);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all device types from database", e);
@@ -286,95 +220,34 @@ public class DbServletActions {
 	}
 	
 	/**
-	 * Return a device type from name
-	 * @return
-	 * @throws Exception
-	 */
-	public JSONObject getDeviceTypeFromName(
-			String name
-			) throws Exception {
-
-		JSONObject result = new JSONObject();
-		
-		try {
-			JSONArray deviceTypesArr = new JSONArray();
-			result.put("deviceTypes", deviceTypesArr);
-			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
-				+"sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
-				+"sensor_precision,sensor_height_in_metres"
-				+" FROM device_sensor_profiles"
-				+" WHERE manufacturer_device_name=?"
-			);
-			
-			pstmt.setString(1, name);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			List<DeviceTypeFields> listOfFields = new Vector<DeviceTypeFields>();
-			
-			while( resultSet.next() ){
-				DeviceTypeFields fields = new DeviceTypeFields();
-				
-				fields.id = resultSet.getString(1);
-				fields.device_type = resultSet.getString(2);
-				fields.manufacturer = resultSet.getString(3);
-				fields.manufacturer_device_name = resultSet.getString(4);
-				fields.sensor_label = resultSet.getString(5);
-				fields.sensor_type_of_measurement = resultSet.getString(6);
-				fields.sensor_unit_of_measurement = resultSet.getString(7);
-				fields.sensor_accuracy = resultSet.getDouble(8);
-				fields.sensor_precision = resultSet.getDouble(9);
-				fields.sensor_height_in_metres = resultSet.getDouble(10);
-					
-				listOfFields.add(fields);
-			}
-
-			JSONObject deviceType = buildDeviceTypeJson(listOfFields);
-			
-			deviceTypesArr.put(deviceType);
-			
-			resultSet.close();
-			
-		} catch (Exception e) {
-			throw new Exception("Error retrieving device type "+name+" from database", e);
-		}
-		
-		result.put("ok", true);
-
-		return result;
-	}
-
-	/**
-	 * @param listOfFields
+	 * @param deviceSensorProfiles
 	 * @return
 	 */
-	private JSONObject buildDeviceTypeJson(List<DeviceTypeFields> listOfFields){
+	private JSONObject buildDeviceTypeJson(List<DeviceSensorProfile> deviceSensorProfiles){
 		
 		JSONObject deviceType = new JSONObject();
 		deviceType.put("type", "deviceType");
 		
 		{
-			DeviceTypeFields fields = listOfFields.get(0);
-			deviceType.put("device_type", fields.device_type);
-			deviceType.put("manufacturer", fields.manufacturer);
-			deviceType.put("manufacturer_device_name", fields.manufacturer_device_name);
+			DeviceSensorProfile profile = deviceSensorProfiles.get(0);
+			deviceType.put("device_type", profile.getDeviceType());
+			deviceType.put("manufacturer", profile.getManufacturer());
+			deviceType.put("manufacturer_device_name", profile.getManufacturerDeviceName());
 		}
 		
 		JSONArray sensors = new JSONArray();
 		deviceType.put("sensors", sensors);
 		
-		for(DeviceTypeFields fields : listOfFields){
+		for(DeviceSensorProfile profile : deviceSensorProfiles){
 			JSONObject sensor = new JSONObject();
 			sensors.put(sensor);
 			
-			sensor.put("label", fields.sensor_label);
-			sensor.put("type_of_measurement", fields.sensor_type_of_measurement);
-			sensor.put("unit_of_measurement", fields.sensor_unit_of_measurement);
-			sensor.put("accuracy", fields.sensor_accuracy);
-			sensor.put("precision", fields.sensor_precision);
-			sensor.put("height_in_metres", fields.sensor_height_in_metres);
+			sensor.put("label", profile.getSensorLabel());
+			sensor.put("type_of_measurement", profile.getSensorTypeOfMeasurement());
+			sensor.put("unit_of_measurement", profile.getSensorUnitOfMeasurement());
+			sensor.put("accuracy", profile.getSensorAccuracy());
+			sensor.put("precision", profile.getSensorPrecision());
+			sensor.put("height_in_metres", profile.getSensorHeightInMetres());
 		}
 
 		return deviceType;
@@ -400,80 +273,27 @@ public class DbServletActions {
 		JSONObject result = new JSONObject();
 		
 		try {
-			JSONObject jsonDeviceType = null;
-			JSONArray jsonSensorDefs = null;
-			{
-				JSONObject deviceTypesResult = getDeviceTypeFromName(type);
-				JSONArray arr = deviceTypesResult.getJSONArray("deviceTypes");
-				if( arr.length() < 1 ){
-					throw new Exception("Can not find device type: "+type);
-				}
-				jsonDeviceType = arr.getJSONObject(0);
-				jsonSensorDefs = jsonDeviceType.getJSONArray("sensors");
-			}
+			Device device = new Device();
+			device.setSerialNumber(serialNumber);
+			device.setAccessCode(accessCode);
+			device.setDeviceType(type);
+			device.setAcquiredOn(acquiredOn);
+			device.setNotes(notes);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO devices (serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes)"
-				+" VALUES (?,?,?,?,?,?,?)"
-				+" RETURNING id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
-			);
+			device = dbAPI.createDevice(device);
 			
-			pstmt.setString(1, serialNumber);
-            pstmt.setString(2, accessCode);
-			pstmt.setString(3, jsonDeviceType.getString("device_type"));
-			pstmt.setString(4, jsonDeviceType.getString("manufacturer"));
-			pstmt.setString(5, jsonDeviceType.getString("manufacturer_device_name"));
-			pstmt.setTimestamp(6, new Timestamp(acquiredOn.getTime()));
-			pstmt.setString(7, notes);
-
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			resultSet.next();
-			String res_id = resultSet.getString(1);
-			String res_serialNumber = resultSet.getString(2);
-            String res_accessCode = resultSet.getString(3);
-			String res_deviceType = resultSet.getString(4);
-			String res_manufacturer = resultSet.getString(5);
-			String res_manufacturer_device_name = resultSet.getString(6);
-			Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
-			String res_notes = resultSet.getString(8);
 				
-			JSONObject device = buildDeviceJson(
-				res_id,
-				res_serialNumber,
-                res_accessCode,
-				res_deviceType,
-				res_manufacturer,
-				res_manufacturer_device_name,
-				res_acquired_on,
-				res_notes
-				);
-			result.put("device", device);
+			JSONObject jsonDevice = buildDeviceJson(device);
+			result.put("device", jsonDevice);
 			
-			JSONArray sensors = new JSONArray();
-			device.put("sensors", sensors);
+			JSONArray sensorsArr = new JSONArray();
+			jsonDevice.put("sensors", sensorsArr);
 			
-			// Create sensors...
-			for(int i=0; i<jsonSensorDefs.length(); ++i){
-				JSONObject jsonSensorDef = jsonSensorDefs.getJSONObject(i);
-				
-				String label = jsonSensorDef.getString("label");
-				String type_of_measurement = jsonSensorDef.getString("type_of_measurement");
-				String unit_of_measurement = jsonSensorDef.optString("unit_of_measurement");
-				double accuracy = jsonSensorDef.getDouble("accuracy");
-				double precision = jsonSensorDef.getDouble("precision");
-				double height_in_metres = jsonSensorDef.getDouble("height_in_metres");
-
-				JSONObject sensorJson = createDeviceSensor(
-						res_id,
-						label,
-						type_of_measurement,
-						unit_of_measurement,
-						accuracy,
-						precision,
-						height_in_metres
-						);
-				sensors.put(sensorJson);
+			// Report associated sensors...
+			Collection<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device.getId());
+			for(Sensor sensor : sensors){
+				JSONObject jsonSensor = buildSensorJson(sensor);
+				sensorsArr.put(jsonSensor);
 			}
 			
 		} catch (Exception e) {
@@ -499,38 +319,13 @@ public class DbServletActions {
 			JSONArray deviceArr = new JSONArray();
 			result.put("devices", deviceArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
-				+ " FROM devices"
-			);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_serialNumber = resultSet.getString(2);
-                String res_accessCode = resultSet.getString(3);
-				String res_device_type = resultSet.getString(4);
-				String res_manufacturer = resultSet.getString(5);
-				String res_manufacturer_device_name = resultSet.getString(6);
-				Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
-				String res_notes = resultSet.getString(8);
-					
-				JSONObject device = buildDeviceJson(
-						res_id,
-						res_serialNumber,
-                        res_accessCode,
-						res_device_type,
-						res_manufacturer,
-						res_manufacturer_device_name,
-						res_acquired_on,
-						res_notes
-						);
+			Collection<Device> devices = dbAPI.getDevices();
+
+			for(Device device : devices){
+				JSONObject jsonDevice = buildDeviceJson(device);
 				
-				deviceArr.put(device);
+				deviceArr.put(jsonDevice);
 			}
-			
-			resultSet.close();
 			
 			// Get sensors
 			Map<String,JSONArray> sensorMap = getAllSensors();
@@ -567,45 +362,14 @@ public class DbServletActions {
 			JSONArray deviceArr = new JSONArray();
 			result.put("devices", deviceArr);
 			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
-				+ " FROM devices WHERE id=?"
-			);
-			
-			UUID uuid = UUID.fromString(device_id);
-			
-			pstmt.setObject(1, uuid);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_serialNumber = resultSet.getString(2);
-                String res_accessCode = resultSet.getString(3);
-				String res_device_type = resultSet.getString(4);
-				String res_manufacturer = resultSet.getString(5);
-				String res_manufacturer_device_name = resultSet.getString(6);
-				Date res_acquired_on = new Date( resultSet.getTimestamp(7).getTime() );
-				String res_notes = resultSet.getString(8);
-					
-				JSONObject device = buildDeviceJson(
-						res_id,
-						res_serialNumber,
-                        res_accessCode,
-						res_device_type,
-						res_manufacturer,
-						res_manufacturer_device_name,
-						res_acquired_on,
-						res_notes
-						);
+			Device device = dbAPI.getDeviceFromId(device_id);
 				
-				JSONArray sensors = getSensorsFromDeviceId(device_id);
-				device.put("sensors", sensors);
-				
-				deviceArr.put(device);
-			}
+			JSONObject jsonDevice = buildDeviceJson(device);
 			
-			resultSet.close();
+			JSONArray sensors = getSensorsFromDeviceId(device_id);
+			jsonDevice.put("sensors", sensors);
+			
+			deviceArr.put(jsonDevice);
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving device ("+device_id+") from database", e);
@@ -624,93 +388,20 @@ public class DbServletActions {
 	 * @param notes
 	 * @return
 	 */
-	private JSONObject buildDeviceJson(
-			String id,
-			String serialNumber,
-            String accessCode,
-			String deviceType,
-			String manufacturer,
-			String manufacturer_device_name,
-			Date acquired_on,
-			String notes 
-			){
+	private JSONObject buildDeviceJson(Device device){
 		
-		JSONObject device = new JSONObject();
-		device.put("type", "device");
-		device.put("id", id);
-		device.put("serial_number", serialNumber);
-        device.put("access_code", accessCode);
-		device.put("device_type", deviceType);
-		device.put("manufacturer", manufacturer);
-		device.put("manufacturer_device_name", manufacturer_device_name);
-		device.put("acquired_on", acquired_on.getTime());
-		device.put("acquired_on_text", DateUtils.getUtcDateString(acquired_on));
-		device.put("notes", notes);
-		return device;
-	}
-	
-	/**
-	 * @param device_id
-	 * @param label
-	 * @param typeOfMeasurment
-	 * @param units
-	 * @return
-	 * @throws Exception
-	 */
-	private JSONObject createDeviceSensor(
-			String device_id,
-			String label,
-			String type_of_measurement,
-			String unit_of_measurement,
-			double accuracy,
-			double precision,
-			double height_in_metres
-			) throws Exception {
-		
-		JSONObject sensor = null;
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-					"INSERT INTO sensors (device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres)"
-					+" VALUES (?,?,?,?,?,?,?)"
-					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
-				);
-				
-			pstmt.setObject(1, UUID.fromString(device_id));
-			pstmt.setString(2, label);
-			pstmt.setString(3, type_of_measurement);
-			pstmt.setString(4, unit_of_measurement);
-			pstmt.setDouble(5, accuracy);
-			pstmt.setDouble(6, precision);
-			pstmt.setDouble(7, height_in_metres);
-
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			resultSet.next();
-			String res_id = resultSet.getString(1);
-			String res_device_id = resultSet.getString(2);
-			String res_label = resultSet.getString(3);
-			String res_type_of_measurement = resultSet.getString(4);
-			String res_unit_of_measurement = resultSet.getString(5);
-			double res_accuracy = resultSet.getDouble(6);
-			double res_precision = resultSet.getDouble(7);
-			double res_height_in_metres = resultSet.getDouble(8);
-				
-			sensor = buildSensorJson(
-					res_id,
-					res_device_id,
-					res_label,
-					res_type_of_measurement,
-					res_unit_of_measurement,
-					res_accuracy,
-					res_precision,
-					res_height_in_metres
-					);
-
-		} catch(Exception e) {
-			throw new Exception("Error while creating sensor ("+label+") for device ("+device_id+")",e);
-		}
-		
-		return sensor;
+		JSONObject jsonDevice = new JSONObject();
+		jsonDevice.put("type", "device");
+		jsonDevice.put("id", device.getId());
+		jsonDevice.put("serial_number", device.getSerialNumber());
+        jsonDevice.put("access_code", device.getAccessCode());
+		jsonDevice.put("device_type", device.getDeviceType());
+		jsonDevice.put("manufacturer", device.getManufacturer());
+		jsonDevice.put("manufacturer_device_name", device.getManufacturerDeviceName());
+		jsonDevice.put("acquired_on", device.getAcquiredOn().getTime());
+		jsonDevice.put("acquired_on_text", DateUtils.getUtcDateString(device.getAcquiredOn()));
+		jsonDevice.put("notes", device.getNotes());
+		return jsonDevice;
 	}
 	
 	/**
@@ -723,41 +414,13 @@ public class DbServletActions {
 		JSONArray result = new JSONArray();
 		
 		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
-				+" FROM sensors"
-				+" WHERE device_id=?"
-			);
 			
-			pstmt.setObject(1, UUID.fromString(device_id));
+			Collection<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
 			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_device_id = resultSet.getString(2);
-				String res_label = resultSet.getString(3);
-				String res_type_of_measurement = resultSet.getString(4);
-				String res_unit_of_measurement = resultSet.getString(5);
-				double res_accuracy = resultSet.getDouble(6);
-				double res_precision = resultSet.getDouble(7);
-				double res_height_in_metres = resultSet.getDouble(8);
-					
-				JSONObject sensor = buildSensorJson(
-						res_id,
-						res_device_id,
-						res_label,
-						res_type_of_measurement,
-						res_unit_of_measurement,
-						res_accuracy,
-						res_precision,
-						res_height_in_metres
-						);
-				
-				result.put(sensor);
+			for(Sensor sensor : sensors){
+				JSONObject jsonSensor = buildSensorJson(sensor);
+				result.put(jsonSensor);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving sensors for device ("+device_id+") from database", e);
@@ -776,44 +439,19 @@ public class DbServletActions {
 		Map<String,JSONArray> map = new HashMap<String,JSONArray>();
 		
 		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres"
-				+" FROM sensors"
-			);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				String res_device_id = resultSet.getString(2);
-				String res_label = resultSet.getString(3);
-				String res_type_of_measurement = resultSet.getString(4);
-				String res_unit_of_measurement = resultSet.getString(5);
-				double res_accuracy = resultSet.getDouble(6);
-				double res_precision = resultSet.getDouble(7);
-				double res_height_in_metres = resultSet.getDouble(8);
-					
-				JSONObject sensor = buildSensorJson(
-						res_id,
-						res_device_id,
-						res_label,
-						res_type_of_measurement,
-						res_unit_of_measurement,
-						res_accuracy,
-						res_precision,
-						res_height_in_metres
-						);
+			Collection<Sensor> sensors = dbAPI.getSensors();
+
+			for(Sensor sensor : sensors){
+				JSONObject jsonSensor = buildSensorJson(sensor);
 				
-				JSONArray arr = map.get(res_device_id);
+				JSONArray arr = map.get(sensor.getDeviceId());
 				if( null == arr ){
 					arr = new JSONArray();
-					map.put(res_device_id, arr);
+					map.put(sensor.getDeviceId(), arr);
 				}
 				
-				arr.put(sensor);
+				arr.put(jsonSensor);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all sensors from database", e);
@@ -830,27 +468,18 @@ public class DbServletActions {
 	 * @param unitOfMeasurement
 	 * @return
 	 */
-	private JSONObject buildSensorJson(
-			String id, 
-			String device_id, 
-			String label, 
-			String type_of_measurement, 
-			String unit_of_measurement,
-			double accuracy,
-			double precision,
-			double height_in_meters
-			){
+	private JSONObject buildSensorJson(Sensor sensor){
 
-		JSONObject location = new JSONObject();
-		location.put("type", "sensor");
-		location.put("id", id);
-		location.put("label", label);
-		location.put("type_of_measurement", type_of_measurement);
-		location.put("unit_of_measurement", unit_of_measurement);
-		location.put("accuracy", accuracy);
-		location.put("precision", precision);
-		location.put("height_in_meters", height_in_meters);
-		return location;
+		JSONObject jsonSensor = new JSONObject();
+		jsonSensor.put("type", "sensor");
+		jsonSensor.put("id", sensor.getId());
+		jsonSensor.put("label", sensor.getLabel());
+		jsonSensor.put("type_of_measurement", sensor.getTypeOfMeasurement());
+		jsonSensor.put("unit_of_measurement", sensor.getUnitOfMeasurement());
+		jsonSensor.put("accuracy", sensor.getAccuracy());
+		jsonSensor.put("precision", sensor.getPrecision());
+		jsonSensor.put("height_in_meters", sensor.getHeightInMetres());
+		return jsonSensor;
 	}
 
 	/**

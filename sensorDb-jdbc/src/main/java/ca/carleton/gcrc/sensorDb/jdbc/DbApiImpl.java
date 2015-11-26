@@ -2,6 +2,8 @@ package ca.carleton.gcrc.sensorDb.jdbc;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +14,9 @@ import java.util.Vector;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
+import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
@@ -27,40 +31,177 @@ public class DbApiImpl implements DbAPI {
 	}
 
 	@Override
-	public String getDeviceIdFromSerialNumber(String serialNumber) throws Exception {
-		String device_id = null;
-		
+	public Collection<DeviceSensorProfile> getDeviceSensorProfilesFromManufacturerDeviceName(String manufacturerDeviceName) throws Exception {
+		List<DeviceSensorProfile> profiles = new Vector<DeviceSensorProfile>();
+
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id FROM devices WHERE serial_number=?"
+				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
+				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
+				+ "sensor_precision,sensor_height_in_metres"
+				+ " FROM device_sensor_profiles"
+				+ " WHERE manufacturer_device_name=?"
 			);
 			
-			pstmt.setString(1, serialNumber);
+			pstmt.setString(1, manufacturerDeviceName);
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
-			boolean found = false;
 			while( resultSet.next() ){
-				if( found ){
-					resultSet.close();
-					throw new Exception("More than one device with serial number: "+serialNumber);
-				}
+				DeviceSensorProfile sensorProfile = new DeviceSensorProfile();
 				
-				found = true;
-				device_id = resultSet.getString(1);
+				sensorProfile.setId( resultSet.getString(1) );
+				sensorProfile.setDeviceType( resultSet.getString(2) );
+				sensorProfile.setManufacturer( resultSet.getString(3) );
+				sensorProfile.setManufacturerDeviceName( resultSet.getString(4) );
+				sensorProfile.setSensorLabel( resultSet.getString(5) );
+				sensorProfile.setSensorTypeOfMeasurement( resultSet.getString(6) );
+				sensorProfile.setSensorUnitOfMeasurement( resultSet.getString(7) );
+				sensorProfile.setSensorAccuracy( resultSet.getDouble(8) );
+				sensorProfile.setSensorPrecision( resultSet.getDouble(9) );
+				sensorProfile.setSensorHeightInMetres( resultSet.getDouble(10) );
+
+				profiles.add(sensorProfile);
+			}
+
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device sensor profiles ("+manufacturerDeviceName+") from database", e);
+		}
+		
+		return profiles;
+	}
+
+	@Override
+	public Collection<DeviceSensorProfile> getDeviceSensorProfiles() throws Exception {
+		List<DeviceSensorProfile> profiles = new Vector<DeviceSensorProfile>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_type,manufacturer,manufacturer_device_name,sensor_label,"
+				+ "sensor_type_of_measurement,sensor_unit_of_measurement,sensor_accuracy,"
+				+ "sensor_precision,sensor_height_in_metres"
+				+ " FROM device_sensor_profiles"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				DeviceSensorProfile sensorProfile = new DeviceSensorProfile();
+				
+				sensorProfile.setId( resultSet.getString(1) );
+				sensorProfile.setDeviceType( resultSet.getString(2) );
+				sensorProfile.setManufacturer( resultSet.getString(3) );
+				sensorProfile.setManufacturerDeviceName( resultSet.getString(4) );
+				sensorProfile.setSensorLabel( resultSet.getString(5) );
+				sensorProfile.setSensorTypeOfMeasurement( resultSet.getString(6) );
+				sensorProfile.setSensorUnitOfMeasurement( resultSet.getString(7) );
+				sensorProfile.setSensorAccuracy( resultSet.getDouble(8) );
+				sensorProfile.setSensorPrecision( resultSet.getDouble(9) );
+				sensorProfile.setSensorHeightInMetres( resultSet.getDouble(10) );
+					
+				profiles.add(sensorProfile);
+			}
+
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all device sensor profiles from database", e);
+		}
+
+		return profiles;
+	}
+
+	@Override
+	public Sensor createSensor(Sensor sensor) throws Exception {
+
+		Sensor result = null;
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+					"INSERT INTO sensors"
+					+" (device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+ "precision,height_in_metres)"
+					+" VALUES (?,?,?,?,?,?,?)"
+					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+ "precision,height_in_metres"
+				);
+				
+			pstmt.setObject(1, UUID.fromString(sensor.getDeviceId()));
+			pstmt.setString(2, sensor.getLabel());
+			pstmt.setString(3, sensor.getTypeOfMeasurement());
+			pstmt.setString(4, sensor.getUnitOfMeasurement());
+			pstmt.setDouble(5, sensor.getAccuracy());
+			pstmt.setDouble(6, sensor.getPrecision());
+			pstmt.setDouble(7, sensor.getHeightInMetres());
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new Sensor();
+			result.setId( resultSet.getString(1) );
+			result.setDeviceId( resultSet.getString(2) );
+			result.setLabel( resultSet.getString(3) );
+			result.setTypeOfMeasurement( resultSet.getString(4) );
+			result.setUnitOfMeasurement( resultSet.getString(5) );
+			result.setAccuracy( resultSet.getDouble(6) );
+			result.setPrecision( resultSet.getDouble(7) );
+			result.setHeightInMetres( resultSet.getDouble(8) );
+				
+		} catch(Exception e) {
+			throw new Exception("Error while creating sensor ("+sensor.getLabel()+") for device ("+sensor.getDeviceId()+")",e);
+		}
+		
+		return result;
+	}
+
+	@Override
+	public Collection<Sensor> getSensors() throws Exception {
+		List<Sensor> sensors = new Vector<Sensor>();
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
+				+ "accuracy,precision,height_in_metres,serial_number"
+				+ " FROM sensors"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String label = resultSet.getString(3);
+				String typeOfMeasurement = resultSet.getString(4);
+				String unitOfMeasurement = resultSet.getString(5);
+				double accuracy = resultSet.getDouble(6);
+				double precision = resultSet.getDouble(7);
+				double heightInMetres = resultSet.getDouble(8);
+				String serialNumber = resultSet.getString(9);
+				
+				Sensor sensor = new Sensor();
+				sensor.setId(id);
+				sensor.setDeviceId(deviceId);
+				sensor.setLabel(label);
+				sensor.setTypeOfMeasurement(typeOfMeasurement);
+				sensor.setUnitOfMeasurement(unitOfMeasurement);
+				sensor.setAccuracy(accuracy);
+				sensor.setPrecision(precision);
+				sensor.setHeightInMetres(heightInMetres);
+				sensor.setSerialNumber(serialNumber);
+				
+				sensors.add(sensor);
 			}
 			
 			resultSet.close();
 			
-			if( !found ){
-				throw new Exception("Can not find device with serial number: "+serialNumber);
-			}
-			
 		} catch (Exception e) {
-			throw new Exception("Error retrieving device (sn="+serialNumber+") from database", e);
+			throw new Exception("Error retrieving sensors from database", e);
 		}
 
-		return device_id;
+		return sensors;
 	}
 
 	@Override
@@ -111,6 +252,203 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return sensors;
+	}
+
+	@Override
+	public Device createDevice(Device device) throws Exception {
+
+		Device result = null;
+		
+		try {
+			Collection<DeviceSensorProfile> deviceSensorProfiles = 
+				getDeviceSensorProfilesFromManufacturerDeviceName(
+					device.getManufacturerDeviceName()
+				);
+			if( deviceSensorProfiles.size() < 1 ){
+				throw new Exception("Can not find device sensor profiles for manufacturer name: "+device.getManufacturerDeviceName());
+			}
+			DeviceSensorProfile firstSensorProfile = null;
+			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
+				firstSensorProfile = sensorProfile;
+				break;
+			}
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO devices"
+				+" (serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes)"
+				+" VALUES (?,?,?,?,?,?,?)"
+				+" RETURNING id,serial_number,access_code,device_type,manufacturer,manufacturer_device_name,acquired_on,notes"
+			);
+			
+			pstmt.setString(1, device.getSerialNumber());
+            pstmt.setString(2, device.getAccessCode());
+			pstmt.setString(3, firstSensorProfile.getDeviceType());
+			pstmt.setString(4, firstSensorProfile.getManufacturer());
+			pstmt.setString(5, firstSensorProfile.getManufacturerDeviceName());
+			pstmt.setTimestamp(6, new Timestamp(device.getAcquiredOn().getTime()));
+			pstmt.setString(7, device.getNotes());
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new Device();
+			result.setId( resultSet.getString(1) );
+			result.setSerialNumber( resultSet.getString(2) );
+			result.setAccessCode( resultSet.getString(3) );
+			result.setDeviceType( resultSet.getString(4) );
+			result.setManufacturer( resultSet.getString(5) );
+			result.setManufacturerDeviceName( resultSet.getString(6) );
+			result.setAcquiredOn( resultSet.getTimestamp(7) );
+			result.setNotes( resultSet.getString(8) );
+				
+			// Create sensors for this device...
+			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
+				Sensor sensor = new Sensor();
+				sensor.setDeviceId(result.getId());
+				sensor.setLabel( sensorProfile.getSensorLabel() );
+				sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
+				sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
+				sensor.setPrecision( sensorProfile.getSensorPrecision() );
+				sensor.setTypeOfMeasurement( sensorProfile.getSensorTypeOfMeasurement() );
+				sensor.setUnitOfMeasurement( sensorProfile.getSensorUnitOfMeasurement() );
+
+				createSensor(sensor);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting device ("+device.getSerialNumber()+") into database", e);
+		}
+		
+		return result;
+	}
+
+	@Override
+	public Collection<Device> getDevices() throws Exception {
+		List<Device> devices = new Vector<Device>();
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,serial_number,access_code,device_type,manufacturer,"
+				+ "manufacturer_device_name,acquired_on,notes"
+				+ " FROM devices"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				Device device = new Device();
+				device.setId( resultSet.getString(1) );
+				device.setSerialNumber( resultSet.getString(2) );
+				device.setAccessCode( resultSet.getString(3) );
+				device.setDeviceType( resultSet.getString(4) );
+				device.setManufacturer( resultSet.getString(5) );
+				device.setManufacturerDeviceName( resultSet.getString(6) );
+				device.setAcquiredOn( resultSet.getTimestamp(7) );
+				device.setNotes( resultSet.getString(8) );
+				
+				devices.add(device);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving devices from database", e);
+		}
+
+		return devices;
+	}
+
+	@Override
+	public Device getDeviceFromId(String id) throws Exception {
+		Device device = null;
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,serial_number,access_code,device_type,manufacturer,"
+				+ "manufacturer_device_name,acquired_on,notes"
+				+ " FROM devices"
+				+ " WHERE id=?"
+			);
+			
+			pstmt.setString(1, id);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				if( null != device ){
+					resultSet.close();
+					throw new Exception("More than one device with id: "+id);
+				}
+				
+				device = new Device();
+				device.setId( resultSet.getString(1) );
+				device.setSerialNumber( resultSet.getString(2) );
+				device.setAccessCode( resultSet.getString(3) );
+				device.setDeviceType( resultSet.getString(4) );
+				device.setManufacturer( resultSet.getString(5) );
+				device.setManufacturerDeviceName( resultSet.getString(6) );
+				device.setAcquiredOn( resultSet.getTimestamp(7) );
+				device.setNotes( resultSet.getString(8) );
+			}
+			
+			resultSet.close();
+			
+			if( null == device ){
+				throw new Exception("Can not find device with id: "+id);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device (id="+id+") from database", e);
+		}
+
+		return device;
+	}
+
+	@Override
+	public Device getDeviceFromSerialNumber(String serialNumber) throws Exception {
+		Device device = null;
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,serial_number,access_code,device_type,manufacturer,"
+				+ "manufacturer_device_name,acquired_on,notes"
+				+ " FROM devices"
+				+ " WHERE serial_number=?"
+			);
+			
+			pstmt.setString(1, serialNumber);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				if( null != device ){
+					resultSet.close();
+					throw new Exception("More than one device with serial number: "+serialNumber);
+				}
+				
+				device = new Device();
+				device.setId( resultSet.getString(1) );
+				device.setSerialNumber( resultSet.getString(2) );
+				device.setAccessCode( resultSet.getString(3) );
+				device.setDeviceType( resultSet.getString(4) );
+				device.setManufacturer( resultSet.getString(5) );
+				device.setManufacturerDeviceName( resultSet.getString(6) );
+				device.setAcquiredOn( resultSet.getTimestamp(7) );
+				device.setNotes( resultSet.getString(8) );
+			}
+			
+			resultSet.close();
+			
+			if( null == device ){
+				throw new Exception("Can not find device with serial number: "+serialNumber);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device (sn="+serialNumber+") from database", e);
+		}
+
+		return device;
 	}
 	
 	@Override
@@ -179,6 +517,43 @@ public class DbApiImpl implements DbAPI {
 	}
 	
 	@Override
+	public Location createLocation(Location location) throws Exception {
+		
+		Location result = null;
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO locations (name,coordinates,elevation,comment,record_observations)"
+				+" VALUES (?,ST_GeomFromText(?,4326),?,?,?)"
+				+" RETURNING id,name,ST_AsText(coordinates),elevation,comment,record_observations"
+			);
+			
+			pstmt.setString(1, location.getName());
+			pstmt.setString(2, location.getGeometry());
+			pstmt.setInt(3, location.getElevation());
+			pstmt.setString(4, location.getComment());
+			pstmt.setBoolean(5, location.isRecordingObservations());
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new Location();
+			result.setLocationId( resultSet.getString(1) );
+			result.setName( resultSet.getString(2) );
+			result.setGeometry( resultSet.getString(3) );
+			result.setElevation( resultSet.getInt(4) );
+			result.setComment( resultSet.getString(5) );
+			result.setRecordingObservations( resultSet.getBoolean(6) );
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting location ("+location.getName()+") into database", e);
+		}
+
+		return result;
+	}
+
+	@Override
 	public Location getLocationFromLocationId(String locationId) throws Exception {
 		Location location = null;
 		try {
@@ -216,6 +591,39 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return location;
+	}
+
+	@Override
+	public Collection<Location> getLocations() throws Exception {
+		List<Location> locations = new Vector<Location>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation,comment,record_observations"
+				+ " FROM locations"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				Location location = new Location();
+				location.setLocationId( resultSet.getString(1) );
+				location.setName( resultSet.getString(2) );
+				location.setGeometry( resultSet.getString(3) );
+				location.setElevation( resultSet.getInt(4) );
+				location.setComment( resultSet.getString(5) );
+				location.setRecordingObservations( resultSet.getBoolean(6) );
+				
+				locations.add(location);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving locations from database", e);
+		}
+
+		return locations;
 	}
 
 	@Override
