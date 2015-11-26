@@ -23,6 +23,10 @@ public interface DbAPI {
 
 	Device getDeviceFromSerialNumber(String serialNumber) throws Exception;
 
+	DeviceLocation createDeviceLocation(DeviceLocation deviceLocation) throws Exception;
+	
+	List<DeviceLocation> getDeviceLocations() throws Exception;
+	
 	List<DeviceLocation> getDeviceLocationsFromDeviceId(String device_id) throws Exception;
 
 	List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception;

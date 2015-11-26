@@ -1,14 +1,10 @@
 package ca.carleton.gcrc.sensorDb.servlet.db;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.Vector;
 
 import org.json.JSONArray;
@@ -18,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -30,11 +27,11 @@ public class DbServletActions {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private JSONObject cached_welcome = null;
-	private DbConnection dbConn = null;
+	// private DbConnection dbConn = null;
 	private DbAPI dbAPI = null;
 
 	public DbServletActions(DbConnection dbConn){
-		this.dbConn = dbConn;
+		//this.dbConn = dbConn;
 		this.dbAPI = dbConn.getAPI();
 	}
 	
@@ -276,7 +273,7 @@ public class DbServletActions {
 			Device device = new Device();
 			device.setSerialNumber(serialNumber);
 			device.setAccessCode(accessCode);
-			device.setDeviceType(type);
+			device.setManufacturerDeviceName(type);
 			device.setAcquiredOn(acquiredOn);
 			device.setNotes(notes);
 			
@@ -500,60 +497,16 @@ public class DbServletActions {
 		JSONObject result = new JSONObject();
 		
 		try {
-			// Check if device_id is valid
-			try {
-				JSONObject query = getDeviceFromId(device_id);
-				JSONArray devices = query.getJSONArray("devices");
-				if( devices.length() < 1 ){
-					throw new Exception("Device not found");
-				}
-				if( devices.length() > 1 ){
-					throw new Exception("Multiple devices with same identifier were found");
-				}
+			DeviceLocation deviceLocation = new DeviceLocation();
+			deviceLocation.setDeviceId(device_id);
+			deviceLocation.setLocationId(location_id);
+			deviceLocation.setTimestamp(time);
+			deviceLocation.setNotes(notes);
+			
+			deviceLocation = dbAPI.createDeviceLocation(deviceLocation);
 				
-			} catch (Exception e) {
-				throw new Exception("Error finding device ("+device_id+")",e);
-			}
-			
-			// Check if location_id is valid
-			try {
-				JSONObject query = getLocationFromId(location_id);
-				JSONArray devices = query.getJSONArray("locations");
-				if( devices.length() < 1 ){
-					throw new Exception("Location not found");
-				}
-				if( devices.length() > 1 ){
-					throw new Exception("Multiple locations with same identifier were found");
-				}
-				
-			} catch (Exception e) {
-				throw new Exception("Error finding device ("+device_id+")",e);
-			}
-			
-			// Get Sql Time
-			Timestamp dbTime = new Timestamp( time.getTime() );
-			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO devices_locations (timestamp,device_id,location_id,notes) VALUES (?,?,?,?)"
-				+" RETURNING id,timestamp,device_id,location_id,notes"
-			);
-			
-			pstmt.setTimestamp(1, dbTime);
-			pstmt.setObject(2, UUID.fromString(device_id) );
-			pstmt.setObject(3, UUID.fromString(location_id) );
-			pstmt.setString(4, notes);
-
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			resultSet.next();
-			String res_id = resultSet.getString(1);
-			Date res_time = new Date( resultSet.getTimestamp(2).getTime() );
-			String res_device_id = resultSet.getString(3);
-			String res_location_id = resultSet.getString(4);
-			String res_notes = resultSet.getString(5);
-				
-			JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
-			result.put("deviceLocation", deviceLocation);
+			JSONObject jsonDeviceLocation = buildDeviceLocationJson(deviceLocation);
+			result.put("deviceLocation", jsonDeviceLocation);
 			
 		} catch (Exception e) {
 			throw new Exception("Error inserting deviceLocation into database", e);
@@ -576,26 +529,14 @@ public class DbServletActions {
 		try {
 			JSONArray deviceLocationArr = new JSONArray();
 			result.put("deviceLocations", deviceLocationArr);
-			
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,timestamp,device_id,location_id,notes FROM devices_locations"
-			);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				String res_id = resultSet.getString(1);
-				Date res_time = new Date( resultSet.getTimestamp(2).getTime() );
-				String res_device_id = resultSet.getString(3);
-				String res_location_id = resultSet.getString(4);
-				String res_notes = resultSet.getString(5);
-					
-				JSONObject deviceLocation = buildDeviceLocationJson(res_id,res_time,res_device_id,res_location_id,res_notes);
+
+			Collection<DeviceLocation> deviceLocations = dbAPI.getDeviceLocations();
+
+			for(DeviceLocation deviceLocation : deviceLocations){
+				JSONObject jsonDeviceLocation = buildDeviceLocationJson(deviceLocation);
 				
-				deviceLocationArr.put(deviceLocation);
+				deviceLocationArr.put(jsonDeviceLocation);
 			}
-			
-			resultSet.close();
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving all deviceLocations from database", e);
@@ -607,29 +548,20 @@ public class DbServletActions {
 	}
 	
 	/**
-	 * @param id
-	 * @param time
-	 * @param device_id
-	 * @param location_id
-	 * @param notes
+	 * @param deviceLocation
 	 * @return
 	 */
-	private JSONObject buildDeviceLocationJson(
-			String id, 
-			Date time,
-			String device_id, 
-			String location_id, 
-			String notes ){
+	private JSONObject buildDeviceLocationJson(DeviceLocation deviceLocation){
 		
-		JSONObject device = new JSONObject();
-		device.put("type", "deviceLocation");
-		device.put("id", id);
-		device.put("timestamp", time.getTime());
-		device.put("timestamp_text", DateUtils.getUtcDateString(time));
-		device.put("device_id", device_id);
-		device.put("location_id", location_id);
-		device.put("notes", notes);
-		return device;
+		JSONObject jsonDeviceLocation = new JSONObject();
+		jsonDeviceLocation.put("type", "deviceLocation");
+		jsonDeviceLocation.put("id", deviceLocation.getId());
+		jsonDeviceLocation.put("timestamp", deviceLocation.getTimestamp().getTime());
+		jsonDeviceLocation.put("timestamp_text", DateUtils.getUtcDateString(deviceLocation.getTimestamp()));
+		jsonDeviceLocation.put("device_id", deviceLocation.getDeviceId());
+		jsonDeviceLocation.put("location_id", deviceLocation.getLocationId());
+		jsonDeviceLocation.put("notes", deviceLocation.getNotes());
+		return jsonDeviceLocation;
 	}
 	
 	public JSONObject getImportRecords() throws Exception {

@@ -371,7 +371,7 @@ public class DbApiImpl implements DbAPI {
 				+ " WHERE id=?"
 			);
 			
-			pstmt.setString(1, id);
+			pstmt.setObject(1, UUID.fromString(id));
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -449,6 +449,105 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return device;
+	}
+
+	@Override
+	public DeviceLocation createDeviceLocation(DeviceLocation deviceLocation) throws Exception {
+
+		DeviceLocation result = null;
+		
+		try {
+			// Check if device_id is valid
+			try {
+				Device device = getDeviceFromId(deviceLocation.getDeviceId());
+				if( null == device ){
+					throw new Exception("Device not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding device ("+deviceLocation.getDeviceId()+")",e);
+			}
+			
+			// Check if location_id is valid
+			try {
+				Location location = getLocationFromLocationId(deviceLocation.getLocationId());
+				if( null == location ){
+					throw new Exception("Location not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding location ("+deviceLocation.getLocationId()+")",e);
+			}
+			
+			// Get Sql Time
+			Timestamp dbTime = new Timestamp( deviceLocation.getTimestamp().getTime() );
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO devices_locations"
+				+" (timestamp,device_id,location_id,notes)"
+				+" VALUES (?,?,?,?)"
+				+" RETURNING id,timestamp,device_id,location_id,notes"
+			);
+			
+			pstmt.setTimestamp(1, dbTime);
+			pstmt.setObject(2, UUID.fromString(deviceLocation.getDeviceId()) );
+			pstmt.setObject(3, UUID.fromString(deviceLocation.getLocationId()) );
+			pstmt.setString(4, deviceLocation.getNotes());
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new DeviceLocation();
+			result.setId( resultSet.getString(1) );
+			result.setTimestamp( resultSet.getTimestamp(2) );
+			result.setDeviceId( resultSet.getString(3) );
+			result.setLocationId( resultSet.getString(4) );
+			result.setNotes( resultSet.getString(5) );
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceLocation into database", e);
+		}
+		
+		return result;
+	}
+
+	@Override
+	public List<DeviceLocation> getDeviceLocations() throws Exception {
+		List<DeviceLocation> deviceLocations = new Vector<DeviceLocation>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,location_id,timestamp,notes"
+				+ " FROM devices_locations"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String locationId = resultSet.getString(3);
+				Date timestamp = resultSet.getTimestamp(4);
+				String notes = resultSet.getString(5);
+
+				DeviceLocation deviceLocation = new DeviceLocation();
+				deviceLocation.setId(id);
+				deviceLocation.setDeviceId(deviceId);
+				deviceLocation.setLocationId(locationId);
+				deviceLocation.setTimestamp(timestamp);
+				deviceLocation.setNotes(notes);
+				
+				deviceLocations.add(deviceLocation);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device locations from database", e);
+		}
+
+		return deviceLocations;
 	}
 	
 	@Override
