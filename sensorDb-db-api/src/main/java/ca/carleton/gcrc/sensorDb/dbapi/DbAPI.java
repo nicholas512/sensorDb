@@ -39,6 +39,10 @@ public interface DbAPI {
 
 	Observation createObservation(Observation observation) throws Exception;
 
+	Observation getObservationFromImportKey(String importKey) throws Exception;
+
+	ImportRecord createImportRecord(ImportRecord importRecord) throws Exception;
+
 	List<ImportRecord> getImportRecords() throws Exception;
 
 	ImportRecord getImportRecordFromImportId(String importId) throws Exception;

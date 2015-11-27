@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReport;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReportMemory;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -32,11 +30,11 @@ public class SensorFileImporter {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	private DbConnection dbConn;
+	//private DbConnection dbConn;
 	private DbAPI dbAPI;
 	
 	public SensorFileImporter(DbConnection dbConn){
-		this.dbConn = dbConn;
+		//this.dbConn = dbConn;
 		this.dbAPI = dbConn.getAPI();
 	}
 	
@@ -57,31 +55,16 @@ public class SensorFileImporter {
 		jsonParams.put("originalFileName", conversionRequest.getOriginalFileName());
 		jsonParams.put("importerName", conversionRequest.getImporterName());
 		jsonParams.put("notes", conversionRequest.getNotes());
-		String paramStr = jsonParams.toString();
 
 		// Record this file into the database
-		String importUuid = null;
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO imports (import_time,filename,import_parameters) VALUES (?,?,?) RETURNING id"
-			);
-
-			pstmt.setTimestamp(1, new Timestamp((new Date()).getTime())); // now
-			pstmt.setString(2, file.getName());
-			pstmt.setString(3, paramStr);
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			while( resultSet.next() ){
-				importUuid = resultSet.getString(1);
-			}
-			
-			resultSet.close();
-		} catch (Exception e) {
-			throw new Exception("Error while recording observation file "+fileName,e);
-		}
+		ImportRecord importRecord = new ImportRecord();
+		importRecord.setImportTime(new Date()); // now
+		importRecord.setFileName(file.getName());
+		importRecord.setImportParameters(jsonParams);
 		
-		logger.error("Import UUID: "+importUuid);
+		importRecord = dbAPI.createImportRecord(importRecord);
+		
+		logger.error("Import UUID: "+importRecord.getId());
 		
 		// Import the file
 		FileInputStream fis = null;
@@ -92,7 +75,7 @@ public class SensorFileImporter {
 			
 			importFile(
 					isr
-					,importUuid
+					,importRecord.getId()
 					,conversionRequest.getInitialOffset()
 					,conversionRequest.getFinalOffset()
 					);
@@ -220,37 +203,6 @@ public class SensorFileImporter {
 		}
 	}
 
-	private boolean isObservationInDatabase(Observation obervation) throws Exception {
-		String importKey = null;
-
-		try {
-			boolean inDatabase = false;
-			
-			importKey = obervation.getImportKey();
-			if( null != importKey ){
-				PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-					"SELECT id"
-					+" FROM observations"
-					+" WHERE import_key=?"
-				);
-				
-				pstmt.setString(1, importKey);
-				
-				ResultSet res = pstmt.executeQuery();
-				
-				while( res.next() ){
-					// If something matches, we should not insert
-					inDatabase = true;
-				}
-			}
-			
-			return inDatabase;
-			
-		} catch (Exception e) {
-			throw new Exception("Error while looking for matching observation: "+importKey, e);
-		}
-	}
-
 	private void insertSample(
 			String importUUID,
 			String device_id,
@@ -295,7 +247,17 @@ public class SensorFileImporter {
 			// "In Transit" locations should not be saved.
 			if( location.isRecordingObservations() ){
 
-				if( isObservationInDatabase(observation) ){
+				boolean collision = false;
+				String importKey = observation.getImportKey();
+				Observation collidingObservation = null;
+				if( null != importKey ){
+					collidingObservation = dbAPI.getObservationFromImportKey(importKey);
+				}
+				if( null != collidingObservation ){
+					collision = true;
+				}
+				
+				if( collision ){
 					report.skippedObservation(observation);
 				} else {
 					observation = dbAPI.createObservation(observation);

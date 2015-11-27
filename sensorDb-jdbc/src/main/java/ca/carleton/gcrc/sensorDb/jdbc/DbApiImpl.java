@@ -633,78 +633,6 @@ public class DbApiImpl implements DbAPI {
 
 		return locations;
 	}
-
-	@Override
-	public Observation createObservation(Observation observation) throws Exception {
-		
-		Observation result = null;
-		
-		if( null != observation.getId() ){
-			throw new Exception("Id should not be set when creating an observation");
-		}
-		
-		try {
-			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO observations"
-				+" (device_id,sensor_id,import_id,import_key,observation_type,"
-				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
-				+" logged_time,corrected_utc_time,location,height_min_metres,"
-				+" height_max_metres,elevation_in_metres)"
-				+" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?,?)"
-				+" RETURNING id,device_id,sensor_id,import_id,import_key,observation_type,"
-				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
-				+" logged_time,corrected_utc_time,ST_AsEWKT(location),height_min_metres,"
-				+" height_max_metres,elevation_in_metres"
-			);
-			
-			pstmt.setObject(1, UUID.fromString(observation.getDeviceId()));
-			pstmt.setObject(2, UUID.fromString(observation.getSensorId()));
-			pstmt.setObject(3, UUID.fromString(observation.getImportId()));
-			pstmt.setString(4, observation.getImportKey());
-			pstmt.setString(5, observation.getObservationType());
-			pstmt.setString(6, observation.getUnitOfMeasure());
-			pstmt.setDouble(7, observation.getAccuracy());
-			pstmt.setDouble(8, observation.getPrecision());
-			pstmt.setDouble(9, observation.getNumericValue());
-			pstmt.setString(10, observation.getTextValue());
-			pstmt.setTimestamp(11, new Timestamp(observation.getLoggedTime().getTime()));
-			pstmt.setTimestamp(12, new Timestamp(observation.getCorrectedTime().getTime()));
-			pstmt.setString(13, observation.getLocation());
-			pstmt.setDouble(14, observation.getMinHeight());
-			pstmt.setDouble(15, observation.getMaxHeight());
-			pstmt.setDouble(16, observation.getElevation());
-			
-			ResultSet resultSet = pstmt.executeQuery();
-			
-			resultSet.next();
-			
-			result = new Observation();
-			result.setId( resultSet.getString(1) );
-			result.setDeviceId( resultSet.getString(2) );
-			result.setSensorId( resultSet.getString(3) );
-			result.setImportId( resultSet.getString(4) );
-			result.setImportKey( resultSet.getString(5) );
-			result.setObservationType( resultSet.getString(6) );
-			result.setUnitOfMeasure( resultSet.getString(7) );
-			result.setAccuracy( resultSet.getDouble(8) );
-			result.setPrecision( resultSet.getDouble(9) );
-			result.setNumericValue( resultSet.getDouble(10) );
-			result.setTextValue( resultSet.getString(11) );
-			result.setLoggedTime( resultSet.getTimestamp(12) );
-			result.setCorrectedTime( resultSet.getTimestamp(13) );
-			result.setLocation( resultSet.getString(14) );
-			result.setMinHeight( resultSet.getDouble(15) );
-			result.setMaxHeight( resultSet.getDouble(16) );
-			result.setElevation( resultSet.getDouble(17) );
-
-			resultSet.close();
-				
-		} catch (Exception e) {
-			throw new Exception("Error inserting observation into database", e);
-		}
-
-		return result;
-	}
 	
 	@Override
 	public Location createLocation(Location location) throws Exception {
@@ -820,6 +748,181 @@ public class DbApiImpl implements DbAPI {
 		}
 
 		return locations;
+	}
+
+	@Override
+	public Observation createObservation(Observation observation) throws Exception {
+		
+		Observation result = null;
+		
+		if( null != observation.getId() ){
+			throw new Exception("Id should not be set when creating an observation");
+		}
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO observations"
+				+" (device_id,sensor_id,import_id,import_key,observation_type,"
+				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
+				+" logged_time,corrected_utc_time,location,height_min_metres,"
+				+" height_max_metres,elevation_in_metres)"
+				+" VALUES (?,?,?,?,?,?,?,?,?,?,?,?,ST_GeomFromEWKT(?),?,?,?)"
+				+" RETURNING id,device_id,sensor_id,import_id,import_key,observation_type,"
+				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
+				+" logged_time,corrected_utc_time,ST_AsEWKT(location),height_min_metres,"
+				+" height_max_metres,elevation_in_metres"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(observation.getDeviceId()));
+			pstmt.setObject(2, UUID.fromString(observation.getSensorId()));
+			pstmt.setObject(3, UUID.fromString(observation.getImportId()));
+			pstmt.setString(4, observation.getImportKey());
+			pstmt.setString(5, observation.getObservationType());
+			pstmt.setString(6, observation.getUnitOfMeasure());
+			pstmt.setDouble(7, observation.getAccuracy());
+			pstmt.setDouble(8, observation.getPrecision());
+			pstmt.setDouble(9, observation.getNumericValue());
+			pstmt.setString(10, observation.getTextValue());
+			pstmt.setTimestamp(11, new Timestamp(observation.getLoggedTime().getTime()));
+			pstmt.setTimestamp(12, new Timestamp(observation.getCorrectedTime().getTime()));
+			pstmt.setString(13, observation.getLocation());
+			pstmt.setDouble(14, observation.getMinHeight());
+			pstmt.setDouble(15, observation.getMaxHeight());
+			pstmt.setDouble(16, observation.getElevation());
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new Observation();
+			result.setId( resultSet.getString(1) );
+			result.setDeviceId( resultSet.getString(2) );
+			result.setSensorId( resultSet.getString(3) );
+			result.setImportId( resultSet.getString(4) );
+			result.setImportKey( resultSet.getString(5) );
+			result.setObservationType( resultSet.getString(6) );
+			result.setUnitOfMeasure( resultSet.getString(7) );
+			result.setAccuracy( resultSet.getDouble(8) );
+			result.setPrecision( resultSet.getDouble(9) );
+			result.setNumericValue( resultSet.getDouble(10) );
+			result.setTextValue( resultSet.getString(11) );
+			result.setLoggedTime( resultSet.getTimestamp(12) );
+			result.setCorrectedTime( resultSet.getTimestamp(13) );
+			result.setLocation( resultSet.getString(14) );
+			result.setMinHeight( resultSet.getDouble(15) );
+			result.setMaxHeight( resultSet.getDouble(16) );
+			result.setElevation( resultSet.getDouble(17) );
+
+			resultSet.close();
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting observation into database", e);
+		}
+
+		return result;
+	}
+
+	@Override
+	public Observation getObservationFromImportKey(String importKey) throws Exception {
+		Observation observation = null;
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,sensor_id,import_id,import_key,observation_type,"
+				+" unit_of_measure,accuracy,precision,numeric_value,text_value,"
+				+" logged_time,corrected_utc_time,ST_AsEWKT(location),height_min_metres,"
+				+" height_max_metres,elevation_in_metres"
+				+" FROM observations"
+				+" WHERE import_key=?"
+			);
+			
+			pstmt.setString(1, importKey);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				if( null != observation ){
+					throw new Exception("Multiple observations reported for import key: "+importKey);
+				}
+
+				observation = new Observation();
+				observation.setId( resultSet.getString(1) );
+				observation.setDeviceId( resultSet.getString(2) );
+				observation.setSensorId( resultSet.getString(3) );
+				observation.setImportId( resultSet.getString(4) );
+				observation.setImportKey( resultSet.getString(5) );
+				observation.setObservationType( resultSet.getString(6) );
+				observation.setUnitOfMeasure( resultSet.getString(7) );
+				observation.setAccuracy( resultSet.getDouble(8) );
+				observation.setPrecision( resultSet.getDouble(9) );
+				observation.setNumericValue( resultSet.getDouble(10) );
+				observation.setTextValue( resultSet.getString(11) );
+				observation.setLoggedTime( resultSet.getTimestamp(12) );
+				observation.setCorrectedTime( resultSet.getTimestamp(13) );
+				observation.setLocation( resultSet.getString(14) );
+				observation.setMinHeight( resultSet.getDouble(15) );
+				observation.setMaxHeight( resultSet.getDouble(16) );
+				observation.setElevation( resultSet.getDouble(17) );
+			}
+
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error while looking for an observation with import key: "+importKey, e);
+		}
+		
+		return observation;
+	}
+
+	@Override
+	public ImportRecord createImportRecord(ImportRecord importRecord) throws Exception {
+
+		ImportRecord result = null;
+
+		if( null != importRecord.getId() ){
+			throw new Exception("Id should not be set when creating an import record");
+		}
+		
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO imports"
+				+" (import_time,filename,import_parameters)"
+				+" VALUES (?,?,?)"
+				+" RETURNING id,import_time,filename,import_parameters"
+			);
+
+			pstmt.setTimestamp(1, new Timestamp(importRecord.getImportTime().getTime())); // now
+			pstmt.setString(2, importRecord.getFileName());
+			
+			String importParamStr = null;
+			if( null != importRecord.getImportParameters() ){
+				importParamStr = importRecord.getImportParameters().toString();
+			}
+			pstmt.setString(3, importParamStr);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new ImportRecord();
+			result.setId( resultSet.getString(1) );
+			result.setImportTime( resultSet.getTimestamp(2) );
+			result.setFileName( resultSet.getString(3) );
+
+			JSONObject jsonImportParams = null;
+			importParamStr = resultSet.getString(4);
+			if( null != importParamStr ){
+				jsonImportParams = new JSONObject(importParamStr);
+			}
+			result.setImportParameters( jsonImportParams );
+			
+			resultSet.close();
+
+		} catch (Exception e) {
+			throw new Exception("Error while inserting import record in database",e);
+		}
+		
+		return result;
 	}
 
 	@Override
