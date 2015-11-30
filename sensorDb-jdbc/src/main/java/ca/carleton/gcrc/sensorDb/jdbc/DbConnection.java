@@ -49,6 +49,6 @@ public class DbConnection {
 	}
 	
 	public DbAPI getAPI(){
-		return new DbApiImpl(this);
+		return new DbApiJdbc(this);
 	}
 }

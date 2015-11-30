@@ -23,11 +23,11 @@ import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Observation;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
-public class DbApiImpl implements DbAPI {
+public class DbApiJdbc implements DbAPI {
 
 	private DbConnection dbConn;
 	
-	public DbApiImpl(DbConnection connection){
+	public DbApiJdbc(DbConnection connection){
 		this.dbConn = connection;
 	}
 
