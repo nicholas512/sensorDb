@@ -244,10 +244,14 @@ var HtmlFixer = $n2.Class({
 						.addClass('sdb_importRecord')
 						.appendTo($div);
 
-					$('<div>')
+					var $importId = $('<div>')
 						.addClass('sdb_importRecord_id')
-						.text(id)
 						.appendTo($line);
+
+					$('<a>')
+						.attr('href',_this.dbService.getObservationsByImportIdUrl(id)+'/'+id+'.csv')
+						.text(id)
+						.appendTo($importId);
 
 					$('<div>')
 						.addClass('sdb_importRecord_date')

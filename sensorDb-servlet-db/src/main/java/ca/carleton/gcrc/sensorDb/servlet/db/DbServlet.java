@@ -127,7 +127,7 @@ public class DbServlet extends HttpServlet {
 				os.flush();
 				fis.close();
 
-			} else if( path.size() >= 2 && path.get(0).equals("getObservationByImportId") ) {
+			} else if( path.size() >= 2 && path.get(0).equals("getObservationsByImportId") ) {
 				String importId = path.get(1);
 				
 				resp.setContentType("text/csv");

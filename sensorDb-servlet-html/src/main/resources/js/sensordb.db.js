@@ -205,6 +205,10 @@ var Database = $n2.Class({
 	
 	getImportFileUrl: function(id){
 		return this.dbUrl + 'getImportFile/' + id;
+	},
+	
+	getObservationsByImportIdUrl: function(id){
+		return this.dbUrl + 'getObservationsByImportId/' + id;
 	}
 });	
 
