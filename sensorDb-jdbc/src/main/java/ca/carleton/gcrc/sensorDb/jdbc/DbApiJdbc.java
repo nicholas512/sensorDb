@@ -21,6 +21,7 @@ import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Observation;
+import ca.carleton.gcrc.sensorDb.dbapi.ObservationReader;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
 public class DbApiJdbc implements DbAPI {
@@ -820,6 +821,31 @@ public class DbApiJdbc implements DbAPI {
 		}
 
 		return result;
+	}
+
+	@Override
+	public ObservationReader getObservationsFromImportId(String importId) throws Exception {
+		ObservationReader observationReader = null;
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT "
+				+ ObservationReaderJdbc.getFields()
+				+" FROM observations"
+				+" WHERE import_id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(importId));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			observationReader = new ObservationReaderJdbc(resultSet);
+			
+		} catch (Exception e) {
+			throw new Exception("Error while looking for an observation with import id: "+importId, e);
+		}
+		
+		return observationReader;
 	}
 
 	@Override

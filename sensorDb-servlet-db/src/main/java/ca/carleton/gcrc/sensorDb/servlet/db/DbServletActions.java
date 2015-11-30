@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.sensorDb.servlet.db;
 
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,6 +20,9 @@ import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.LogRecord;
+import ca.carleton.gcrc.sensorDb.dbapi.Observation;
+import ca.carleton.gcrc.sensorDb.dbapi.ObservationReader;
+import ca.carleton.gcrc.sensorDb.dbapi.ObservationWriterCsv;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.jdbc.DbConnection;
 
@@ -672,5 +676,22 @@ public class DbServletActions {
 		}
 
 		return logEntry;
+	}
+	
+	public void getObservationsFromImportId(String importId, Writer writer) throws Exception {
+		ObservationReader reader = dbAPI.getObservationsFromImportId(importId);
+		ObservationWriterCsv writerCsv = new ObservationWriterCsv(writer);
+		
+		writerCsv.writeHeader();
+		
+		Observation observation = reader.read();
+		while( null != observation ){
+			writerCsv.write(observation);
+			observation = reader.read();
+		}
+		
+		reader.close();
+
+		writer.flush();
 	}
 }

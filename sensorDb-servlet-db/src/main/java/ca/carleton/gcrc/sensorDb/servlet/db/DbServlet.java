@@ -127,6 +127,22 @@ public class DbServlet extends HttpServlet {
 				os.flush();
 				fis.close();
 
+			} else if( path.size() >= 2 && path.get(0).equals("getObservationByImportId") ) {
+				String importId = path.get(1);
+				
+				resp.setContentType("text/csv");
+				resp.setCharacterEncoding("utf-8");
+				resp.addHeader("Cache-Control", "no-cache");
+				resp.addHeader("Pragma", "no-cache");
+				resp.addHeader("Expires", "-1");
+				
+				ServletOutputStream os = resp.getOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(os,"UTF-8");
+				
+				actions.getObservationsFromImportId(importId, osw);
+				
+				osw.flush();
+
 			} else if( path.size() == 1 && path.get(0).equals("getLog") ) {
 				String id = getStringParameter(req, "id");
 				JSONObject result = actions.getLogFromId(id);
