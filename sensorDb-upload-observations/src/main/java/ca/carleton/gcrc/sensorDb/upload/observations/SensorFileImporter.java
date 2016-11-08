@@ -222,7 +222,7 @@ public class SensorFileImporter {
 			if( null == location ){
 				throw new Exception("Can not find location of device (id="+device_id+") for time "+correctedTime.toString());
 			}
-
+			
 			String geometry = location.getGeometry();
 			
 			Observation observation = new Observation();

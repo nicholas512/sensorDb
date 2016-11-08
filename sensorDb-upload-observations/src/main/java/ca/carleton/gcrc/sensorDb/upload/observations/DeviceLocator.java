@@ -8,10 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 
 public class DeviceLocator {
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private List<DeviceLocation> deviceLocations = null;
 	private Map<String,Location> locationsById = null;
@@ -24,7 +28,7 @@ public class DeviceLocator {
 		this.locationsById = new HashMap<String,Location>();
 		
 		// Sort device locations by time
-		Collections.sort(deviceLocations, new Comparator<DeviceLocation>(){
+		Collections.sort(this.deviceLocations, new Comparator<DeviceLocation>(){
 
 			@Override
 			public int compare(DeviceLocation dl1, DeviceLocation dl2) {

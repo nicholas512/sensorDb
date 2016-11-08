@@ -8,6 +8,9 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /*
 
 Logger: #E5096D 'PT1000TEMP' - USP_EXP2 - (CGI) Expander for GP5W - (V2.60, Mai 27 2014)
@@ -26,6 +29,8 @@ Each line has a date and a number of variables readings.
 
 public class SensorFileReader {
 
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	static private Pattern patternFirstLine = Pattern.compile("^Logger:\\s*#([^']*)'.*$");
 	static private Pattern patternTextNumber = Pattern.compile("^\\s*-?[0-9]+(\\.[0-9]+)\\s*$");
 
@@ -38,7 +43,8 @@ public class SensorFileReader {
 	int lineNumber = 0;
 	
 	public SensorFileReader(Reader reader) throws Exception {
-		bufReader = new BufferedReader(reader);
+		CarriageReturnFilterReader crfr = new CarriageReturnFilterReader(reader);
+		bufReader = new BufferedReader(crfr);
 		
 		readPreamble();
 	}
@@ -134,6 +140,7 @@ public class SensorFileReader {
 				this.deviceSerialNumber = serialNumber;
 				
 			} else {
+				logger.error("First line: "+firstLine);
 				throw new Exception("Error while analyzing first line");
 			}
 		}

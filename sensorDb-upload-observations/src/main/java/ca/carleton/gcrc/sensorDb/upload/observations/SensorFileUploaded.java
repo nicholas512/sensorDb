@@ -49,6 +49,17 @@ public class SensorFileUploaded implements OnUploadedListener,OnUploadedRequires
 	}
 
 	@Override
+	public void onError(
+			String progressId, 
+			List<LoadedFile> uploadedFiles,
+			Map<String,List<String>> parameters, 
+			Principal userPrincipal,
+			Cookie[] cookies
+			) {
+		
+	}
+
+	@Override
 	public void shutdown() {
 		if( null != conversionThread ){
 			conversionThread.shutdown();
