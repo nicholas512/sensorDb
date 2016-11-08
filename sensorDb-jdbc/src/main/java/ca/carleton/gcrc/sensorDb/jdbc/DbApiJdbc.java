@@ -12,6 +12,8 @@ import java.util.UUID;
 import java.util.Vector;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
@@ -25,6 +27,7 @@ import ca.carleton.gcrc.sensorDb.dbapi.ObservationReader;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
 public class DbApiJdbc implements DbAPI {
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private DbConnection dbConn;
 	
@@ -817,6 +820,7 @@ public class DbApiJdbc implements DbAPI {
 			resultSet.close();
 				
 		} catch (Exception e) {
+			logger.error("Error inserting observation: "+observation);
 			throw new Exception("Error inserting observation into database", e);
 		}
 

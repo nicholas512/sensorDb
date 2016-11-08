@@ -45,5 +45,59 @@ public class SensorFileReaderTest extends TestCase {
 			fail("sample6 should be null");
 		}
 	}
-	
+
+	public void testNoFLoating() throws Exception {
+		String input = "Logger: #E509EC 'PT1000TEMP' - USP_EXP2 - (CGI) Expander for GP5W - (V2.7, Jan 12 2016)\n"
+				+"No,Time,#1:oC,#HK-Bat:V\n"
+				+"1,28.01.2016 15:40:00,-5\n"
+				+"2,28.01.2016 15:40:00,-5.2\n"
+				;
+
+		StringReader sr = new StringReader(input);
+		SensorFileReader sensorReader = new SensorFileReader(sr);
+
+		String sn = sensorReader.getDeviceSerialNumber();
+		if( false == "E509EC".equals(sn) ){
+			fail("Unexpected serial number");
+		}
+
+		// First sample should have a numeric value
+		{
+			Sample sample = sensorReader.read();
+			Double value = sample.getValue();
+			if( null == value ){
+				fail("A numeric value should be reported");
+			}
+		}
+	}
+
+	public void testFloatingPointNotation() throws Exception {
+		String input = "Logger: #E509EC 'PT1000TEMP' - USP_EXP2 - (CGI) Expander for GP5W - (V2.7, Jan 12 2016)\n"
+				+"No,Time,#1:oC,#HK-Bat:V\n"
+				+"1,28.01.2016 15:40:00,-7.24792e-05\n"
+				+"2,28.01.2016 15:50:00,-7.24792e+05\n"
+				+"3,28.01.2016 16:00:00,-7.24792e05\n"
+				+"4,28.01.2016 16:10:00,-7.24792E05\n"
+				+"5,28.01.2016 16:20:00,-7E-05\n"
+				+"6,28.01.2016 16:30:00,-7\n"
+				+"7,28.01.2016 16:40:00,7\n"
+				+"8,28.01.2016 16:50:00,7.0\n"
+				;
+
+		StringReader sr = new StringReader(input);
+		SensorFileReader sensorReader = new SensorFileReader(sr);
+
+		// Check that samples have numeric values
+		int index = 1;
+		Sample sample = sensorReader.read();
+		while( null != sample ){
+			Double value = sample.getValue();
+			if( null == value ){
+				fail("A numeric value should be reported at: "+index);
+			}
+			
+			++index;
+			sample = sensorReader.read();
+		}
+	}
 }

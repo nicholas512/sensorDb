@@ -258,6 +258,7 @@ public class SensorFileImporter {
 				}
 				
 				if( collision ){
+					report.collisionObservation(observation);
 					report.skippedObservation(observation);
 				} else {
 					observation = dbAPI.createObservation(observation);
@@ -266,6 +267,7 @@ public class SensorFileImporter {
 				}
 
 			} else {
+				report.inTransitObservation(observation);
 				report.skippedObservation(observation);
 			};
 			

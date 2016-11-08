@@ -13,6 +13,8 @@ public class ImportReportMemory implements ImportReport {
 	private String importId;
 	private int insertedObservations = 0;
 	private int skippedObservations = 0;
+	private int inTransitObservations = 0;
+	private int collisionObservations = 0;
 	private DateFormat dateFormatter;
 	private Map<String,Integer> observedTextFields = new HashMap<String,Integer>();
 	private Throwable reportedError = null;
@@ -54,6 +56,16 @@ public class ImportReportMemory implements ImportReport {
 	}
 
 	@Override
+	public void inTransitObservation(Observation observation) {
+		++inTransitObservations;
+	}
+
+	@Override
+	public void collisionObservation(Observation observation) {
+		++collisionObservations;
+	}
+
+	@Override
 	public void setError(Throwable err) {
 		this.reportedError = err;
 	}
@@ -66,6 +78,8 @@ public class ImportReportMemory implements ImportReport {
 		jsonReport.put("importId", importId);
 		jsonReport.put("insertedCount", insertedObservations);
 		jsonReport.put("skippedCount", skippedObservations);
+		jsonReport.put("inTransitCount", inTransitObservations);
+		jsonReport.put("collisionCount", collisionObservations);
 		
 		JSONObject jsonProblems = new JSONObject();
 		int problemCount = 0;
@@ -93,6 +107,14 @@ public class ImportReportMemory implements ImportReport {
 
 	public int getSkippedObservations() {
 		return skippedObservations;
+	}
+	
+	public int getInTransitObservationCount() {
+		return inTransitObservations;
+	}
+	
+	public int getCollisionObservationCount() {
+		return collisionObservations;
 	}
 	
 	private JSONObject errorToJSON(Throwable t){

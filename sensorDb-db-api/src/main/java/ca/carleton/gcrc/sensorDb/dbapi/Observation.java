@@ -140,4 +140,15 @@ public class Observation {
 	public void setElevation(Double elevation) {
 		this.elevation = elevation;
 	}
+	
+	public String toString(){
+		return "Observation("+id
+				+" device:"+deviceId
+				+" sensor:"+sensorId
+				+" type:"+observationType
+				+" time:"+loggedTime
+				+" numberic:"+numericValue
+				+" text:"+textValue
+				+")";
+	}
 }
