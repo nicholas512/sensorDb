@@ -133,6 +133,8 @@ CREATE TABLE public.observations (
     height_max_metres numeric
 );
 
+CREATE INDEX observations_import_key ON observations USING btree (import_key);
+
 ALTER TABLE public.observations OWNER TO observations_admin;
 
 ALTER TABLE ONLY public.observations
