@@ -759,6 +759,9 @@ public class DbApiJdbc implements DbAPI {
 		
 		Observation result = null;
 		
+		if( null == observation ){
+			throw new Exception("Attempting to create a null observation");
+		}
 		if( null != observation.getId() ){
 			throw new Exception("Id should not be set when creating an observation");
 		}

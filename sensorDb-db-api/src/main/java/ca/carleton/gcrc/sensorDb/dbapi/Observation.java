@@ -147,7 +147,7 @@ public class Observation {
 				+" sensor:"+sensorId
 				+" type:"+observationType
 				+" time:"+loggedTime
-				+" numberic:"+numericValue
+				+" numeric:"+numericValue
 				+" text:"+textValue
 				+")";
 	}

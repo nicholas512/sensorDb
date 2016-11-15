@@ -33,9 +33,13 @@ public class SensorFileImporter {
 	//private DbConnection dbConn;
 	private DbAPI dbAPI;
 	
-	public SensorFileImporter(DbConnection dbConn){
+	public SensorFileImporter(DbConnection dbConn) throws Exception{
 		//this.dbConn = dbConn;
 		this.dbAPI = dbConn.getAPI();
+		
+		if( null == this.dbAPI ){
+			throw new Exception("Unable to get dbAPI from database connection");
+		}
 	}
 	
 	public void importFile(ConversionRequest conversionRequest) throws Exception {
@@ -185,7 +189,22 @@ public class SensorFileImporter {
 				String sensor_label = sample.getColumn().getName();
 				Sensor sensor = sensorsMap.get( sensor_label );
 				
-				insertSample(importUUID, device_id, sensor, sample, timeCorrector, deviceLocator, report);
+				try {
+					insertSample(
+						importUUID, 
+						device_id, 
+						sensor, 
+						sample, 
+						timeCorrector, 
+						deviceLocator, 
+						report
+					);
+				} catch (Exception e) {
+					logger.error("Error on sample: "+sample);
+					logger.error("Sample found on line: "+sample.getLineNumber());
+					logger.error("Sample line: "+sample.getLine());
+					throw new Exception("Error inserting sample: "+sample,e);
+				}
 			}
 
 		} catch (Exception e) {

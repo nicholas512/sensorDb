@@ -106,7 +106,7 @@ public class SensorFileReader {
 			String fieldStr = fields[index];
 			SampleColumn column = columns.get(index);
 			
-			if( column.isValue() ){
+			if( fieldStr.length() > 0 && column.isValue() ){
 				Sample obs = null;
 
 				Matcher matcherTextNumber = patternTextNumber.matcher(fieldStr);
@@ -119,6 +119,7 @@ public class SensorFileReader {
 				
 				if( null != obs ){
 					obs.setLine(line);
+					obs.setLineNumber(lineNumber);
 					obs.setDeviceSerialNumber(deviceSerialNumber);
 					cachedObservations.add(obs);
 				}

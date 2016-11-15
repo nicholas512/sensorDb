@@ -21,7 +21,7 @@ public class SensorFileUploaded implements OnUploadedListener,OnUploadedRequires
 
 	private ConversionThread conversionThread = null;
 	
-	public SensorFileUploaded(DbConnection dbConn){
+	public SensorFileUploaded(DbConnection dbConn) throws Exception{
 		SensorFileImporter importer = new SensorFileImporter(dbConn);
 		this.conversionThread = new ConversionThread(importer);
 		this.conversionThread.start();

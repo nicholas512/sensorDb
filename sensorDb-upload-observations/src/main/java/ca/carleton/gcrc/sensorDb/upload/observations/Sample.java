@@ -16,6 +16,7 @@ public class Sample {
 	private Double value;
 	private String text;
 	private String line;
+	private Integer lineNumber;
 	private String deviceSerialNumber;
 	private String importKey;
 
@@ -54,6 +55,13 @@ public class Sample {
 	}
 	public void setLine(String line) {
 		this.line = line;
+	}
+	
+	public Integer getLineNumber() {
+		return lineNumber;
+	}
+	public void setLineNumber(Integer lineNumber) {
+		this.lineNumber = lineNumber;
 	}
 
 	public String getDeviceSerialNumber() {
@@ -94,5 +102,13 @@ public class Sample {
 		}
 		
 		return importKey;
+	}
+	
+	public String toString(){
+		return "Sample(time:"+time
+			+" column:"+column
+			+" value:"+value
+			+" text:"+text
+			+")";
 	}
 }

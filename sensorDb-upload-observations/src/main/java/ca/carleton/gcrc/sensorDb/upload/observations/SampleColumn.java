@@ -69,4 +69,8 @@ public class SampleColumn {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public String toString(){
+		return "SampleColumn("+name+")";
+	}
 }
