@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.sensorDb.dbapi;
 
+import java.io.StringWriter;
 import java.util.Date;
 
 public class Device {
@@ -67,5 +68,15 @@ public class Device {
 	}
 	public void setNotes(String notes) {
 		this.notes = notes;
+	}
+	
+	public String toString(){
+		StringWriter sw = new StringWriter();
+		sw.write("Device(");
+		sw.write("id="+id);
+		sw.write(",sn="+serialNumber);
+		sw.write(")");
+		
+		return sw.toString();
 	}
 }

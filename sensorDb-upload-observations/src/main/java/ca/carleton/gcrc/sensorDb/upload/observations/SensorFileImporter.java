@@ -68,7 +68,7 @@ public class SensorFileImporter {
 		
 		importRecord = dbAPI.createImportRecord(importRecord);
 		
-		logger.error("Import UUID: "+importRecord.getId());
+		logger.info("Import UUID: "+importRecord.getId());
 		
 		// Import the file
 		FileInputStream fis = null;
@@ -114,12 +114,13 @@ public class SensorFileImporter {
 
 		ImportReport report = new ImportReportMemory();
 
+		Device device = null;
 		try {
 			SensorFileReader obsReader = new SensorFileReader(reader);
 			
 			String deviceSerialNumber = obsReader.getDeviceSerialNumber();
 			
-			Device device = dbAPI.getDeviceFromSerialNumber(deviceSerialNumber);
+			device = dbAPI.getDeviceFromSerialNumber(deviceSerialNumber);
 			String device_id = device.getId();
 			List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
 			
@@ -140,7 +141,7 @@ public class SensorFileImporter {
 			for(SampleColumn column : obsReader.getColumns()){
 				if( column.isValue() ){
 					if( null == sensorsMap.get( column.getName() ) ){
-						throw new Exception("Sensor with label ("+column.getName()+") not found for device ("+deviceSerialNumber+")");
+						throw new Exception("Sensor with label ("+column.getName()+") not found for device: "+device);
 					}
 				}
 			}
@@ -210,7 +211,7 @@ public class SensorFileImporter {
 		} catch (Exception e) {
 			
 			report.setError(e);
-			throw new Exception("Error during import process",e);
+			throw new Exception("Error during import process for device: "+device,e);
 
 		} finally {
 			try {

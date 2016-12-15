@@ -32,7 +32,10 @@ public class SensorFileReader {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	static private Pattern patternFirstLine = Pattern.compile("^Logger:\\s*#([^']*)'.*$");
+	static private Pattern patternIgnoreLine = Pattern.compile("^\\(.*\\)\\s*$");
 	static private Pattern patternTextNumber = Pattern.compile("^\\s*-?[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?\\s*$");
+	static private Pattern patternIgnoreValue = Pattern.compile("^\\s*\\(.*\\)\\s*$");
+	static private Pattern patternIgnoreValue2 = Pattern.compile("^\\s*$");
 
 	private BufferedReader bufReader;
 	private String deviceSerialNumber = null;
@@ -79,7 +82,8 @@ public class SensorFileReader {
 		}
 		
 		// If line starts with "(Parameter", then it should be ignored
-		if( line.startsWith("(Parameter") ){
+		Matcher matcherIgnoreLine = patternIgnoreLine.matcher(line);
+		if( matcherIgnoreLine.matches() ){
 			// Ignore this line. Re-enter
 			return read();
 		}
@@ -106,22 +110,34 @@ public class SensorFileReader {
 			String fieldStr = fields[index];
 			SampleColumn column = columns.get(index);
 			
-			if( fieldStr.length() > 0 && column.isValue() ){
+			if( column.isValue() ){
 				Sample obs = null;
-
-				Matcher matcherTextNumber = patternTextNumber.matcher(fieldStr);
-				if( matcherTextNumber.matches() ){
-					double value = Double.parseDouble(fieldStr.trim());
-					obs = new Sample(time, column, value);
-				} else {
-					obs = new Sample(time, column, fieldStr.trim());
-				}
 				
-				if( null != obs ){
-					obs.setLine(line);
-					obs.setLineNumber(lineNumber);
-					obs.setDeviceSerialNumber(deviceSerialNumber);
-					cachedObservations.add(obs);
+				boolean ignoreThisValue = false;
+				Matcher matcherIgnoreValue = patternIgnoreValue.matcher(fieldStr);
+				if( matcherIgnoreValue.matches() ){
+					ignoreThisValue = true;
+				};
+				Matcher matcherIgnoreValue2 = patternIgnoreValue2.matcher(fieldStr);
+				if( matcherIgnoreValue2.matches() ){
+					ignoreThisValue = true;
+				};
+
+				if( !ignoreThisValue ){
+					Matcher matcherTextNumber = patternTextNumber.matcher(fieldStr);
+					if( matcherTextNumber.matches() ){
+						double value = Double.parseDouble(fieldStr.trim());
+						obs = new Sample(time, column, value);
+					} else {
+						obs = new Sample(time, column, fieldStr.trim());
+					}
+					
+					if( null != obs ){
+						obs.setLine(line);
+						obs.setLineNumber(lineNumber);
+						obs.setDeviceSerialNumber(deviceSerialNumber);
+						cachedObservations.add(obs);
+					}
 				}
 			}
 		}
