@@ -171,6 +171,7 @@ public class DbServlet extends HttpServlet {
 				String name = getStringParameter(req, "name");
 				String geomType = getStringParameter(req, "geomType");
 				Integer elevation = optIntegerParameter(req, "elevation");
+				Double accuracy = optDoubleParameter(req, "accuracy");
 				String comment = optStringParameter(req, "comment");
 				boolean recordingObservations = getCheckboxParameter(req, "record_observations");
 
@@ -191,6 +192,7 @@ public class DbServlet extends HttpServlet {
 						name
 						,wkt
 						,elevation
+						,accuracy
 						,comment
 						,recordingObservations
 						);
@@ -375,6 +377,10 @@ public class DbServlet extends HttpServlet {
 	private Double optDoubleParameter(HttpServletRequest req, String paramName) throws Exception {
 		String strValue = optStringParameter(req, paramName);
 		if( null == strValue ){
+			return null;
+		}
+		
+		if( "".equals(strValue.trim()) ){
 			return null;
 		}
 		

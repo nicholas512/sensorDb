@@ -649,9 +649,9 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"INSERT INTO locations (name,coordinates,elevation_in_metres,comment,record_observations)"
-				+" VALUES (?,ST_GeomFromEWKT(?),?,?,?)"
-				+" RETURNING id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
+				"INSERT INTO locations (name,coordinates,elevation_in_metres,comment,record_observations,accuracy_in_metres)"
+				+" VALUES (?,ST_GeomFromEWKT(?),?,?,?,?)"
+				+" RETURNING id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations,accuracy_in_metres"
 			);
 			
 			pstmt.setString(1, location.getName());
@@ -659,6 +659,11 @@ public class DbApiJdbc implements DbAPI {
 			pstmt.setDouble(3, location.getElevation());
 			pstmt.setString(4, location.getComment());
 			pstmt.setBoolean(5, location.isRecordingObservations());
+			if( null == location.getAccuracy() ){
+				pstmt.setNull(6, java.sql.Types.NUMERIC);
+			} else {
+				pstmt.setDouble(6, location.getAccuracy());
+			}
 			
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -671,6 +676,7 @@ public class DbApiJdbc implements DbAPI {
 			result.setElevation( resultSet.getDouble(4) );
 			result.setComment( resultSet.getString(5) );
 			result.setRecordingObservations( resultSet.getBoolean(6) );
+			result.setAccuracy( resultSet.getDouble(7) );
 
 			resultSet.close();
 				
@@ -686,7 +692,7 @@ public class DbApiJdbc implements DbAPI {
 		Location location = null;
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations,accuracy_in_metres"
 				+ " FROM locations"
 				+ " WHERE id=?"
 			);
@@ -702,6 +708,7 @@ public class DbApiJdbc implements DbAPI {
 				double elevation = resultSet.getDouble(4);
 				String comment = resultSet.getString(5);
 				boolean recordingObservations = resultSet.getBoolean(6);
+				Double accuracy = resultSet.getDouble(7);
 				
 				location = new Location();
 				location.setId(location_id);
@@ -710,6 +717,7 @@ public class DbApiJdbc implements DbAPI {
 				location.setElevation(elevation);
 				location.setComment(comment);
 				location.setRecordingObservations(recordingObservations);
+				location.setAccuracy(accuracy);
 			}
 			
 			resultSet.close();
@@ -727,7 +735,7 @@ public class DbApiJdbc implements DbAPI {
 
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations"
+				"SELECT id,name,ST_AsEWKT(coordinates),elevation_in_metres,comment,record_observations,accuracy_in_metres"
 				+ " FROM locations"
 			);
 			
@@ -741,6 +749,7 @@ public class DbApiJdbc implements DbAPI {
 				location.setElevation( resultSet.getDouble(4) );
 				location.setComment( resultSet.getString(5) );
 				location.setRecordingObservations( resultSet.getBoolean(6) );
+				location.setAccuracy( resultSet.getDouble(7) );
 				
 				locations.add(location);
 			}

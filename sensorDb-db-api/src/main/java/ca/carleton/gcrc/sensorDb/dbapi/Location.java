@@ -6,6 +6,7 @@ public class Location {
 	private String name;
 	private String geometry;
 	private double elevation;
+	private Double accuracy;
 	private String comment;
 	private boolean recordingObservations;
 	
@@ -44,5 +45,11 @@ public class Location {
 	}
 	public void setRecordingObservations(boolean recordingObservations) {
 		this.recordingObservations = recordingObservations;
+	}
+	public Double getAccuracy() {
+		return accuracy;
+	}
+	public void setAccuracy(Double accuracy) {
+		this.accuracy = accuracy;
 	}
 }

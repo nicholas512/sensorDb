@@ -74,6 +74,7 @@ CREATE TABLE public.locations(
 	elevation_in_metres numeric NOT NULL,
 	comment text,
 	record_observations boolean NOT NULL DEFAULT TRUE,
+	accuracy_in_metres numeric,
 	CONSTRAINT locations_pk PRIMARY KEY (id)
 
 );

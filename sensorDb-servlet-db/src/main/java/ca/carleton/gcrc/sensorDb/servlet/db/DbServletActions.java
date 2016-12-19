@@ -62,6 +62,7 @@ public class DbServletActions {
 			String name, 
 			String wkt, 
 			Integer elevation,
+			Double accuracy,
 			String comment,
 			boolean recordingObservations
 			) throws Exception {
@@ -73,6 +74,7 @@ public class DbServletActions {
 			location.setName(name);
 			location.setGeometry(wkt);
 			location.setElevation(elevation);
+			location.setAccuracy(accuracy);
 			location.setComment(comment);
 			location.setRecordingObservations(recordingObservations);
 
