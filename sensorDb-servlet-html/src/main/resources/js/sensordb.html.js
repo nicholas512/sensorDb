@@ -50,6 +50,11 @@ var HtmlFixer = $n2.Class({
 			var $elem = $(this);
 			_this._insertImportRecords($elem);
 		});
+		
+		$set.filter('fieldset.sdb_createLocation_select').each(function(){
+			var $elem = $(this);
+			_this._fixCreateLocationHtml($elem);
+		});
 	},
 	
 	_getLocationOptions: function($select){
@@ -294,6 +299,55 @@ var HtmlFixer = $n2.Class({
 				};
 			}
 		});
+	},
+	
+	_fixCreateLocationHtml: function($elem){
+		
+		adjustClasses($elem);
+		
+		$elem.find('input[name="geomType"]')
+			.change(function(){
+				var $fields = $('.sdb_createLocation_select');
+				$fields.each(function(){
+					var $field = $(this);
+					adjustClasses($field);
+				});
+			});
+		
+		function adjustClasses($elem){
+			var valueMap = {};
+			
+			var $radioButtons = $elem.find('input[name="geomType"]');
+			$radioButtons.each(function(){
+				var $radioButton = $(this);
+				var value = $radioButton.val();
+				var isChecked = $radioButton.is(':checked');
+				valueMap[value] = isChecked;
+			});
+			
+			for(var value in valueMap){
+				// Adjust class at the top element
+				var isChecked = valueMap[value];
+				var className = 'sdb_createLocation_select_'+value;
+				if( isChecked ) {
+					$elem.addClass(className);
+				} else {
+					$elem.removeClass(className);
+				};
+				
+				// Adjust required attributes
+				var requiredSelector = '.sdb_createLocation_required_'+value;
+				$(requiredSelector).each(function(){
+					if( isChecked ){
+						$(this).attr('required','required');
+					} else {
+						$(this).removeAttr('required');
+					};
+				});
+			};
+
+			$n2.log('valueMap',valueMap);
+		};
 	}
 });	
 

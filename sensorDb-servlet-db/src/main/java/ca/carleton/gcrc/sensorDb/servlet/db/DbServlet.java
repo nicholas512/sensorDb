@@ -169,16 +169,27 @@ public class DbServlet extends HttpServlet {
 			if( path.size() == 1 && path.get(0).equals("createLocation") ) {
 
 				String name = getStringParameter(req, "name");
-				double lat = getDoubleParameter(req, "lat");
-				double lng = getDoubleParameter(req, "lng");
+				String geomType = getStringParameter(req, "geomType");
 				Integer elevation = optIntegerParameter(req, "elevation");
 				String comment = optStringParameter(req, "comment");
 				boolean recordingObservations = getCheckboxParameter(req, "record_observations");
 
+				String wkt = null;
+				if( "longlat".equals(geomType) ){
+					double lat = getDoubleParameter(req, "lat");
+					double lng = getDoubleParameter(req, "lng");
+					wkt = String.format("SRID=4326;POINT(%f %f)", lng, lat);
+					
+				} else if( "wkt".equals(geomType) ){
+					wkt = "SRID=4326;"+getStringParameter(req, "wkt");
+					
+				} else {
+					throw new Exception("Unkonwn geometry type: "+geomType);
+				}
+				
 				JSONObject result = actions.createLocation(
 						name
-						,lat
-						,lng
+						,wkt
 						,elevation
 						,comment
 						,recordingObservations

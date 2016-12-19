@@ -51,17 +51,16 @@ public class DbServletActions {
 	/**
 	 * Create a new location record
 	 * @param name
-	 * @param responsible
-	 * @param lat
-	 * @param lng
+	 * @param wkt
 	 * @param elevation
+	 * @param comment
+	 * @param recordingObservations
 	 * @return
 	 * @throws Exception
 	 */
 	public JSONObject createLocation(
 			String name, 
-			double lat, 
-			double lng, 
+			String wkt, 
 			Integer elevation,
 			String comment,
 			boolean recordingObservations
@@ -70,11 +69,9 @@ public class DbServletActions {
 		JSONObject result = new JSONObject();
 		
 		try {
-			String geom = String.format("POINT(%f %f)", lng, lat);
-
 			Location location = new Location();
 			location.setName(name);
-			location.setGeometry(geom);
+			location.setGeometry(wkt);
 			location.setElevation(elevation);
 			location.setComment(comment);
 			location.setRecordingObservations(recordingObservations);
@@ -85,7 +82,7 @@ public class DbServletActions {
 			result.put("location", jsonLocation);
 			
 		} catch (Exception e) {
-			throw new Exception("Error inserting location into database", e);
+			throw new Exception("Error inserting location into database: "+wkt, e);
 		}
 		
 		result.put("ok", true);

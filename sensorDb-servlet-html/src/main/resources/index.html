@@ -10,7 +10,7 @@
 <body>
     <h1>SensorDb</h1>
     <form action="./db/createLocation" method="POST" class="form-horizontal">
-        <fieldset>
+        <fieldset class="sdb_createLocation_select">
 
             <!-- Form Name -->
             <legend>Add Location</legend>
@@ -24,21 +24,43 @@
                 </div>
             </div>
 
-            <!-- Text input-->
+			<!-- Radio button -->
             <div class="form-group">
+                <label class="col-md-4 control-label" for="_geomType">Geometry Type</label>
+                <div class="col-md-4">
+                    <label class="radio-inline">
+						<input type="radio" name="geomType" value="longlat" checked="checked">Lat-Long</input>
+					</label>
+                    <label class="radio-inline">
+						<input type="radio" name="geomType" value="wkt">Well-Known Text</input>
+					</label>
+                </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group sdb_createLocation_longlat">
                 <label class="col-md-4 control-label" for="_lat">Lattitude</label>
                 <div class="col-md-4">
-                    <input id="_lat" name="lat" type="text" placeholder="45.00000" class="form-control input-md" required="">
+                    <input id="_lat" name="lat" type="text" placeholder="45.00000" class="form-control input-md sdb_createLocation_required_longlat" required="">
                     <span class="help-block">decimal degrees</span>
                 </div>
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group sdb_createLocation_longlat">
                 <label class="col-md-4 control-label" for="_lng">Longitude</label>
                 <div class="col-md-4">
-                    <input id="_lng" name="lng" type="text" placeholder="-75.00000" class="form-control input-md" required="">
+                    <input id="_lng" name="lng" type="text" placeholder="-75.00000" class="form-control input-md sdb_createLocation_required_longlat" required="">
                     <span class="help-block">decimal degrees</span>
+                </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group sdb_createLocation_wkt">
+                <label class="col-md-4 control-label" for="_wkt">Well-Known Text</label>
+                <div class="col-md-4">
+                    <input id="_wkt" name="wkt" type="text" placeholder="POINT(-45.5 75.3)" class="form-control input-md sdb_createLocation_required_wkt" required=""/>
+                    <span class="help-block">WKT geometry</span>
                 </div>
             </div>
 
@@ -55,8 +77,9 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="add_location_record_observations">Record observations for this location</label>
                 <div class="col-md-4">
-                    <input id="add_location_record_observations" name="record_observations" type="checkbox" class="form-control input-md" checked="checked">
-                    <span class="help-block"></span>
+                    <label class="form-check-inline">
+	                    <input id="add_location_record_observations" name="record_observations" type="checkbox" class="" checked="checked"/>
+					</label>
                 </div>
             </div>
 

@@ -26,3 +26,18 @@
 	float: left;
 	width: 300px;
 }
+
+/* --- Radio button in createLocation form --- */
+.sdb_createLocation_wkt {
+	display: none;
+}
+.sdb_createLocation_select_wkt .sdb_createLocation_wkt {
+	display: block;
+}
+
+.sdb_createLocation_longlat {
+	display: none;
+}
+.sdb_createLocation_select_longlat .sdb_createLocation_longlat {
+	display: block;
+}

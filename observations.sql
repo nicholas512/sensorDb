@@ -79,6 +79,10 @@ CREATE TABLE public.locations(
 );
 ALTER TABLE public.locations OWNER TO observations_admin;
 
+CREATE INDEX locations_name ON locations USING btree (name);
+
+CREATE INDEX locations_coordinates ON locations USING btree (coordinates);
+
 CREATE TABLE public.devices_locations(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	timestamp timestamp WITH TIME ZONE NOT NULL,
@@ -134,6 +138,12 @@ CREATE TABLE public.observations (
 );
 
 CREATE INDEX observations_import_key ON observations USING btree (import_key);
+
+CREATE INDEX observations_corrected_utc_time ON observations USING btree (corrected_utc_time);
+
+CREATE INDEX observations_unit_of_measure ON observations USING btree (unit_of_measure);
+
+CREATE INDEX observations_location ON observations USING btree (location);
 
 ALTER TABLE public.observations OWNER TO observations_admin;
 
