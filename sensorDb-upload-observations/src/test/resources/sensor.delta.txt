@@ -1,0 +1,5 @@
+Logger: #E509EC 'PT1000TEMP' - USP_EXP2 - (CGI) Expander for GP5W - (V2.7, Jan 12 2016)
+Delta Time: -3600 secs
+No,Time,#1:oC,#HK-Bat:V
+1,28.01.2016 15:40:00,1
+2,28.01.2016 15:50:00,1.1

@@ -42,7 +42,15 @@ public class SensorFileImporter {
 		}
 	}
 	
-	public void importFile(ConversionRequest conversionRequest) throws Exception {
+	public SensorFileImporter(DbAPI dbApi) throws Exception{
+		this.dbAPI = dbApi;
+		
+		if( null == this.dbAPI ){
+			throw new Exception("dbAPI must be provided");
+		}
+	}
+	
+	public ImportRecord importFile(ConversionRequest conversionRequest) throws Exception {
 		if( null == conversionRequest ){
 			throw new Exception("A conversion request must be provided");
 		}
@@ -103,6 +111,8 @@ public class SensorFileImporter {
 				}
 			}
 		}
+		
+		return importRecord;
 	}
 
 	public void importFile(
@@ -179,6 +189,13 @@ public class SensorFileImporter {
 			timeCorrector.setEndTime(lastTime);
 			timeCorrector.setInitialOffsetInSec(initialOffset);
 			timeCorrector.setFinalOffsetInSec(finalOffset);
+			
+			// If a delta time was provided in the file, then this should
+			// override the final offset
+			Integer deltaTimeInSecs = obsReader.getDeltaTimeInSecs();
+			if( null != deltaTimeInSecs ){
+				timeCorrector.setFinalOffsetInSec(deltaTimeInSecs.intValue());
+			}
 			
 			// Get all the device locations for this device
 			List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);

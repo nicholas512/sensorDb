@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.Reader;
 import java.util.Date;
 import java.util.List;
+import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,17 @@ Two sensors:
 - Label: 'HK-Bat' Units: 'V' (voltage)
 
 Each line has a date and a number of variables readings. 
+
+Sometimes, there is a Delta Time line. This value should be used to override the final
+offset.
+
+Logger: #E50BB3 'PT1000TEMP' - USP_EXP2 - (CGI) Expander for GP5W - (V2.7, Jan 12 2016)
+Delta Time: 1341 secs
+No,Time,#1:oC,#HK-Bat:V,#HK-Temp:oC
+1,28.06.2016 16:01:17,23.6905,3.604,22.20
+2,28.06.2016 16:02:17,22.7814
+3,28.06.2016 16:03:17,22.4845,3.590,22.63
+
  */
 
 public class SensorFileReader {
@@ -32,6 +44,7 @@ public class SensorFileReader {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	static private Pattern patternFirstLine = Pattern.compile("^Logger:\\s*#([^']*)'.*$");
+	static private Pattern patternDeltaTimeLine = Pattern.compile("^Delta\\s+Time:\\s*(-?[0-9]+)\\s+secs\\s*$");
 	static private Pattern patternIgnoreLine = Pattern.compile("^\\(.*\\)\\s*$");
 	static private Pattern patternTextNumber = Pattern.compile("^\\s*-?[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?\\s*$");
 	static private Pattern patternIgnoreValue = Pattern.compile("^\\s*\\(.*\\)\\s*$");
@@ -39,11 +52,13 @@ public class SensorFileReader {
 
 	private BufferedReader bufReader;
 	private String deviceSerialNumber = null;
+	private Integer deltaTimeInSecs = null;
 	private List<SampleColumn> columns = new Vector<SampleColumn>();
 	private int timeColumnIndex;
 	private boolean reachedEnd = false;
 	private List<Sample> cachedObservations = new Vector<Sample>();
-	int lineNumber = 0;
+	private int lineNumber = 0;
+	private Stack<String> bufferedLines = new Stack<String>();
 	
 	public SensorFileReader(Reader reader) throws Exception {
 		CarriageReturnFilterReader crfr = new CarriageReturnFilterReader(reader);
@@ -54,6 +69,10 @@ public class SensorFileReader {
 
 	public String getDeviceSerialNumber() {
 		return deviceSerialNumber;
+	}
+	
+	public Integer getDeltaTimeInSecs() {
+		return deltaTimeInSecs;
 	}
 
 	public List<SampleColumn> getColumns() {
@@ -74,8 +93,7 @@ public class SensorFileReader {
 		
 		// Get new line
 		int columnCount = columns.size();
-		String line = bufReader.readLine();
-		++lineNumber;
+		String line = readLine();
 		if( null == line ){
 			reachedEnd = true;
 			return null;
@@ -149,8 +167,7 @@ public class SensorFileReader {
 	private void readPreamble() throws Exception {
 		// Read top line
 		{
-			String firstLine = bufReader.readLine();
-			++lineNumber;
+			String firstLine = readLine();
 			Matcher matcherFirstLine = patternFirstLine.matcher(firstLine);
 			if( matcherFirstLine.matches() ){
 				String serialNumber = matcherFirstLine.group(1).trim();
@@ -162,10 +179,22 @@ public class SensorFileReader {
 			}
 		}
 		
+		// Read Delta Time line
+		{
+			String line = readLine();
+			Matcher matcherDeltaTimeLine = patternDeltaTimeLine.matcher(line);
+			if( matcherDeltaTimeLine.matches() ){
+				int delta = Integer.parseInt( matcherDeltaTimeLine.group(1) );
+				deltaTimeInSecs = new Integer(delta);
+			} else {
+				// If it is not the optional Delta Time line, push back
+				pushBackLine(line);
+			}
+		}
+		
 		// Read columns
 		{
-			String line = bufReader.readLine();
-			++lineNumber;
+			String line = readLine();
 			String[] columnStrings = line.split(",");
 			for(String columnString : columnStrings){
 				SampleColumn column = SampleColumn.parseColumnString(columnString);
@@ -193,5 +222,23 @@ public class SensorFileReader {
 				throw new Exception("No column reporting time");
 			}
 		}
+	}
+	
+	private String readLine() throws Exception {
+		String line = null;
+		if( bufferedLines.size() > 0 ){
+			line = bufferedLines.pop();
+		} else {
+			line = bufReader.readLine();
+		}
+
+		++lineNumber;
+		
+		return line;
+	}
+	
+	private void pushBackLine(String line) {
+		bufferedLines.push(line);
+		--lineNumber;
 	}
 }
