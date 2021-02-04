@@ -32,7 +32,7 @@
 		<mustache.version>0.8.14</mustache.version>
 		<jetty.version>9.2.3.v20140905</jetty.version>
 		<maven-assembly-plugin.version>2.4.1</maven-assembly-plugin.version>
-		<nunaliit.version>2.2.9-SNAPSHOT</nunaliit.version>
+		<nunaliit.version>2.2.7</nunaliit.version>
 	</properties>
 	<modules>
 		<module>sensorDb-command</module>
