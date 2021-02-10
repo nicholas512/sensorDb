@@ -1,11 +1,17 @@
 # sensorDb
 
-SensorDB is a webservice that facilitates writing data to the permafrost database.
+sensorDB is a webservice that facilitates writing data to the permafrost database.
+
+** Table of Contents **
+[Installation](#_installation)  
+[Usage](#_usage)  
+
 
 ## Installation
+<a name="_installation"/>
 
 ### Install dependencies
-SensorDb requires Maven, Java 8, and Nunaliit 2.2.9. 
+sensorDb requires Maven, Java 8, and Nunaliit 2.2.9. 
 
 ```bash
 apt-get install maven
@@ -90,7 +96,23 @@ If you want sensorDb to be reachable from a web address, you will want to set up
 * If you aren't able to install the Nunaliit 2.2.9 binary, you can try installing Nunaliit 2.2.7 from source, and changing the dependency in `pom.xml`
 * 
 
+<a name="_usage"/>
 ## Usage
+
+### Adding a Location
+
+### Adding a device
+
+### Assigning device location
+
+### Uploading observations files
+sensorDb currently accepts the following file types:
+* Geoprecision (GP5W)
+
+
+
+
+# Notes
 ```
 sudo su -l postgres
 
