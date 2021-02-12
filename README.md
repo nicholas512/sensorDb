@@ -92,12 +92,13 @@ If you want sensorDb to be reachable from a web address, you will want to set up
   https://github.com/GCRC/nunaliit/wiki/Proxying-Nunaliit-with-Apache2-and-SSL
 
 ## Troubleshooting
-*  make sure user sensordb has an entry in pg_hba.conf
+* Make sure the user sensordb has an entry in pg_hba.conf
 * If you aren't able to install the Nunaliit 2.2.9 binary, you can try installing Nunaliit 2.2.7 from source, and changing the dependency in `pom.xml`
 * 
 
-<a name="_usage"/>
+
 ## Usage
+<a name="_usage"/>
 
 ### Adding a Location
 
@@ -109,8 +110,11 @@ If you want sensorDb to be reachable from a web address, you will want to set up
 sensorDb currently accepts the following file types:
 * Geoprecision (GP5W)
 
-
-
+Information on how records are updated:
+* If a time offset is provided (i.e. a measured drift in the sensor clock), sensorDb will 'correct' the time records by averaging out the observed drift over the entire time series.
+* Observations are only uploaded to the database if the corresponding sensor location is configured to record observations (i.e. `record_observations` is `True` for the location record.) 
+* The import system creates a MD5 hash of each observation, using the column name, device serial number and the row of text. If this hash is found to match an existing observation in the database (using the `import_id`), the observation is skipped to avoid duplication. The number of skipped observations will be noted in the report. This means that re-uploading the same file will not cause duplicate imports, but if the file is changed, a duplicate may be possible.
+* Uploading a file takes some time, the log may not be generated immediately.
 
 # Notes
 ```
