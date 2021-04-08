@@ -1,3 +1,9 @@
+if [ $# -eq 0 ]; then
+	echo "No arguments Provided."
+	echo "You must provide the SensorDb version (e.g. 0.0.2-SNAPSHOT)."
+    exit 1
+fi
+
 SDB_VER=$1
 mvn clean compile
 mvn clean install
