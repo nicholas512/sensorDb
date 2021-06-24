@@ -63,7 +63,7 @@ To configure a new sensorDb server, run `sensorDb create` (ensure the sensorDb-c
 * user: sensordb *your database must have a user role by this name with write-access and an entry in pg_hba.conf* 
 * password: *database password for chosen `user`*
 
-To launch sensorDb, type `sensorDb run`
+To launch sensorDb, type `sensorDb run`.  If you log out of your terminal session, sensorDb will stop running. If you log back in, you will need to add the sensorDb path to $PATH again.
 
 ### Run sensorDb as a background service
 To have sensorDb run automatically when the system starts, create the file `sensordb.service` in the directory `/etc/systemd/system`: 
