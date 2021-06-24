@@ -22,7 +22,7 @@ If you have multiple versions of Java installed, make sure that you switch to Ja
 ```
 MAINDIR=/opt
 cd $MAINDIR
-git clone https://github.com/geocryology/sensorDb
+git clone https://github.com/GCRC/nunaliit
 cd nunaliit
 git checkout nunaliit2-2.2.7
 mvn clean compile
