@@ -61,7 +61,7 @@ To configure a new sensorDb server, run `sensorDb create` (ensure the sensorDb-c
 * port: *any port is ok.*
 * connection string: *in the format `//HOST/DATABASE` (e.g. `//206.12.92.139:5432/observations`).*
 * user: sensordb *your database must have a user role by this name with write-access and an entry in pg_hba.conf* 
-* password: *choose a secure password*
+* password: *database password for chosen `user`*
 
 To launch sensorDb, type `sensorDb run`
 
