@@ -152,9 +152,6 @@ ALTER TABLE ONLY public.observations
     ADD CONSTRAINT observations_pk PRIMARY KEY (id);
 
 ALTER TABLE ONLY observations
-    ADD CONSTRAINT observations_sensor_fk FOREIGN KEY (sensor_id) REFERENCES sensors(id) MATCH FULL;
-
-ALTER TABLE ONLY observations
     ADD CONSTRAINT observations_device_fk FOREIGN KEY (device_id) REFERENCES devices(id) MATCH FULL;
 
 ALTER TABLE ONLY observations
