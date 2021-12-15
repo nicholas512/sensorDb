@@ -6,6 +6,35 @@ sensorDB is a webservice that facilitates writing data to the permafrost databas
 [Installation](#_installation)  
 [Usage](#_usage)  
 
+## Running with Docker
+### Create a new configuration
+Use the following command, copied exactly, to create a new sensorDb configuration:
+
+```bash
+docker run -it -v myconfig:/opt/sensorDb/config geocryology/sensordb create
+```
+
+Follow the on-screen prompts. The first question asks where to create the configuration; this will become the name of a new subdirectory within the `myconfig` storage volume.  The name `config` cannot be used as it is used by the default configuration. The name provided here will be used when running sensorDb in the next step.
+
+```
+Enter location where server should be created: jam
+Enter the port for the server: 5005
+Enter the database connection string: 123.45.678.90:5432/observations
+Enter the database user: sensordb
+Enter the database password: password
+```
+
+### Running an existing configuration
+To run sensorDb using a previously defined configuration, use the following command, but replace 'jam' in `-w /config/jam` with the location you specified in the last step.  
+
+```bash
+docker run -it -v myconfig:/opt/sensorDb/config -w /config/jam  geocryology/sensordb
+```
+
+To get a list of previously defined configurations
+```
+docker run -it -v myconfig:/opt/sensorDb/config --entrypoint ls geocryology/sensordb  /config
+```
 
 ## Installation
 <a name="_installation"/>
@@ -59,7 +88,7 @@ export PATH=$PATH:$MAINDIR"sensorDb/sensorDb-command/target/sensorDb-command-"$S
 To configure a new sensorDb server, run `sensorDb create` (ensure the sensorDb-command bin directory is on your `PATH`). You will be prompted for the following information:
 
 * port: *any port is ok.*
-* connection string: *in the format `//HOST/DATABASE` (e.g. `//206.12.92.139:5432/observations`).*
+* connection string: *in the format `//HOST:PORT/DATABASE` (e.g. `//206.12.92.139:5432/observations`).*
 * user: sensordb *your database must have a user role by this name with write-access and an entry in pg_hba.conf* 
 * password: *database password for chosen `user`*
 
@@ -87,7 +116,7 @@ WantedBy=multi-user.target
 
 Make sure your ExecStart points to the correct sensordb /bin directory and that the working directory has a sensordb configuration. To activate the service, type: `sudo systemctl enable sensordb`
 
-### Set up proxy server
+### Setting up proxy server
 If you want sensorDb to be reachable from a web address, you will want to set up a reverse proxy.  Follow the instructions at
   https://github.com/GCRC/nunaliit/wiki/Proxying-Nunaliit-with-Apache2-and-SSL
 
@@ -151,3 +180,4 @@ select name,responsible_party,ST_AsText(coordinates),elevation from locations;
 > pg_dump observations > 201XMMDD_observations_data.txt
 
 > psql observations < 201XMMDD_observations_data.txt
+
