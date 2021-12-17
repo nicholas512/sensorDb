@@ -1,4 +1,5 @@
 # sensorDb
+[![Tests](https://github.com/geocryology/sensorDb/actions/workflows/maven.yml/badge.svg)](https://github.com/geocryology/sensorDb/actions/workflows/maven.yml)
 
 sensorDB is a webservice that facilitates writing data to the permafrost database.
 
