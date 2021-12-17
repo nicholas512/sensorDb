@@ -5,10 +5,14 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
+    paths: 
+      - '**.java'
+      - '**/pom.xml'    
   pull_request:
     branches: [ master ]
-
+    paths: 
+      - '**.java'
+      - '**/pom.xml' 
 jobs:
   test:
 
