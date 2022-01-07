@@ -4,11 +4,14 @@ if [ $# -eq 0 ]; then
     #exit 1
 	SDB_VER="$(grep -m 1 -o '<version>.*</version>' pom.xml | sed 's-<\/\?version>--g')"
 	echo "Detected version: $SDB_VER"
+else
+    SDB_VER=$1
+
 fi
 
-SDB_VER=$1
 mvn clean compile
 mvn clean install
 cd sensorDb-command/target/
 tar zxvf "sensorDb-command-"$SDB_VER"-sensorDb.tar.gz"
 chmod -R o+r,o+x "sensorDb-command-"$SDB_VER"-sensorDb.tar.gz"
+
