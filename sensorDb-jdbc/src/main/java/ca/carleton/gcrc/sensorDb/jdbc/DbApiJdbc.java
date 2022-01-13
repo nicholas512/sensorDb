@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -213,6 +214,50 @@ public class DbApiJdbc implements DbAPI {
 		}
 
 		return sensors;
+	}
+
+	@Override
+	public Sensor getSensorFromSensorId(String sensorId) throws Exception {
+		Sensor sensor = null;
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres,serial_number"
+				+ " FROM sensors"
+				+ " WHERE id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(sensorId));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String sensor_id = resultSet.getString(1);
+				String label = resultSet.getString(2);
+				String type_of_measurement = resultSet.getString(3);
+				String unit_of_measurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double height_in_metres = resultSet.getDouble(7);
+				String serial_number = resultSet.getString(8);
+				
+				sensor = new Sensor();
+				sensor.setId(sensor_id);
+				sensor.setLabel(label);
+				sensor.setTypeOfMeasurement(type_of_measurement);
+				sensor.setUnitOfMeasurement(unit_of_measurement);
+				sensor.setAccuracy(accuracy);
+				sensor.setPrecision(precision);
+				sensor.setHeightInMetres(height_in_metres);
+				sensor.setSerialNumber(serial_number);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving sensor (id="+sensorId+") from database", e);
+		}
+
+		return sensor;
 	}
 
 	@Override
@@ -761,6 +806,73 @@ public class DbApiJdbc implements DbAPI {
 		}
 
 		return locations;
+	}
+
+	@Override
+	public DeviceSensor createDeviceSensor(DeviceSensor DeviceSensor) throws Exception {
+
+		DeviceSensor result = null;
+		
+		if( null != DeviceSensor.getId() ){
+			throw new Exception("Id should not be set when creating a device sensor");
+		}
+		
+		try {
+			// Check if device_id is valid
+			try {
+				Device device = getDeviceFromId(DeviceSensor.getDeviceId());
+				if( null == device ){
+					throw new Exception("Device not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding device ("+DeviceSensor.getDeviceId()+")",e);
+			}
+			
+			// Check if sensor_id is valid
+			try {
+				Sensor sensor = getSensorFromSensorId(DeviceSensor.getSensorId());
+				if( null == sensor ){
+					throw new Exception("Sensor not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding sensor ("+DeviceSensor.getSensorId()+")",e);
+			}
+			
+			// Get Sql Time
+			Timestamp dbTime = new Timestamp( DeviceSensor.getTimestamp().getTime() );
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO devices_sensors"
+				+" (timestamp,device_id,sensor_id,notes)"
+				+" VALUES (?,?,?,?)"
+				+" RETURNING id,timestamp,device_id,sensor_id,notes"
+			);
+			
+			pstmt.setTimestamp(1, dbTime);
+			pstmt.setObject(2, UUID.fromString(DeviceSensor.getDeviceId()) );
+			pstmt.setObject(3, UUID.fromString(DeviceSensor.getSensorId()) );
+			pstmt.setString(4, DeviceSensor.getNotes());
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new DeviceSensor();
+			result.setId( resultSet.getString(1) );
+			result.setTimestamp( resultSet.getTimestamp(2) );
+			result.setDeviceId( resultSet.getString(3) );
+			result.setSensorId( resultSet.getString(4) );
+			result.setNotes( resultSet.getString(5) );
+
+			resultSet.close();
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceSensor into database", e);
+		}
+		
+		return result;
 	}
 
 	@Override
