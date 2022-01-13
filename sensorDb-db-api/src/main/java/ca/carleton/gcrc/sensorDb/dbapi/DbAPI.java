@@ -37,6 +37,8 @@ public interface DbAPI {
 
 	List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception;
 
+	List<Sensor> getSensorsFromDeviceSensors(List<DeviceSensor> deviceSensors) throws Exception;
+
 	Location createLocation(Location location) throws Exception;
 	
 	Location getLocationFromLocationId(String locationId) throws Exception;

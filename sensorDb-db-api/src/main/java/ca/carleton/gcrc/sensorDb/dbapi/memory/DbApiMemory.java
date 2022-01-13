@@ -229,6 +229,27 @@ public class DbApiMemory implements DbAPI {
 	}
 
 	@Override
+	public List<Sensor> getSensorsFromDeviceSensors(List<DeviceSensor> deviceSensors) throws Exception {
+		List<Sensor> sensors = new Vector<Sensor>();
+		
+		// Accumulate all sensor ids
+		Set<String> sensorIds = new HashSet<String>();
+		for(DeviceSensor deviceSensor : deviceSensors){
+			String sensorId = deviceSensor.getSensorId();
+			if( null != sensorId ){
+				sensorIds.add(sensorId);
+			}
+		}
+		
+		for(String sensorId : sensorIds){
+			Sensor sensor = getSensorFromSensorId(sensorId);
+			sensors.add(sensor);
+		}
+		
+		return sensors;
+	}
+
+	@Override
 	public Location createLocation(Location location) throws Exception {
 		Location dbLocation = new Location();
 		
