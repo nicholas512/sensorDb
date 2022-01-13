@@ -11,6 +11,7 @@ import java.util.Vector;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -37,6 +38,7 @@ public class DbApiMemory implements DbAPI {
 	private Map<String,Sensor> sensorsById = new HashMap<String,Sensor>();
 	private Map<String,Device> devicesById = new HashMap<String,Device>();
 	private Map<String,DeviceLocation> deviceLocationsById = new HashMap<String,DeviceLocation>();
+	private Map<String,DeviceSensor> deviceSensorsById = new HashMap<String,DeviceSensor>();
 	private Map<String,Location> locationsById = new HashMap<String,Location>();
 	private Map<String,Observation> observationsById = new HashMap<String,Observation>();
 	private Map<String,ImportRecord> importRecordsById = new HashMap<String,ImportRecord>();
@@ -89,6 +91,11 @@ public class DbApiMemory implements DbAPI {
 		List<Sensor> sensors = new Vector<Sensor>( sensorsById.values() );
 		
 		return sensors;
+	}
+
+	@Override
+	public Sensor getSensorFromSensorId(String sensorId) throws Exception {
+		return sensorsById.get(sensorId);
 	}
 
 	@Override
@@ -228,6 +235,21 @@ public class DbApiMemory implements DbAPI {
 		List<Location> locations = new Vector<Location>( locationsById.values() );
 		
 		return locations;
+	}
+
+	@Override
+	public DeviceSensor createDeviceSensor(DeviceSensor deviceSensor) throws Exception {
+		DeviceSensor dbDeviceSensor = new DeviceSensor();
+		
+		dbDeviceSensor.setId( getNextUUID() );
+		dbDeviceSensor.setDeviceId( deviceSensor.getDeviceId() );
+		dbDeviceSensor.setSensorId( deviceSensor.getSensorId() );
+		dbDeviceSensor.setNotes( deviceSensor.getNotes() );
+		dbDeviceSensor.setTimestamp( deviceSensor.getTimestamp() );
+		
+		deviceSensorsById.put(dbDeviceSensor.getId(), dbDeviceSensor);
+		
+		return dbDeviceSensor;
 	}
 
 	@Override
