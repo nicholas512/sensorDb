@@ -658,6 +658,83 @@ public class DbApiJdbc implements DbAPI {
 	}
 	
 	@Override
+	public List<DeviceSensor> getDeviceSensors() throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,sensor_id,timestamp,notes"
+				+ " FROM devices_sensors"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String sensorId = resultSet.getString(3);
+				Date timestamp = resultSet.getTimestamp(4);
+				String notes = resultSet.getString(5);
+
+				DeviceSensor deviceSensor = new DeviceSensor();
+				deviceSensor.setId(id);
+				deviceSensor.setDeviceId(deviceId);
+				deviceSensor.setSensorId(sensorId);
+				deviceSensor.setTimestamp(timestamp);
+				deviceSensor.setNotes(notes);
+				
+				deviceSensors.add(deviceSensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device sensors from database", e);
+		}
+
+		return deviceSensors;
+	}
+
+	@Override
+	public List<DeviceSensor> getDeviceSensorsFromDeviceId(String device_id) throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,sensor_id,timestamp,notes FROM devices_sensors WHERE device_id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(device_id));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String sensorId = resultSet.getString(3);
+				Date timestamp = resultSet.getTimestamp(4);
+				String notes = resultSet.getString(5);
+
+				DeviceSensor deviceSensor = new DeviceSensor();
+				deviceSensor.setId(id);
+				deviceSensor.setDeviceId(deviceId);
+				deviceSensor.setSensorId(sensorId);
+				deviceSensor.setTimestamp(timestamp);
+				deviceSensor.setNotes(notes);
+				
+				deviceSensors.add(deviceSensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device sensors for device (id="+device_id+") from database", e);
+		}
+
+		return deviceSensors;
+	}
+	
+	@Override
 	public List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception {
 		List<Location> locations = new Vector<Location>();
 		
