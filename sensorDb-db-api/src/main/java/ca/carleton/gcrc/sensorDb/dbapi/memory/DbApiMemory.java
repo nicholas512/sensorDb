@@ -188,6 +188,26 @@ public class DbApiMemory implements DbAPI {
 	}
 
 	@Override
+	public List<DeviceSensor> getDeviceSensors() throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>( deviceSensorsById.values() );
+		
+		return deviceSensors;
+	}
+
+	@Override
+	public List<DeviceSensor> getDeviceSensorsFromDeviceId(String device_id) throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+		
+		for(DeviceSensor deviceSensor : deviceSensorsById.values()){
+			if( device_id.equals(deviceSensor.getDeviceId()) ){
+				deviceSensors.add(deviceSensor);
+			}
+		}
+		
+		return deviceSensors;
+	}
+
+	@Override
 	public List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception {
 		List<Location> locations = new Vector<Location>();
 		
