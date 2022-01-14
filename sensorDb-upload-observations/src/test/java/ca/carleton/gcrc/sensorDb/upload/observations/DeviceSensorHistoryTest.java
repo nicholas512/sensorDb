@@ -9,7 +9,7 @@ import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.dbapi.memory.DbApiMemory;
-import ca.carleton.gcrc.sensorDb.upload.observations.DeviceSensorHistory;
+
 import junit.framework.TestCase;
 
 
@@ -110,6 +110,19 @@ public class DeviceSensorHistoryTest extends TestCase {
             deviceSensor.setSensorId(sensors.get(4).getId());
             deviceSensor.setTimestamp(swapSensors2017);
             deviceSensors.add(deviceSensor);
+		}
+	}
+
+	public void testGetDeviceReconfigurationDates() throws Exception{
+		DeviceSensorHistory deviceSensorHistory = new DeviceSensorHistory(deviceSensors, sensors);
+		List<Date> reconfigurationDates = deviceSensorHistory.getDeviceReconfigurationDates();
+
+		assertEquals("Wrong length, expected" + 2 + " actual: "+ reconfigurationDates.size(), 2, reconfigurationDates.size());
+
+		for (int i = 0; i < reconfigurationDates.size() - 1; i++){
+			if (reconfigurationDates.get(i).getTime() > reconfigurationDates.get(i+1).getTime()){
+				fail("Dates in wrong order (expect sorted earliest to latest)");
+			}
 		}
 	}
 
