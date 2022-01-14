@@ -58,6 +58,25 @@ public class DeviceSensorHistory {
 		}
 	}
 	
+    public List<Date> getDeviceReconfigurationDates(){
+        List <Date> reconfigurationDates = new ArrayList<Date>();
+        
+        if ( deviceSensors.size() > 0 ){
+            
+            int i = 0;
+            reconfigurationDates.add(deviceSensors.get(0).getTimestamp());  
+
+            for (DeviceSensor ds : deviceSensors){
+                if (ds.getTimestamp().getTime() != reconfigurationDates.get(i).getTime()){
+                    reconfigurationDates.add(ds.getTimestamp());
+                    i++;
+                }
+            }
+        }
+
+        return reconfigurationDates;
+    }
+
 	public List<Sensor> getSensorsAtTimestamp(Date timestamp){
 		Date lastChange = null;
 
@@ -81,7 +100,11 @@ public class DeviceSensorHistory {
                 }
             }
 		}
-		
+
+		if (sensors.size() == 0){
+            sensors = null;
+        }
+
 		return sensors;
 	}
 }
