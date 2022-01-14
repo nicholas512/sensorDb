@@ -588,7 +588,38 @@ public class DbServletActions {
 
 		return result;
 	}
+
 	
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject getDeviceSensors(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceSensorArr = new JSONArray();
+			result.put("deviceSensors", deviceSensorArr);
+
+			Collection<DeviceSensor> deviceSensors = dbAPI.getDeviceSensors();
+
+			for(DeviceSensor deviceSensor : deviceSensors){
+				JSONObject jsonDeviceSensor = buildDeviceSensorJson(deviceSensor);
+				
+				deviceSensorArr.put(jsonDeviceSensor);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all deviceSensors from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+
 	/**
 	 * @param deviceLocation
 	 * @return
