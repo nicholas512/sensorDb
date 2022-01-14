@@ -12,22 +12,33 @@ import ca.carleton.gcrc.sensorDb.dbapi.memory.DbApiMemory;
 import ca.carleton.gcrc.sensorDb.upload.observations.DeviceSensorHistory;
 import junit.framework.TestCase;
 
+
 public class DeviceSensorHistoryTest extends TestCase {
+	DbApiMemory dbApi;
 
-	public void testDeltaTimeLine() throws Exception {
+	List<Device> devices;
+	List<DeviceSensor> deviceSensors;
+	List<Sensor> sensors;
 
-        DbApiMemory dbApi = new DbApiMemory();
+	Date initialDeviceDeployment;
+	Date swapSensors2017;
+	
+	Date targetDate;
+	Date aLaterDate;
+	
+	protected void setUp() throws Exception {
+		this.dbApi = new DbApiMemory();
 		
 		// Populate with appropriate devices and sensors
-		List<Device> devices = new ArrayList<Device>(1);
-		List<DeviceSensor> deviceSensors = new ArrayList<DeviceSensor>();
-        List<Sensor> sensors= new ArrayList<Sensor>(4);
+		this.devices = new ArrayList<Device>(1);
+		this.deviceSensors = new ArrayList<DeviceSensor>();
+        this.sensors= new ArrayList<Sensor>(4);
 
-        Date initialDeviceDeployment = DateUtils.parseUtcString("28.01.2016 16:45:00");
-        Date swapSensors2017 = DateUtils.parseUtcString("28.01.2017 16:45:00");
+        this.initialDeviceDeployment = DateUtils.parseUtcString("28.01.2016 16:45:00");
+        this.swapSensors2017 = DateUtils.parseUtcString("28.01.2017 16:45:00");
         
-        Date targetDate = DateUtils.parseUtcString("28.05.2016 16:45:00");
-        Date aLaterDate = DateUtils.parseUtcString("28.05.2019 16:45:00");
+        this.targetDate = DateUtils.parseUtcString("28.05.2016 16:45:00");
+        this.aLaterDate = DateUtils.parseUtcString("28.05.2019 16:45:00");
         
 		{
 			Device device = new Device();
@@ -100,6 +111,9 @@ public class DeviceSensorHistoryTest extends TestCase {
             deviceSensor.setTimestamp(swapSensors2017);
             deviceSensors.add(deviceSensor);
 		}
+	}
+
+	public void testGetSensorsAtTimestamp() throws Exception {
 		
 		DeviceSensorHistory deviceSensorHistory = new DeviceSensorHistory(deviceSensors, sensors);
 		List<Sensor> sensorsAtTarget = deviceSensorHistory.getSensorsAtTimestamp(targetDate);
