@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -516,7 +517,45 @@ public class DbServletActions {
 		}
 		
 		result.put("ok", true);
-		result.put("action", "insert device");
+		result.put("action", "insert device location");
+		return result;
+	}
+
+	/**
+	 * @param time
+	 * @param device_id
+	 * @param sensor_id
+	 * @param notes
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject addDeviceSensor(
+			Date time, 
+			String device_id,
+			String sensor_id,
+			String notes
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			DeviceSensor deviceSensor = new DeviceSensor();
+			deviceSensor.setDeviceId(device_id);
+			deviceSensor.setSensorId(sensor_id);
+			deviceSensor.setTimestamp(time);
+			deviceSensor.setNotes(notes);
+			
+			deviceSensor = dbAPI.createDeviceSensor(deviceSensor);
+				
+			JSONObject jsonDeviceSensor = buildDeviceSensorJson(deviceSensor);
+			result.put("deviceSensor", jsonDeviceSensor);
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceSensor into database", e);
+		}
+		
+		result.put("ok", true);
+		result.put("action", "insert device sensor");
 		return result;
 	}
 
@@ -565,6 +604,23 @@ public class DbServletActions {
 		jsonDeviceLocation.put("location_id", deviceLocation.getLocationId());
 		jsonDeviceLocation.put("notes", deviceLocation.getNotes());
 		return jsonDeviceLocation;
+	}
+
+		/**
+	 * @param deviceSensor
+	 * @return
+	 */
+	private JSONObject buildDeviceSensorJson(DeviceSensor deviceSensor){
+		
+		JSONObject jsonDeviceSensor = new JSONObject();
+		jsonDeviceSensor.put("type", "deviceSensor");
+		jsonDeviceSensor.put("id", deviceSensor.getId());
+		jsonDeviceSensor.put("timestamp", deviceSensor.getTimestamp().getTime());
+		jsonDeviceSensor.put("timestamp_text", DateUtils.getUtcDateString(deviceSensor.getTimestamp()));
+		jsonDeviceSensor.put("device_id", deviceSensor.getDeviceId());
+		jsonDeviceSensor.put("location_id", deviceSensor.getSensorId());
+		jsonDeviceSensor.put("notes", deviceSensor.getNotes());
+		return jsonDeviceSensor;
 	}
 	
 	public JSONObject getImportRecords() throws Exception {
