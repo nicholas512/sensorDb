@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
+import ca.carleton.gcrc.sensorDb.upload.observations.SensorSelector;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
 public class DeviceSensorHistory {
@@ -20,11 +23,13 @@ public class DeviceSensorHistory {
 
 	private List<DeviceSensor> deviceSensors = null;
 	private Map<String,Sensor> sensorsById = null;
-	
+	private Map<Date, SensorSelector> sensorSelectorsByDate = null;
+
+
 	public DeviceSensorHistory(
 			List<DeviceSensor> deviceSensors,
 			List<Sensor> sensors
-			){
+			) throws Exception{
 		this.deviceSensors = new ArrayList<DeviceSensor>(deviceSensors);
 		this.sensorsById = new HashMap<String,Sensor>();
 		
@@ -56,6 +61,21 @@ public class DeviceSensorHistory {
 		for(Sensor sensor : sensors){
 			this.sensorsById.put(sensor.getId(), sensor);
 		}
+		
+		// Make history of sensors at times
+		for (Date date : getDeviceReconfigurationDates()){
+			List<String> labels = new ArrayList<String>();
+			Set<String> uniqueLabels = new HashSet<String>();
+
+			for (Sensor sensor : sensors){
+				uniqueLabels.add(sensor.getLabel());
+			}
+			
+			labels.addAll(uniqueLabels);
+
+			SensorSelector selector = new SensorSelector(sensors, labels);
+			sensorSelectorsByDate.put(date, selector);
+		}
 	}
 	
     public List<Date> getDeviceReconfigurationDates(){
@@ -77,7 +97,7 @@ public class DeviceSensorHistory {
         return reconfigurationDates;
     }
 
-	public List<Sensor> getSensorsAtTimestamp(Date timestamp){
+	public Date getLastReconfigurationDate(Date timestamp) throws Exception{
 		Date lastChange = null;
 
         // Find last update to device-sensor configuration
@@ -88,6 +108,11 @@ public class DeviceSensorHistory {
 				lastChange = ds.getTimestamp();
 			}
 		}
+		return lastChange;
+	}
+
+	public List<Sensor> getSensorsAtTimestamp(Date timestamp) throws Exception{
+		Date lastChange = getLastReconfigurationDate(timestamp);
 		
 		List<Sensor> sensors = new ArrayList<Sensor>();
 		if( null != lastChange ){
@@ -107,4 +132,14 @@ public class DeviceSensorHistory {
 
 		return sensors;
 	}
+
+	public Sensor getSensorAtTimestamp(String label, Date timestamp) throws Exception{
+		Date lastChange = getLastReconfigurationDate(timestamp);
+		SensorSelector sensorSelector = sensorSelectorsByDate.get(lastChange);
+		Sensor sensor = sensorSelector.getSensorFromLabel(label);
+
+		return sensor;
+	}
 }
+
+
