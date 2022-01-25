@@ -151,5 +151,28 @@ public class DeviceSensorHistoryTest extends TestCase {
 
 
 	}
+
+	public void testGetSensorAtTimestamp() throws Exception {
+		
+		DeviceSensorHistory deviceSensorHistory = new DeviceSensorHistory(deviceSensors, sensors);
+		//
+		Sensor sensor1AtTarget = deviceSensorHistory.getSensorAtTimestamp("#1:oC", targetDate);
+		Sensor sensor2AtTarget = deviceSensorHistory.getSensorAtTimestamp("#2:oC", targetDate);
+		Sensor sensor1Later = deviceSensorHistory.getSensorAtTimestamp("#1:oC", aLaterDate);
+		Sensor sensor2Later = deviceSensorHistory.getSensorAtTimestamp("#2:oC", aLaterDate);
+		
+		// Now check that the returned sensors are appropriate
+		assertNotSame(sensor1AtTarget, sensor1Later);
+		assertNotSame(sensor2AtTarget, sensor2Later);
+
+		// Asking for a sensor that doesn't exist
+		try {
+			Sensor sensorWithWrongLabel = deviceSensorHistory.getSensorAtTimestamp("#1:oC", targetDate);
+			fail("Expect exception when asking for sensor with wrong label");
+		} catch(Exception e){
+			fail("still no good!");
+		}
+
+	}
 	
 }
