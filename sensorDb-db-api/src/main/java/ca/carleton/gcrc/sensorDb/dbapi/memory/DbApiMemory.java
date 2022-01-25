@@ -73,7 +73,6 @@ public class DbApiMemory implements DbAPI {
 		
 		dbSensor.setId( getNextUUID() );
 		dbSensor.setAccuracy( sensor.getAccuracy() );
-		dbSensor.setDeviceId( sensor.getDeviceId() );
 		dbSensor.setHeightInMetres( sensor.getHeightInMetres() );
 		dbSensor.setLabel( sensor.getLabel() );
 		dbSensor.setPrecision( sensor.getPrecision() );
