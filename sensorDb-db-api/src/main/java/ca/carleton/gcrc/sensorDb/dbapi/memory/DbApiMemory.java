@@ -99,14 +99,25 @@ public class DbApiMemory implements DbAPI {
 
 	@Override
 	public List<Sensor> getSensorsFromDeviceId(String device_id) throws Exception {
+		Set<Sensor> uniqueSensors = new HashSet<Sensor>();
 		List<Sensor> sensors = new Vector<Sensor>();
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
 		
-		for(Sensor sensor : sensorsById.values()){
-			if( device_id.equals( sensor.getDeviceId() ) ){
-				sensors.add(sensor);
+		for (DeviceSensor deviceSensor : deviceSensorsById.values()){
+			if ( device_id.equals( deviceSensor.getDeviceId() ) ){
+				deviceSensors.add(deviceSensor);
+			}
+		}
+
+		for (DeviceSensor deviceSensor : deviceSensors){ // TODO: make this better than O(n^2)
+			for (Sensor sensor : sensorsById.values()){
+				if ( deviceSensor.getSensorId().equals(sensor.getId() ) ) {
+					uniqueSensors.add(sensor);
+				}
 			}
 		}
 		
+		sensors.addAll(uniqueSensors);
 		return sensors;
 	}
 
