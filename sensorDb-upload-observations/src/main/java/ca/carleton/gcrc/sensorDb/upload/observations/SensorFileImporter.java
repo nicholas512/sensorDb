@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReport;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReportMemory;
@@ -201,6 +202,10 @@ public class SensorFileImporter {
 			List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);
 			List<Location> locations = dbAPI.getLocationsFromDeviceLocations(deviceLocations);
 			DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
+
+			// Get all sensors for this device
+			List<DeviceSensor> deviceSensors = dbAPI.getDeviceSensorsFromDeviceId(device_id);
+			List<Sensor> allSensors = dbAPI.getSensorsFromDeviceSensors(deviceSensors);
 			
 			// Start saving observations
 			for( Sample sample : samples ){
