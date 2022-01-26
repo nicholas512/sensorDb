@@ -44,7 +44,6 @@ public class DeviceSensorHistory {
 			SensorLabelSelector sensorSelector = new SensorLabelSelector(sensorsAtDate, labels);
 
 			Pair<Date,SensorLabelSelector> sensorConfiguration = new Pair<Date,SensorLabelSelector>(date, sensorSelector);
-			System.out.println(sensorConfiguration.toString());
 			sensorConfigurations.add(sensorConfiguration);
 
 		}
@@ -53,16 +52,15 @@ public class DeviceSensorHistory {
 	
 	public Sensor getSensorAtTimestamp(String label, Date timestamp) throws Exception{
 		SensorLabelSelector sensorLabelSelector = null;
-
+        
 		// Iterate through to find date
 		for (Pair<Date,SensorLabelSelector> configuration : sensorConfigurations ){
 			if (configuration.first.getTime() <= timestamp.getTime()){
 				sensorLabelSelector = configuration.second;
 			}
 		}
-		
-		Sensor sensor = sensorLabelSelector.getSensorFromLabel(label);
 
+		Sensor sensor = sensorLabelSelector.getSensorFromLabel(label);
 		return sensor;
 	}
 }
