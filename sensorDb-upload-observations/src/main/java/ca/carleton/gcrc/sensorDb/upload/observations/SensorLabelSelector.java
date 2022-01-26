@@ -24,14 +24,13 @@ public class SensorLabelSelector {
 				
 				sensorsByLabel.put(sensor.getLabel(), sensor);
 			}
-
     }
 
     public Sensor getSensorFromLabel(String label) throws Exception{
         Sensor sensor = null;
 		
         for (String lab : sensorsByLabel.keySet()){
-            if (label == lab){
+            if (label.equals(lab)){
                 sensor = sensorsByLabel.get(lab);
             }
         }
