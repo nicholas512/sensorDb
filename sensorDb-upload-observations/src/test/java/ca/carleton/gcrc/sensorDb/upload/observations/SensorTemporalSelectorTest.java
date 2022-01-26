@@ -139,15 +139,9 @@ public class SensorTemporalSelectorTest extends TestCase {
 			assertEquals(2, 2);
 		}
 
-		try {
-			sensorTemporalSelector.getSensorsAtTimestamp(initialDeviceDeployment);
-			fail("Can't get sensors for earlier than configured. Configurations assumed to be on half-open intervals (t1,t2]");
-		} catch( Exception e) { 
-			assertEquals(2, 2);
-		}
-
+		assertEquals("half-open interval [t0,t1)", 2, sensorTemporalSelector.getSensorsAtTimestamp(initialDeviceDeployment).size());
 		assertEquals(2, sensorTemporalSelector.getSensorsAtTimestamp(targetDate).size());
-		assertEquals(2, sensorTemporalSelector.getSensorsAtTimestamp(swapSensors2017).size());
+		assertEquals(3, sensorTemporalSelector.getSensorsAtTimestamp(swapSensors2017).size());
 		assertEquals(3, sensorTemporalSelector.getSensorsAtTimestamp(aLaterDate).size());
 	
 	}
