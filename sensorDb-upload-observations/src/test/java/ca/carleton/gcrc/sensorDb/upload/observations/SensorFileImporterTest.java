@@ -2,9 +2,11 @@ package ca.carleton.gcrc.sensorDb.upload.observations;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
 import ca.carleton.gcrc.sensorDb.dbapi.Observation;
@@ -59,6 +61,21 @@ public class SensorFileImporterTest extends TestCase {
 			deviceLocation.setLocationId( location.getId() );
 			deviceLocation.setTimestamp( DateUtils.parseUtcString("01.01.2016 01:00:00") );
 			dbApi.createDeviceLocation(deviceLocation);
+		}
+		List<Sensor> sensors = dbApi.getSensorsFromDeviceId(device.getId());
+		{
+			DeviceSensor deviceSensor = new DeviceSensor();
+			deviceSensor.setDeviceId(device.getId());
+			deviceSensor.setSensorId(sensors.get(0).getId());
+			deviceSensor.setTimestamp(DateUtils.parseUtcString("01.01.2000 01:00:00"));
+			dbApi.createDeviceSensor(deviceSensor);
+		}
+		{
+			DeviceSensor deviceSensor = new DeviceSensor();
+			deviceSensor.setDeviceId(device.getId());
+			deviceSensor.setSensorId(sensors.get(1).getId());
+			deviceSensor.setTimestamp(DateUtils.parseUtcString("01.01.2000 01:00:00"));
+			dbApi.createDeviceSensor(deviceSensor);
 		}
 		
 		SensorFileImporter importer = new SensorFileImporter(dbApi);

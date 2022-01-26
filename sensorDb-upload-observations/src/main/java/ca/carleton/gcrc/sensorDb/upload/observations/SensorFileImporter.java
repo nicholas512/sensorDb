@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
 
@@ -135,23 +137,16 @@ public class SensorFileImporter {
 			String device_id = device.getId();
 			List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
 			
-			// Make a map of sensors based on label
-			Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
+			// Make a list of sensors based on label
+			Set<String> sensorLabelSet = new HashSet<String>();
 			for(Sensor sensor : sensors){
-				
-				if( sensorsMap.containsKey(sensor.getLabel()) ){
-					throw new Exception("Multiple sensors with same label ("+sensor.getLabel()
-						+") for device ("+deviceSerialNumber+")"
-					);
-				}
-				
-				sensorsMap.put(sensor.getLabel(), sensor);
+				sensorLabelSet.add(sensor.getLabel());
 			}
 
 			// Check that sensors were found for all parsed columns
 			for(SampleColumn column : obsReader.getColumns()){
 				if( column.isValue() ){
-					if( null == sensorsMap.get( column.getName() ) ){
+					if( !(sensorLabelSet.contains( column.getName() )) ){
 						throw new Exception("Sensor with label ("+column.getName()+") not found for device: "+device);
 					}
 				}
@@ -206,17 +201,18 @@ public class SensorFileImporter {
 			// Get all sensors for this device
 			List<DeviceSensor> deviceSensors = dbAPI.getDeviceSensorsFromDeviceId(device_id);
 			List<Sensor> allSensors = dbAPI.getSensorsFromDeviceSensors(deviceSensors);
-			
+			DeviceSensorHistory deviceSensorHistory = new DeviceSensorHistory(deviceSensors, allSensors);
+
 			// Start saving observations
 			for( Sample sample : samples ){
 				String sensor_label = sample.getColumn().getName();
-				Sensor sensor = sensorsMap.get( sensor_label );
 				
 				try {
 					insertSample(
 						importUUID, 
 						device_id, 
-						sensor, 
+						deviceSensorHistory, 
+						sensor_label,
 						sample, 
 						timeCorrector, 
 						deviceLocator, 
