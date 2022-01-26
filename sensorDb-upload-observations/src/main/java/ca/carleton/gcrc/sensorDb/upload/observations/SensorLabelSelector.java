@@ -27,7 +27,7 @@ public class SensorLabelSelector {
 
     }
 
-    public Sensor getSensorFromLabel(String label){
+    public Sensor getSensorFromLabel(String label) throws Exception{
         Sensor sensor = null;
 		
         for (String lab : sensorsByLabel.keySet()){
@@ -36,6 +36,9 @@ public class SensorLabelSelector {
             }
         }
 		
+        if (null == sensor){
+            throw new Exception("Sensor with label '" + label + "' not found!");
+        }
 		return sensor;
     }
 }

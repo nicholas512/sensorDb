@@ -86,14 +86,14 @@ public class SensorTemporalSelector {
         // TODO: Try to find a better way that does not rely on 
         // assuming all sensors change at once
         for(DeviceSensor ds : deviceSensors){
-			if( ds.getTimestamp().getTime() < timestamp.getTime() ){
+			if( ds.getTimestamp().getTime() <= timestamp.getTime() ){
 				lastChange = ds.getTimestamp();
 			}
 		}
 
 		if ( null == lastChange ){
 			throw new Exception("Timestamp " + timestamp.toString() + " predates any known device configuration. " +
-			"Configurations assumed to be defined on half-open intervals (t1,t2]");
+			"Configurations assumed to be defined on half-open intervals [t1,t2)");
 		}
 		return lastChange;
 	}

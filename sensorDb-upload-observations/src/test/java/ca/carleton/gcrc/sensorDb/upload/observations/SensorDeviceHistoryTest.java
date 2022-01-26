@@ -36,11 +36,11 @@ public class SensorDeviceHistoryTest extends TestCase {
 		this.deviceSensors = new ArrayList<DeviceSensor>();
         this.sensors= new ArrayList<Sensor>(4);
 
-        this.initialDeviceDeployment = DateUtils.parseUtcString("28.01.2016 16:45:00");
+        this.initialDeviceDeployment = DateUtils.parseUtcString("01.02.2014 16:45:00");
         this.swapSensors2017 = DateUtils.parseUtcString("28.01.2017 16:45:00");
         
-        this.targetDate = DateUtils.parseUtcString("28.05.2016 16:45:00");
-        this.aLaterDate = DateUtils.parseUtcString("28.05.2019 16:45:00");
+        this.targetDate = DateUtils.parseUtcString("20.04.2016 16:45:00");
+        this.aLaterDate = DateUtils.parseUtcString("11.09.2019 16:45:00");
         
 		{
 			Device device = new Device();
@@ -130,7 +130,7 @@ public class SensorDeviceHistoryTest extends TestCase {
 
 		// Asking for a sensor that doesn't exist
 		try {
-			Sensor sensorWithWrongLabel = deviceSensorHistory.getSensorAtTimestamp("#1:oC", targetDate);
+			Sensor sensorWithWrongLabel = deviceSensorHistory.getSensorAtTimestamp("#65:oC", targetDate);
 			fail("Expect exception when asking for sensor with wrong label");
 		} catch(Exception e){
 			assertEquals(1, 1);
