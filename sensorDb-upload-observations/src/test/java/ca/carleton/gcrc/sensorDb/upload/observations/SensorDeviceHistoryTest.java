@@ -9,7 +9,6 @@ import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.dbapi.memory.DbApiMemory;
-import ca.carleton.gcrc.sensorDb.upload.observations.DeviceSensorHistory;
 
 import junit.framework.TestCase;
 

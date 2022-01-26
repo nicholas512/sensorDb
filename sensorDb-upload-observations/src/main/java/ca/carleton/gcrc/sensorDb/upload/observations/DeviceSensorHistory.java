@@ -2,12 +2,8 @@ package ca.carleton.gcrc.sensorDb.upload.observations;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.io.*;
 import java.util.Objects;
-// import javafx.util.Pair;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
