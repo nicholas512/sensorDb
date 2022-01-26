@@ -6,10 +6,10 @@ import java.util.Map;
 
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 
-public class SensorSelector {
+public class SensorLabelSelector {
     private Map<String,Sensor> sensorsByLabel;
 
-    public SensorSelector(
+    public SensorLabelSelector(
         List<Sensor> sensors, 
         List<String> labels) throws Exception{
     

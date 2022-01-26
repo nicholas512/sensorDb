@@ -1,19 +1,17 @@
 package ca.carleton.gcrc.sensorDb.upload.observations;
 
-import java.util.Date;
-
 import java.util.List;
 import java.util.ArrayList;
 
-import ca.carleton.gcrc.sensorDb.dbapi.Device;
-import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
+
 import ca.carleton.gcrc.sensorDb.dbapi.Sensor;
 import ca.carleton.gcrc.sensorDb.dbapi.memory.DbApiMemory;
+import ca.carleton.gcrc.sensorDb.upload.observations.SensorLabelSelector;
 
 import junit.framework.TestCase;
 
 
-public class SensorSelectorTest extends TestCase {
+public class SensorLabelSelectorTest extends TestCase {
 	DbApiMemory dbApi;
 
 	List<Sensor> uniqueSensors;
@@ -70,15 +68,15 @@ public class SensorSelectorTest extends TestCase {
 	}
 
 	public void testGetSensors() throws Exception{
-		SensorSelector sensorSelector = new SensorSelector(uniqueSensors, labels);
-		assertEquals("#1:oC", sensorSelector.getSensorFromLabel("#1:oC").getLabel());
+		SensorLabelSelector SensorLabelSelector = new SensorLabelSelector(uniqueSensors, labels);
+		assertEquals("#1:oC", SensorLabelSelector.getSensorFromLabel("#1:oC").getLabel());
 
 		}
 
 	public void testNoDuplicates() throws Exception {
 		try {
-			SensorSelector sensorSelector = new SensorSelector(sensorsWithDuplicates, labels);
-			fail( "Missing exception" );
+			SensorLabelSelector SensorLabelSelector = new SensorLabelSelector(sensorsWithDuplicates, labels);
+			fail( "Missing exception : should detect multiple sensors" );
 	   } catch( Exception e ) {
 			assertEquals( "Multiple sensors with same label (#1:oC)", e.getMessage() ); // Optionally make sure you get the correct message, too
 	   }
