@@ -20,6 +20,7 @@ public class SensorTemporalSelectorTest extends TestCase {
 	List<DeviceSensor> deviceSensors;
 	List<Sensor> sensors;
 
+	Date dawnOfTime;
 	Date initialDeviceDeployment;
 	Date swapSensors2017;
 	
@@ -34,6 +35,7 @@ public class SensorTemporalSelectorTest extends TestCase {
 		this.deviceSensors = new ArrayList<DeviceSensor>();
         this.sensors= new ArrayList<Sensor>(4);
 
+		this.dawnOfTime = DateUtils.parseUtcString("26.12.1987 16:45:00");
         this.initialDeviceDeployment = DateUtils.parseUtcString("28.01.2016 16:45:00");
         this.swapSensors2017 = DateUtils.parseUtcString("28.01.2017 16:45:00");
         
@@ -118,12 +120,36 @@ public class SensorTemporalSelectorTest extends TestCase {
 		List<Date> reconfigurationDates = sensorTemporalSelector.getDeviceReconfigurationDates();
 
 		assertEquals("Wrong length, expected" + 2 + " actual: "+ reconfigurationDates.size(), 2, reconfigurationDates.size());
-
+		assertEquals(initialDeviceDeployment.toString(), reconfigurationDates.get(0).toString());
+		
 		for (int i = 0; i < reconfigurationDates.size() - 1; i++){
 			if (reconfigurationDates.get(i).getTime() > reconfigurationDates.get(i+1).getTime()){
 				fail("Dates in wrong order (expect sorted earliest to latest)");
 			}
 		}
+	}
+
+	public void testGetSensorsAtTimestamp() throws Exception { 
+		SensorTemporalSelector sensorTemporalSelector = new SensorTemporalSelector(deviceSensors, sensors);
+		
+		try {
+			sensorTemporalSelector.getSensorsAtTimestamp(dawnOfTime);
+			fail("Can't get sensors for earlier than configured. Configurations assumed to be on half-open intervals (t1,t2]");
+		} catch( Exception e) { 
+			assertEquals(2, 2);
+		}
+
+		try {
+			sensorTemporalSelector.getSensorsAtTimestamp(initialDeviceDeployment);
+			fail("Can't get sensors for earlier than configured. Configurations assumed to be on half-open intervals (t1,t2]");
+		} catch( Exception e) { 
+			assertEquals(2, 2);
+		}
+
+		assertEquals(2, sensorTemporalSelector.getSensorsAtTimestamp(targetDate).size());
+		assertEquals(2, sensorTemporalSelector.getSensorsAtTimestamp(swapSensors2017).size());
+		assertEquals(3, sensorTemporalSelector.getSensorsAtTimestamp(aLaterDate).size());
+	
 	}
 
 
