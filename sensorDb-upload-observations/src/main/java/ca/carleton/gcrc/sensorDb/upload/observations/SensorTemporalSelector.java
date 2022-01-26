@@ -90,6 +90,11 @@ public class SensorTemporalSelector {
 				lastChange = ds.getTimestamp();
 			}
 		}
+
+		if ( null == lastChange ){
+			throw new Exception("Timestamp " + timestamp.toString() + " predates any known device configuration. " +
+			"Configurations assumed to be defined on half-open intervals (t1,t2]");
+		}
 		return lastChange;
 	}
 
