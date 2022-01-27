@@ -262,10 +262,12 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
-				+ "accuracy,precision,height_in_metres,serial_number"
+				"SELECT id,label,type_of_measurement,unit_of_measurement,"
+				+ "accuracy,precision,height_in_metres,serial_number,"
+			    + "devices_sensors.device_id"
 				+ " FROM sensors"
-				+ " WHERE device_id=?"
+				+ " INNER JOIN devices_sensors ON devices_sensors.sensor_id = sensors.id"
+				+ " WHERE devices_sensors.device_id=?"
 			);
 			
 			pstmt.setObject(1, UUID.fromString(device_id));
@@ -274,14 +276,13 @@ public class DbApiJdbc implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
+				String label = resultSet.getString(2);
+				String typeOfMeasurement = resultSet.getString(3);
+				String unitOfMeasurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double heightInMetres = resultSet.getDouble(7);
+				String serialNumber = resultSet.getString(8);
 				
 				Sensor sensor = new Sensor();
 				sensor.setId(id);
