@@ -359,18 +359,39 @@ public class DbApiJdbc implements DbAPI {
 			result.setNotes( resultSet.getString(8) );
 
 			resultSet.close();
-				
+			
 			// Create sensors for this device...
+
 			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
 				Sensor sensor = new Sensor();
-				sensor.setLabel( sensorProfile.getSensorLabel() );
-				sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
-				sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
-				sensor.setPrecision( sensorProfile.getSensorPrecision() );
-				sensor.setTypeOfMeasurement( sensorProfile.getSensorTypeOfMeasurement() );
-				sensor.setUnitOfMeasurement( sensorProfile.getSensorUnitOfMeasurement() );
+				
+				try{
+					sensor.setLabel( sensorProfile.getSensorLabel() );
+					sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
+					sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
+					sensor.setPrecision( sensorProfile.getSensorPrecision() );
+					sensor.setTypeOfMeasurement( sensorProfile.getSensorTypeOfMeasurement() );
+					sensor.setUnitOfMeasurement( sensorProfile.getSensorUnitOfMeasurement() );
+	
+					sensor = createSensor(sensor);
+				
+				} catch (Exception e) {
+					throw new Exception("Error inserting sensor ("+sensor.getLabel()+") for device ("+device.getSerialNumber()+") into database", e);
+				}
 
-				createSensor(sensor);
+				try {
+					DeviceSensor deviceSensor = new DeviceSensor();
+					deviceSensor.setDeviceId(result.getId());
+					deviceSensor.setSensorId(sensor.getId());
+					deviceSensor.setTimestamp(result.getAcquiredOn());
+					
+					createDeviceSensor(deviceSensor);
+				
+				} catch (Exception e) {
+					throw new Exception("Error inserting device_sensor record for sensor  ("+sensor.getLabel()+") " +
+									    "with device ("+device.getSerialNumber()+") into database", e);
+				}
+
 			}
 			
 		} catch (Exception e) {
