@@ -39,13 +39,11 @@ public class SensorFileImporterTest extends TestCase {
 		}
 		{
 			Sensor sensor = new Sensor();
-			sensor.setDeviceId(device.getId());
 			sensor.setLabel("#1:oC");
 			dbApi.createSensor(sensor);
 		}
 		{
 			Sensor sensor = new Sensor();
-			sensor.setDeviceId(device.getId());
 			sensor.setLabel("#HK-Bat:V");
 			dbApi.createSensor(sensor);
 		}

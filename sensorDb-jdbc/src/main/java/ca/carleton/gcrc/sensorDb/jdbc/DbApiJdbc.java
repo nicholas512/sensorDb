@@ -131,20 +131,19 @@ public class DbApiJdbc implements DbAPI {
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 					"INSERT INTO sensors"
-					+" (device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+" (label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres)"
 					+" VALUES (?,?,?,?,?,?,?)"
-					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+" RETURNING id,label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres"
 				);
 				
-			pstmt.setObject(1, UUID.fromString(sensor.getDeviceId()));
-			pstmt.setString(2, sensor.getLabel());
-			pstmt.setString(3, sensor.getTypeOfMeasurement());
-			pstmt.setString(4, sensor.getUnitOfMeasurement());
-			pstmt.setDouble(5, sensor.getAccuracy());
-			pstmt.setDouble(6, sensor.getPrecision());
-			pstmt.setDouble(7, sensor.getHeightInMetres());
+			pstmt.setString(1, sensor.getLabel());
+			pstmt.setString(2, sensor.getTypeOfMeasurement());
+			pstmt.setString(3, sensor.getUnitOfMeasurement());
+			pstmt.setDouble(4, sensor.getAccuracy());
+			pstmt.setDouble(5, sensor.getPrecision());
+			pstmt.setDouble(6, sensor.getHeightInMetres());
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -152,18 +151,17 @@ public class DbApiJdbc implements DbAPI {
 			
 			result = new Sensor();
 			result.setId( resultSet.getString(1) );
-			result.setDeviceId( resultSet.getString(2) );
-			result.setLabel( resultSet.getString(3) );
-			result.setTypeOfMeasurement( resultSet.getString(4) );
-			result.setUnitOfMeasurement( resultSet.getString(5) );
-			result.setAccuracy( resultSet.getDouble(6) );
-			result.setPrecision( resultSet.getDouble(7) );
-			result.setHeightInMetres( resultSet.getDouble(8) );
+			result.setLabel( resultSet.getString(2) );
+			result.setTypeOfMeasurement( resultSet.getString(3) );
+			result.setUnitOfMeasurement( resultSet.getString(4) );
+			result.setAccuracy( resultSet.getDouble(5) );
+			result.setPrecision( resultSet.getDouble(6) );
+			result.setHeightInMetres( resultSet.getDouble(7) );
 
 			resultSet.close();
 				
 		} catch(Exception e) {
-			throw new Exception("Error while creating sensor ("+sensor.getLabel()+") for device ("+sensor.getDeviceId()+")",e);
+			throw new Exception("Error while creating sensor ("+sensor.getLabel()+")",e);
 		}
 		
 		return result;
@@ -175,7 +173,7 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
+				"SELECT id,label,type_of_measurement,unit_of_measurement,"
 				+ "accuracy,precision,height_in_metres,serial_number"
 				+ " FROM sensors"
 			);
@@ -184,18 +182,16 @@ public class DbApiJdbc implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
+				String label = resultSet.getString(2);
+				String typeOfMeasurement = resultSet.getString(3);
+				String unitOfMeasurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double heightInMetres = resultSet.getDouble(7);
+				String serialNumber = resultSet.getString(8);
 				
 				Sensor sensor = new Sensor();
 				sensor.setId(id);
-				sensor.setDeviceId(deviceId);
 				sensor.setLabel(label);
 				sensor.setTypeOfMeasurement(typeOfMeasurement);
 				sensor.setUnitOfMeasurement(unitOfMeasurement);
@@ -266,10 +262,12 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
-				+ "accuracy,precision,height_in_metres,serial_number"
+				"SELECT id,label,type_of_measurement,unit_of_measurement,"
+				+ "accuracy,precision,height_in_metres,serial_number,"
+			    + "devices_sensors.device_id"
 				+ " FROM sensors"
-				+ " WHERE device_id=?"
+				+ " INNER JOIN devices_sensors ON devices_sensors.sensor_id = sensors.id"
+				+ " WHERE devices_sensors.device_id=?"
 			);
 			
 			pstmt.setObject(1, UUID.fromString(device_id));
@@ -278,18 +276,16 @@ public class DbApiJdbc implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
+				String label = resultSet.getString(2);
+				String typeOfMeasurement = resultSet.getString(3);
+				String unitOfMeasurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double heightInMetres = resultSet.getDouble(7);
+				String serialNumber = resultSet.getString(8);
 				
 				Sensor sensor = new Sensor();
 				sensor.setId(id);
-				sensor.setDeviceId(deviceId);
 				sensor.setLabel(label);
 				sensor.setTypeOfMeasurement(typeOfMeasurement);
 				sensor.setUnitOfMeasurement(unitOfMeasurement);
@@ -367,7 +363,6 @@ public class DbApiJdbc implements DbAPI {
 			// Create sensors for this device...
 			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
 				Sensor sensor = new Sensor();
-				sensor.setDeviceId(result.getId());
 				sensor.setLabel( sensorProfile.getSensorLabel() );
 				sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
 				sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
