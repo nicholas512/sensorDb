@@ -421,6 +421,41 @@ public class DbServletActions {
 		return result;
 	}
 	
+	private JSONObject getSensorsByTimestampFromDeviceId(String device_id) throws Exception {
+		JSONObject result = new JSONObject();
+
+		try {
+			JSONObject timeJson = new JSONObject();
+			result.put("timestamps", timeJson);
+			
+			Collection<DeviceSensor> deviceSensors = dbAPI.getDeviceSensorsFromDeviceId(device_id);
+
+			// TODO: Make times ordered - write unique into list
+			for(DeviceSensor deviceSensor : deviceSensors){
+				String timestamp = deviceSensor.getTimestamp().toString();
+				
+				if (null == timeJson.get(timestamp)){
+					JSONArray sensorList = new JSONArray();
+					timeJson.put(timestamp.toString(), sensorList);
+				}
+			}
+			
+			for (DeviceSensor deviceSensor : deviceSensors){
+				JSONArray sensorList = (JSONArray) timeJson.get(deviceSensor.getTimestamp().toString());
+				Sensor sensor = dbAPI.getSensorFromSensorId(deviceSensor.getSensorId());
+				JSONObject sensorJSON = buildSensorJson(sensor);
+
+				sensorList.put(sensorJSON);
+			}
+			
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving sensors for device ("+device_id+") from database", e);
+		}
+		
+
+		return result;
+	}
 	// /**
 	//  * @param device_id
 	//  * @return
