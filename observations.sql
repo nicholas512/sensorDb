@@ -256,9 +256,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE on devices_locations to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices_sensors to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on logs to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on imports to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on observations to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on observations_dois to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on observations_sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on sensors to observations_write;
 
