@@ -54,7 +54,6 @@ ALTER TABLE public.devices OWNER TO observations_admin;
 
 CREATE TABLE public.sensors(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	device_id uuid NOT NULL,
 	label character varying NOT NULL,
 	type_of_measurement character varying NOT NULL,
 	unit_of_measurement character varying,
@@ -204,10 +203,6 @@ CREATE TABLE public.logs(
 );
 ALTER TABLE public.logs OWNER TO observations_admin;
 
-
-ALTER TABLE public.sensors ADD CONSTRAINT fk_device_id FOREIGN KEY (device_id)
-REFERENCES public.devices (id) MATCH FULL
-ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE public.devices_locations ADD CONSTRAINT device_location_fk_device FOREIGN KEY (device_id)
 REFERENCES public.devices (id) MATCH FULL
