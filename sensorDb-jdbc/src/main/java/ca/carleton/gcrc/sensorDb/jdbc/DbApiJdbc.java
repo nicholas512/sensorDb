@@ -262,7 +262,7 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,label,type_of_measurement,unit_of_measurement,"
+				"SELECT sensors.id AS id,label,type_of_measurement,unit_of_measurement,"
 				+ "accuracy,precision,height_in_metres,serial_number,"
 			    + "devices_sensors.device_id"
 				+ " FROM sensors"
