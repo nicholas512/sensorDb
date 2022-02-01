@@ -133,7 +133,7 @@ public class DbApiJdbc implements DbAPI {
 					"INSERT INTO sensors"
 					+" (label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres)"
-					+" VALUES (?,?,?,?,?,?,?)"
+					+" VALUES (?,?,?,?,?,?)"
 					+" RETURNING id,label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres"
 				);
