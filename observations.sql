@@ -193,24 +193,6 @@ ALTER TABLE public.observations_sets OWNER TO observations_admin;
 
 --- end of sets tables
 
-CREATE TABLE public.sets(
-	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	set character varying NOT NULL,
-	notes text,
-	CONSTRAINT sets_pk PRIMARY KEY (id)
-
-);
-ALTER TABLE public.sets OWNER TO observations_admin;
-
-CREATE TABLE public.observations_sets(
-	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	observation_id uuid NOT NULL,
-	set_id uuid NOT NULL
-);
-ALTER TABLE public.observations_sets OWNER TO observations_admin;
-
---- end of sets tables
-
 CREATE TABLE public.logs(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
 	timestamp timestamp WITH TIME ZONE NOT NULL,
