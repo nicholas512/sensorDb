@@ -182,3 +182,9 @@ select name,responsible_party,ST_AsText(coordinates),elevation from locations;
 
 > psql observations < 201XMMDD_observations_data.txt
 
+# Schema
+
+
+![schema](https://user-images.githubusercontent.com/59845773/165125911-46cf07ab-5b29-4ea5-8b2a-4d2fd82ba33e.png)
+
+
