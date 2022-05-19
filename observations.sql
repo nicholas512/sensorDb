@@ -223,6 +223,7 @@ GRANT SELECT on device_sensor_profiles to observations_read;
 GRANT SELECT on devices to observations_read;
 GRANT SELECT on devices_locations to observations_read;
 GRANT SELECT on sets to observations_read;
+GRANT SELECT on observations_sets to observations_read;
 GRANT SELECT on locations to observations_read;
 GRANT SELECT on logs to observations_read;
 GRANT SELECT on imports to observations_read;
