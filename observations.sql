@@ -249,7 +249,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE on device_sensor_profiles to observations_w
 GRANT SELECT, INSERT, UPDATE, DELETE on devices to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices_locations to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices_sensors to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on logs to observations_write;
