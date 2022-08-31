@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -256,7 +257,7 @@ public class DbServletActions {
 	/**
 	 * CReate a new device record
 	 * @param serialNumber
-     * @Param accessCode
+     * @param accessCode
 	 * @param type
 	 * @param notes
 	 * @return
@@ -272,8 +273,9 @@ public class DbServletActions {
 
 		JSONObject result = new JSONObject();
 		
+		Device device = new Device();
+		
 		try {
-			Device device = new Device();
 			device.setSerialNumber(serialNumber);
 			device.setAccessCode(accessCode);
 			device.setManufacturerDeviceName(type);
@@ -290,6 +292,7 @@ public class DbServletActions {
 			jsonDevice.put("sensors", sensorsArr);
 			
 			// Report associated sensors...
+			// When it is first created, the only sensors should be the ones in the profile
 			Collection<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device.getId());
 			for(Sensor sensor : sensors){
 				JSONObject jsonSensor = buildSensorJson(sensor);
@@ -297,7 +300,7 @@ public class DbServletActions {
 			}
 			
 		} catch (Exception e) {
-			throw new Exception("Error inserting device into database", e);
+			throw new Exception("Error inserting device (SN: " + device.getSerialNumber() +") into database", e);
 		}
 		
 		result.put("ok", true);
@@ -325,17 +328,6 @@ public class DbServletActions {
 				JSONObject jsonDevice = buildDeviceJson(device);
 				
 				deviceArr.put(jsonDevice);
-			}
-			
-			// Get sensors
-			Map<String,JSONArray> sensorMap = getAllSensors();
-			for(int i=0; i<deviceArr.length(); ++i){
-				JSONObject device = deviceArr.getJSONObject(i);
-				
-				JSONArray sensors = sensorMap.get(device.getString("id"));
-				if( null != sensors ){
-					device.put("sensors", sensors);
-				}
 			}
 			
 		} catch (Exception e) {
@@ -429,36 +421,71 @@ public class DbServletActions {
 		return result;
 	}
 	
-	/**
-	 * @param device_id
-	 * @return
-	 * @throws Exception  
-	 */
-	private Map<String,JSONArray> getAllSensors() throws Exception {
+	private JSONObject getSensorsByTimestampFromDeviceId(String device_id) throws Exception {
+		JSONObject result = new JSONObject();
 
-		Map<String,JSONArray> map = new HashMap<String,JSONArray>();
-		
 		try {
-			Collection<Sensor> sensors = dbAPI.getSensors();
+			JSONObject timeJson = new JSONObject();
+			result.put("timestamps", timeJson);
+			
+			Collection<DeviceSensor> deviceSensors = dbAPI.getDeviceSensorsFromDeviceId(device_id);
 
-			for(Sensor sensor : sensors){
-				JSONObject jsonSensor = buildSensorJson(sensor);
+			// TODO: Make times ordered - write unique into list
+			for(DeviceSensor deviceSensor : deviceSensors){
+				String timestamp = deviceSensor.getTimestamp().toString();
 				
-				JSONArray arr = map.get(sensor.getDeviceId());
-				if( null == arr ){
-					arr = new JSONArray();
-					map.put(sensor.getDeviceId(), arr);
+				if (null == timeJson.get(timestamp)){
+					JSONArray sensorList = new JSONArray();
+					timeJson.put(timestamp.toString(), sensorList);
 				}
-				
-				arr.put(jsonSensor);
 			}
 			
+			for (DeviceSensor deviceSensor : deviceSensors){
+				JSONArray sensorList = (JSONArray) timeJson.get(deviceSensor.getTimestamp().toString());
+				Sensor sensor = dbAPI.getSensorFromSensorId(deviceSensor.getSensorId());
+				JSONObject sensorJSON = buildSensorJson(sensor);
+
+				sensorList.put(sensorJSON);
+			}
+			
+			
 		} catch (Exception e) {
-			throw new Exception("Error retrieving all sensors from database", e);
+			throw new Exception("Error retrieving sensors for device ("+device_id+") from database", e);
 		}
 		
-		return map;
+
+		return result;
 	}
+	// /**
+	//  * @param device_id
+	//  * @return
+	//  * @throws Exception  
+	//  */
+	// private Map<String,JSONArray> getAllSensors() throws Exception {
+
+	// 	Map<String,JSONArray> map = new HashMap<String,JSONArray>();
+		
+	// 	try {
+	// 		Collection<Sensor> sensors = dbAPI.getSensors();
+
+	// 		for(Sensor sensor : sensors){
+	// 			JSONObject jsonSensor = buildSensorJson(sensor);
+				
+	// 			JSONArray arr = map.get(sensor.getDeviceId());
+	// 			if( null == arr ){
+	// 				arr = new JSONArray();
+	// 				map.put(sensor.getDeviceId(), arr);
+	// 			}
+				
+	// 			arr.put(jsonSensor);
+	// 		}
+			
+	// 	} catch (Exception e) {
+	// 		throw new Exception("Error retrieving all sensors from database", e);
+	// 	}
+		
+	// 	return map;
+	// }
 	
 	/**
 	 * @param id
@@ -516,7 +543,45 @@ public class DbServletActions {
 		}
 		
 		result.put("ok", true);
-		result.put("action", "insert device");
+		result.put("action", "insert device location");
+		return result;
+	}
+
+	/**
+	 * @param time
+	 * @param device_id
+	 * @param sensor_id
+	 * @param notes
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject addDeviceSensor(
+			Date time, 
+			String device_id,
+			String sensor_id,
+			String notes
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			DeviceSensor deviceSensor = new DeviceSensor();
+			deviceSensor.setDeviceId(device_id);
+			deviceSensor.setSensorId(sensor_id);
+			deviceSensor.setTimestamp(time);
+			deviceSensor.setNotes(notes);
+			
+			deviceSensor = dbAPI.createDeviceSensor(deviceSensor);
+				
+			JSONObject jsonDeviceSensor = buildDeviceSensorJson(deviceSensor);
+			result.put("deviceSensor", jsonDeviceSensor);
+			
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceSensor into database", e);
+		}
+		
+		result.put("ok", true);
+		result.put("action", "insert device sensor");
 		return result;
 	}
 
@@ -549,7 +614,38 @@ public class DbServletActions {
 
 		return result;
 	}
+
 	
+	/**
+	 * @return
+	 * @throws Exception
+	 */
+	public JSONObject getDeviceSensors(
+			) throws Exception {
+
+		JSONObject result = new JSONObject();
+		
+		try {
+			JSONArray deviceSensorArr = new JSONArray();
+			result.put("deviceSensors", deviceSensorArr);
+
+			Collection<DeviceSensor> deviceSensors = dbAPI.getDeviceSensors();
+
+			for(DeviceSensor deviceSensor : deviceSensors){
+				JSONObject jsonDeviceSensor = buildDeviceSensorJson(deviceSensor);
+				
+				deviceSensorArr.put(jsonDeviceSensor);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving all deviceSensors from database", e);
+		}
+		
+		result.put("ok", true);
+
+		return result;
+	}
+
 	/**
 	 * @param deviceLocation
 	 * @return
@@ -565,6 +661,23 @@ public class DbServletActions {
 		jsonDeviceLocation.put("location_id", deviceLocation.getLocationId());
 		jsonDeviceLocation.put("notes", deviceLocation.getNotes());
 		return jsonDeviceLocation;
+	}
+
+		/**
+	 * @param deviceSensor
+	 * @return
+	 */
+	private JSONObject buildDeviceSensorJson(DeviceSensor deviceSensor){
+		
+		JSONObject jsonDeviceSensor = new JSONObject();
+		jsonDeviceSensor.put("type", "deviceSensor");
+		jsonDeviceSensor.put("id", deviceSensor.getId());
+		jsonDeviceSensor.put("timestamp", deviceSensor.getTimestamp().getTime());
+		jsonDeviceSensor.put("timestamp_text", DateUtils.getUtcDateString(deviceSensor.getTimestamp()));
+		jsonDeviceSensor.put("device_id", deviceSensor.getDeviceId());
+		jsonDeviceSensor.put("location_id", deviceSensor.getSensorId());
+		jsonDeviceSensor.put("notes", deviceSensor.getNotes());
+		return jsonDeviceSensor;
 	}
 	
 	public JSONObject getImportRecords() throws Exception {

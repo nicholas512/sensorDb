@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Vector;
 
@@ -17,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReport;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportReportMemory;
@@ -134,23 +137,16 @@ public class SensorFileImporter {
 			String device_id = device.getId();
 			List<Sensor> sensors = dbAPI.getSensorsFromDeviceId(device_id);
 			
-			// Make a map of sensors based on label
-			Map<String,Sensor> sensorsMap = new HashMap<String,Sensor>();
+			// Make a list of sensors based on label
+			Set<String> sensorLabelSet = new HashSet<String>();
 			for(Sensor sensor : sensors){
-				
-				if( sensorsMap.containsKey(sensor.getLabel()) ){
-					throw new Exception("Multiple sensors with same label ("+sensor.getLabel()
-						+") for device ("+deviceSerialNumber+")"
-					);
-				}
-				
-				sensorsMap.put(sensor.getLabel(), sensor);
+				sensorLabelSet.add(sensor.getLabel());
 			}
 
 			// Check that sensors were found for all parsed columns
 			for(SampleColumn column : obsReader.getColumns()){
 				if( column.isValue() ){
-					if( null == sensorsMap.get( column.getName() ) ){
+					if( !(sensorLabelSet.contains( column.getName() )) ){
 						throw new Exception("Sensor with label ("+column.getName()+") not found for device: "+device);
 					}
 				}
@@ -201,17 +197,22 @@ public class SensorFileImporter {
 			List<DeviceLocation> deviceLocations = dbAPI.getDeviceLocationsFromDeviceId(device_id);
 			List<Location> locations = dbAPI.getLocationsFromDeviceLocations(deviceLocations);
 			DeviceLocator deviceLocator = new DeviceLocator(deviceLocations, locations);
-			
+
+			// Get all sensors for this device
+			List<DeviceSensor> deviceSensors = dbAPI.getDeviceSensorsFromDeviceId(device_id);
+			List<Sensor> allSensors = dbAPI.getSensorsFromDeviceSensors(deviceSensors);
+			DeviceSensorHistory deviceSensorHistory = new DeviceSensorHistory(deviceSensors, allSensors);
+
 			// Start saving observations
 			for( Sample sample : samples ){
 				String sensor_label = sample.getColumn().getName();
-				Sensor sensor = sensorsMap.get( sensor_label );
 				
 				try {
 					insertSample(
 						importUUID, 
 						device_id, 
-						sensor, 
+						deviceSensorHistory, 
+						sensor_label,
 						sample, 
 						timeCorrector, 
 						deviceLocator, 
@@ -312,6 +313,92 @@ public class SensorFileImporter {
 			throw new Exception("Error inserting observation for sensor (id="+sensor.getId()+") to database", e);
 		}
 	}
+
+	private void insertSample(
+		String importUUID,
+		String device_id,
+		DeviceSensorHistory deviceSensorHistory,
+		String sensor_label,
+		Sample sample, 
+		TimeCorrector timeCorrector,
+		DeviceLocator deviceLocator,
+		ImportReport report
+		) throws Exception {
+	
+	Sensor sensor = null;
+	// insert into observations (device_id,sensor_id,location) values ('123','456',ST_GeomFromEWKT('srid=4326;POINT(0 0)'));
+	try {
+		Date loggerTime = sample.getTime();
+		Date correctedTime = timeCorrector.correctTime(loggerTime);
+		
+		Location location = deviceLocator.getLocationFromTimestamp(correctedTime);
+		if( null == location ){
+			throw new Exception("Can not find location of device (id="+device_id+") for time "+correctedTime.toString());
+		}
+
+		sensor = deviceSensorHistory.getSensorAtTimestamp(sensor_label, correctedTime);
+		if ( null == sensor ){
+			throw new Exception("Can not find sensor with label '" + sensor_label +
+						        "' corresponding to device (id="+device_id+") at time "+correctedTime.toString());
+		}
+
+		String geometry = location.getGeometry();
+		
+		Observation observation = new Observation();
+		observation.setDeviceId( device_id );
+		observation.setSensorId( sensor.getId() );
+		observation.setImportId( importUUID );
+		observation.setImportKey( sample.computeImportKey() );
+		observation.setObservationType( sensor.getTypeOfMeasurement() );
+		observation.setUnitOfMeasure( sensor.getUnitOfMeasurement() );
+		observation.setAccuracy( sensor.getAccuracy() );
+		observation.setPrecision( sensor.getPrecision() );
+		observation.setNumericValue( sample.getValue() );
+		observation.setTextValue( sample.getText() );
+		observation.setLoggedTime( loggerTime );
+		observation.setCorrectedTime( correctedTime );
+		observation.setLocation( geometry );
+		observation.setElevation( location.getElevation() );
+		observation.setMinHeight( sensor.getHeightInMetres() );
+		observation.setMaxHeight( sensor.getHeightInMetres() );
+		
+		// Insert observation only if this location is meant to record observations.
+		// "In Transit" locations should not be saved.
+		if( location.isRecordingObservations() ){
+
+			boolean collision = false;
+			String importKey = observation.getImportKey();
+			Observation collidingObservation = null;
+			if( null != importKey ){
+				collidingObservation = dbAPI.getObservationFromImportKey(importKey);
+			}
+			if( null != collidingObservation ){
+				collision = true;
+			}
+			
+			if( collision ){
+				report.collisionObservation(observation);
+				report.skippedObservation(observation);
+			} else {
+				observation = dbAPI.createObservation(observation);
+				
+				report.insertedObservation(observation);
+			}
+
+		} else {
+			report.inTransitObservation(observation);
+			report.skippedObservation(observation);
+		};
+		
+	} catch (Exception e) {
+		if (null == sensor){
+			throw new Exception("Error inserting observation for sensor (label="+sensor_label+") to database", e);
+		} else{
+			throw new Exception("Error inserting observation for sensor (id="+sensor.getId()+") to database", e);
+		}
+		
+	}
+}
 
 	private void saveImportReport(ImportReport report) throws Exception {
 		try {

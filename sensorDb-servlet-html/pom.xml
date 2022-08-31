@@ -3,7 +3,7 @@
   <parent>
     <groupId>ca.gcrc.carleton</groupId>
     <artifactId>sensorDb</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>sensorDb-servlet-html</artifactId>
 	<name>sensorDb-servlet-html</name>

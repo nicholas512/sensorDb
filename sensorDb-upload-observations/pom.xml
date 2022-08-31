@@ -4,10 +4,23 @@
 	<parent>
 		<groupId>ca.gcrc.carleton</groupId>
 		<artifactId>sensorDb</artifactId>
-		<version>0.0.4-SNAPSHOT</version>
+		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>sensorDb-upload-observations</artifactId>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.openjfx</groupId>
+				<artifactId>javafx-maven-plugin</artifactId>
+				<version>0.0.8</version>
+				<configuration>
+					<mainClass>HelloFX</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 	<name>sensorDb-upload-observations</name>
+	
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -21,6 +34,12 @@
 			<version>${slf4j.version}</version>
 			<type>jar</type>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>11</version>
+			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>ca.carleton.gcrc</groupId>
