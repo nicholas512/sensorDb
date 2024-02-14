@@ -4,10 +4,15 @@
 sensorDB is a webservice that facilitates writing data to a permafrost database.
 
 ### Table of Contents
-[Installation](#_installation)
-[Dockerized installation](#_docker)
-[Usage](#_usage)  
-[Schema](#schema)
+1. [Installation](#_installation)
+2. [Dockerized installation](#_docker)
+3. [Usage](#_usage)
+   1.  Adding a Location
+   2.  Adding a device
+   3.  Assigning device location
+   4.  Uploading observations files
+   5.  Logs
+6. [Schema](#schema)
 
 
 ## Installation
