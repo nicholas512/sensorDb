@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -130,20 +131,19 @@ public class DbApiJdbc implements DbAPI {
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 					"INSERT INTO sensors"
-					+" (device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+" (label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres)"
-					+" VALUES (?,?,?,?,?,?,?)"
-					+" RETURNING id,device_id,label,type_of_measurement,unit_of_measurement,accuracy,"
+					+" VALUES (?,?,?,?,?,?)"
+					+" RETURNING id,label,type_of_measurement,unit_of_measurement,accuracy,"
 					+ "precision,height_in_metres"
 				);
 				
-			pstmt.setObject(1, UUID.fromString(sensor.getDeviceId()));
-			pstmt.setString(2, sensor.getLabel());
-			pstmt.setString(3, sensor.getTypeOfMeasurement());
-			pstmt.setString(4, sensor.getUnitOfMeasurement());
-			pstmt.setDouble(5, sensor.getAccuracy());
-			pstmt.setDouble(6, sensor.getPrecision());
-			pstmt.setDouble(7, sensor.getHeightInMetres());
+			pstmt.setString(1, sensor.getLabel());
+			pstmt.setString(2, sensor.getTypeOfMeasurement());
+			pstmt.setString(3, sensor.getUnitOfMeasurement());
+			pstmt.setDouble(4, sensor.getAccuracy());
+			pstmt.setDouble(5, sensor.getPrecision());
+			pstmt.setDouble(6, sensor.getHeightInMetres());
 
 			ResultSet resultSet = pstmt.executeQuery();
 			
@@ -151,18 +151,17 @@ public class DbApiJdbc implements DbAPI {
 			
 			result = new Sensor();
 			result.setId( resultSet.getString(1) );
-			result.setDeviceId( resultSet.getString(2) );
-			result.setLabel( resultSet.getString(3) );
-			result.setTypeOfMeasurement( resultSet.getString(4) );
-			result.setUnitOfMeasurement( resultSet.getString(5) );
-			result.setAccuracy( resultSet.getDouble(6) );
-			result.setPrecision( resultSet.getDouble(7) );
-			result.setHeightInMetres( resultSet.getDouble(8) );
+			result.setLabel( resultSet.getString(2) );
+			result.setTypeOfMeasurement( resultSet.getString(3) );
+			result.setUnitOfMeasurement( resultSet.getString(4) );
+			result.setAccuracy( resultSet.getDouble(5) );
+			result.setPrecision( resultSet.getDouble(6) );
+			result.setHeightInMetres( resultSet.getDouble(7) );
 
 			resultSet.close();
 				
 		} catch(Exception e) {
-			throw new Exception("Error while creating sensor ("+sensor.getLabel()+") for device ("+sensor.getDeviceId()+")",e);
+			throw new Exception("Error while creating sensor ("+sensor.getLabel()+")",e);
 		}
 		
 		return result;
@@ -174,7 +173,7 @@ public class DbApiJdbc implements DbAPI {
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
+				"SELECT id,label,type_of_measurement,unit_of_measurement,"
 				+ "accuracy,precision,height_in_metres,serial_number"
 				+ " FROM sensors"
 			);
@@ -183,18 +182,16 @@ public class DbApiJdbc implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
+				String label = resultSet.getString(2);
+				String typeOfMeasurement = resultSet.getString(3);
+				String unitOfMeasurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double heightInMetres = resultSet.getDouble(7);
+				String serialNumber = resultSet.getString(8);
 				
 				Sensor sensor = new Sensor();
 				sensor.setId(id);
-				sensor.setDeviceId(deviceId);
 				sensor.setLabel(label);
 				sensor.setTypeOfMeasurement(typeOfMeasurement);
 				sensor.setUnitOfMeasurement(unitOfMeasurement);
@@ -216,15 +213,61 @@ public class DbApiJdbc implements DbAPI {
 	}
 
 	@Override
+	public Sensor getSensorFromSensorId(String sensorId) throws Exception {
+		Sensor sensor = null;
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,label,type_of_measurement,unit_of_measurement,accuracy,precision,height_in_metres,serial_number"
+				+ " FROM sensors"
+				+ " WHERE id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(sensorId));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String sensor_id = resultSet.getString(1);
+				String label = resultSet.getString(2);
+				String type_of_measurement = resultSet.getString(3);
+				String unit_of_measurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double height_in_metres = resultSet.getDouble(7);
+				String serial_number = resultSet.getString(8);
+				
+				sensor = new Sensor();
+				sensor.setId(sensor_id);
+				sensor.setLabel(label);
+				sensor.setTypeOfMeasurement(type_of_measurement);
+				sensor.setUnitOfMeasurement(unit_of_measurement);
+				sensor.setAccuracy(accuracy);
+				sensor.setPrecision(precision);
+				sensor.setHeightInMetres(height_in_metres);
+				sensor.setSerialNumber(serial_number);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving sensor (id="+sensorId+") from database", e);
+		}
+
+		return sensor;
+	}
+
+	@Override
 	public List<Sensor> getSensorsFromDeviceId(String device_id) throws Exception {
 		List<Sensor> sensors = new Vector<Sensor>();
 		
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,device_id,label,type_of_measurement,unit_of_measurement,"
-				+ "accuracy,precision,height_in_metres,serial_number"
+				"SELECT sensors.id AS id,label,type_of_measurement,unit_of_measurement,"
+				+ "accuracy,precision,height_in_metres,serial_number,"
+			    + "devices_sensors.device_id"
 				+ " FROM sensors"
-				+ " WHERE device_id=?"
+				+ " INNER JOIN devices_sensors ON devices_sensors.sensor_id = sensors.id"
+				+ " WHERE devices_sensors.device_id=?"
 			);
 			
 			pstmt.setObject(1, UUID.fromString(device_id));
@@ -233,18 +276,16 @@ public class DbApiJdbc implements DbAPI {
 			
 			while( resultSet.next() ){
 				String id = resultSet.getString(1);
-				String deviceId = resultSet.getString(2);
-				String label = resultSet.getString(3);
-				String typeOfMeasurement = resultSet.getString(4);
-				String unitOfMeasurement = resultSet.getString(5);
-				double accuracy = resultSet.getDouble(6);
-				double precision = resultSet.getDouble(7);
-				double heightInMetres = resultSet.getDouble(8);
-				String serialNumber = resultSet.getString(9);
+				String label = resultSet.getString(2);
+				String typeOfMeasurement = resultSet.getString(3);
+				String unitOfMeasurement = resultSet.getString(4);
+				double accuracy = resultSet.getDouble(5);
+				double precision = resultSet.getDouble(6);
+				double heightInMetres = resultSet.getDouble(7);
+				String serialNumber = resultSet.getString(8);
 				
 				Sensor sensor = new Sensor();
 				sensor.setId(id);
-				sensor.setDeviceId(deviceId);
 				sensor.setLabel(label);
 				sensor.setTypeOfMeasurement(typeOfMeasurement);
 				sensor.setUnitOfMeasurement(unitOfMeasurement);
@@ -318,19 +359,39 @@ public class DbApiJdbc implements DbAPI {
 			result.setNotes( resultSet.getString(8) );
 
 			resultSet.close();
-				
+			
 			// Create sensors for this device...
+
 			for(DeviceSensorProfile sensorProfile : deviceSensorProfiles){
 				Sensor sensor = new Sensor();
-				sensor.setDeviceId(result.getId());
-				sensor.setLabel( sensorProfile.getSensorLabel() );
-				sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
-				sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
-				sensor.setPrecision( sensorProfile.getSensorPrecision() );
-				sensor.setTypeOfMeasurement( sensorProfile.getSensorTypeOfMeasurement() );
-				sensor.setUnitOfMeasurement( sensorProfile.getSensorUnitOfMeasurement() );
+				
+				try{
+					sensor.setLabel( sensorProfile.getSensorLabel() );
+					sensor.setAccuracy( sensorProfile.getSensorAccuracy() );
+					sensor.setHeightInMetres( sensorProfile.getSensorHeightInMetres() );
+					sensor.setPrecision( sensorProfile.getSensorPrecision() );
+					sensor.setTypeOfMeasurement( sensorProfile.getSensorTypeOfMeasurement() );
+					sensor.setUnitOfMeasurement( sensorProfile.getSensorUnitOfMeasurement() );
+	
+					sensor = createSensor(sensor);
+				
+				} catch (Exception e) {
+					throw new Exception("Error inserting sensor ("+sensor.getLabel()+") for device ("+device.getSerialNumber()+") into database", e);
+				}
 
-				createSensor(sensor);
+				try {
+					DeviceSensor deviceSensor = new DeviceSensor();
+					deviceSensor.setDeviceId(result.getId());
+					deviceSensor.setSensorId(sensor.getId());
+					deviceSensor.setTimestamp(result.getAcquiredOn());
+					
+					createDeviceSensor(deviceSensor);
+				
+				} catch (Exception e) {
+					throw new Exception("Error inserting device_sensor record for sensor  ("+sensor.getLabel()+") " +
+									    "with device ("+device.getSerialNumber()+") into database", e);
+				}
+
 			}
 			
 		} catch (Exception e) {
@@ -613,6 +674,83 @@ public class DbApiJdbc implements DbAPI {
 	}
 	
 	@Override
+	public List<DeviceSensor> getDeviceSensors() throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,sensor_id,timestamp,notes"
+				+ " FROM devices_sensors"
+			);
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String sensorId = resultSet.getString(3);
+				Date timestamp = resultSet.getTimestamp(4);
+				String notes = resultSet.getString(5);
+
+				DeviceSensor deviceSensor = new DeviceSensor();
+				deviceSensor.setId(id);
+				deviceSensor.setDeviceId(deviceId);
+				deviceSensor.setSensorId(sensorId);
+				deviceSensor.setTimestamp(timestamp);
+				deviceSensor.setNotes(notes);
+				
+				deviceSensors.add(deviceSensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device sensors from database", e);
+		}
+
+		return deviceSensors;
+	}
+
+	@Override
+	public List<DeviceSensor> getDeviceSensorsFromDeviceId(String device_id) throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+
+		try {
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"SELECT id,device_id,sensor_id,timestamp,notes FROM devices_sensors WHERE device_id=?"
+			);
+			
+			pstmt.setObject(1, UUID.fromString(device_id));
+			
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			while( resultSet.next() ){
+				String id = resultSet.getString(1);
+				String deviceId = resultSet.getString(2);
+				String sensorId = resultSet.getString(3);
+				Date timestamp = resultSet.getTimestamp(4);
+				String notes = resultSet.getString(5);
+
+				DeviceSensor deviceSensor = new DeviceSensor();
+				deviceSensor.setId(id);
+				deviceSensor.setDeviceId(deviceId);
+				deviceSensor.setSensorId(sensorId);
+				deviceSensor.setTimestamp(timestamp);
+				deviceSensor.setNotes(notes);
+				
+				deviceSensors.add(deviceSensor);
+			}
+			
+			resultSet.close();
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving device sensors for device (id="+device_id+") from database", e);
+		}
+
+		return deviceSensors;
+	}
+	
+	@Override
 	public List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception {
 		List<Location> locations = new Vector<Location>();
 		
@@ -638,6 +776,32 @@ public class DbApiJdbc implements DbAPI {
 		return locations;
 	}
 	
+	@Override
+	public List<Sensor> getSensorsFromDeviceSensors(List<DeviceSensor> deviceSensors) throws Exception {
+		List<Sensor> sensors = new Vector<Sensor>();
+		
+		try {
+			// Accumulate all sensor ids
+			Set<String> sensorIds = new HashSet<String>();
+			for(DeviceSensor deviceSensor : deviceSensors){
+				String sensorId = deviceSensor.getSensorId();
+				if( null != sensorId ){
+					sensorIds.add(sensorId);
+				}
+			}
+			
+			for(String sensorId : sensorIds){
+				Sensor sensor = getSensorFromSensorId(sensorId);
+				sensors.add(sensor);
+			}
+			
+		} catch (Exception e) {
+			throw new Exception("Error retrieving sensors for device sensors from database", e);
+		}
+
+		return sensors;
+	}
+
 	@Override
 	public Location createLocation(Location location) throws Exception {
 		
@@ -761,6 +925,73 @@ public class DbApiJdbc implements DbAPI {
 		}
 
 		return locations;
+	}
+
+	@Override
+	public DeviceSensor createDeviceSensor(DeviceSensor DeviceSensor) throws Exception {
+
+		DeviceSensor result = null;
+		
+		if( null != DeviceSensor.getId() ){
+			throw new Exception("Id should not be set when creating a device sensor");
+		}
+		
+		try {
+			// Check if device_id is valid
+			try {
+				Device device = getDeviceFromId(DeviceSensor.getDeviceId());
+				if( null == device ){
+					throw new Exception("Device not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding device ("+DeviceSensor.getDeviceId()+")",e);
+			}
+			
+			// Check if sensor_id is valid
+			try {
+				Sensor sensor = getSensorFromSensorId(DeviceSensor.getSensorId());
+				if( null == sensor ){
+					throw new Exception("Sensor not found");
+				}
+				
+			} catch (Exception e) {
+				throw new Exception("Error finding sensor ("+DeviceSensor.getSensorId()+")",e);
+			}
+			
+			// Get Sql Time
+			Timestamp dbTime = new Timestamp( DeviceSensor.getTimestamp().getTime() );
+			
+			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
+				"INSERT INTO devices_sensors"
+				+" (timestamp,device_id,sensor_id,notes)"
+				+" VALUES (?,?,?,?)"
+				+" RETURNING id,timestamp,device_id,sensor_id,notes"
+			);
+			
+			pstmt.setTimestamp(1, dbTime);
+			pstmt.setObject(2, UUID.fromString(DeviceSensor.getDeviceId()) );
+			pstmt.setObject(3, UUID.fromString(DeviceSensor.getSensorId()) );
+			pstmt.setString(4, DeviceSensor.getNotes());
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			resultSet.next();
+			
+			result = new DeviceSensor();
+			result.setId( resultSet.getString(1) );
+			result.setTimestamp( resultSet.getTimestamp(2) );
+			result.setDeviceId( resultSet.getString(3) );
+			result.setSensorId( resultSet.getString(4) );
+			result.setNotes( resultSet.getString(5) );
+
+			resultSet.close();
+				
+		} catch (Exception e) {
+			throw new Exception("Error inserting deviceSensor into database", e);
+		}
+		
+		return result;
 	}
 
 	@Override

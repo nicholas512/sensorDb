@@ -54,7 +54,6 @@ ALTER TABLE public.devices OWNER TO observations_admin;
 
 CREATE TABLE public.sensors(
 	id uuid NOT NULL DEFAULT uuid_generate_v4(),
-	device_id uuid NOT NULL,
 	label character varying NOT NULL,
 	type_of_measurement character varying NOT NULL,
 	unit_of_measurement character varying,
@@ -94,6 +93,17 @@ CREATE TABLE public.devices_locations(
 
 );
 ALTER TABLE public.devices_locations OWNER TO observations_admin;
+
+CREATE TABLE public.devices_sensors(
+     id uuid NOT NULL DEFAULT uuid_generate_v4(),
+     timestamp timestamp WITH TIME ZONE NOT NULL,
+     device_id uuid NOT NULL,
+     sensor_id uuid NOT NULL,
+     notes text,
+     CONSTRAINT device_sensor_pk PRIMARY KEY (id)
+
+);
+ALTER TABLE public.devices_sensors OWNER TO observations_admin;
 
 --- New imports table
 
@@ -194,16 +204,20 @@ CREATE TABLE public.logs(
 ALTER TABLE public.logs OWNER TO observations_admin;
 
 
-ALTER TABLE public.sensors ADD CONSTRAINT fk_device_id FOREIGN KEY (device_id)
-REFERENCES public.devices (id) MATCH FULL
-ON DELETE NO ACTION ON UPDATE NO ACTION;
-
 ALTER TABLE public.devices_locations ADD CONSTRAINT device_location_fk_device FOREIGN KEY (device_id)
 REFERENCES public.devices (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE public.devices_locations ADD CONSTRAINT device_location_fk_location FOREIGN KEY (location_id)
 REFERENCES public.locations (id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE public.devices_sensors ADD CONSTRAINT device_sensor_fk_device FOREIGN KEY (device_id)
+REFERENCES public.devices (id) MATCH FULL
+ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+ALTER TABLE public.devices_sensors ADD CONSTRAINT device_sensor_fk_sensor FOREIGN KEY (sensor_id)
+REFERENCES public.sensors (id) MATCH FULL
 ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 ALTER TABLE public.observations ADD CONSTRAINT observations_sensor_fk FOREIGN KEY (sensor_id)
@@ -221,6 +235,7 @@ ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 GRANT SELECT on device_sensor_profiles to observations_read;
 GRANT SELECT on devices to observations_read;
+GRANT SELECT on devices_sensors to observations_read;
 GRANT SELECT on devices_locations to observations_read;
 GRANT SELECT on sets to observations_read;
 GRANT SELECT on locations to observations_read;
@@ -233,8 +248,9 @@ GRANT SELECT on sensors to observations_read;
 GRANT SELECT, INSERT, UPDATE, DELETE on device_sensor_profiles to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on devices_locations to observations_write;
-GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on devices_sensors to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on locations to observations_write;
+GRANT SELECT, INSERT, UPDATE, DELETE on sets to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on logs to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on imports to observations_write;
 GRANT SELECT, INSERT, UPDATE, DELETE on observations to observations_write;

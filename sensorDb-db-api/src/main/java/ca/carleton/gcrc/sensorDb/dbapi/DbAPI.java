@@ -13,6 +13,8 @@ public interface DbAPI {
 
 	Collection<Sensor> getSensors() throws Exception;
 
+	Sensor getSensorFromSensorId(String sensor_id) throws Exception;
+
 	List<Sensor> getSensorsFromDeviceId(String device_id) throws Exception;
 
 	Device createDevice(Device device) throws Exception;
@@ -29,13 +31,21 @@ public interface DbAPI {
 	
 	List<DeviceLocation> getDeviceLocationsFromDeviceId(String device_id) throws Exception;
 
+	List<DeviceSensor> getDeviceSensors() throws Exception;
+	
+	List<DeviceSensor> getDeviceSensorsFromDeviceId(String device_id) throws Exception;
+
 	List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception;
+
+	List<Sensor> getSensorsFromDeviceSensors(List<DeviceSensor> deviceSensors) throws Exception;
 
 	Location createLocation(Location location) throws Exception;
 	
 	Location getLocationFromLocationId(String locationId) throws Exception;
 
 	Collection<Location> getLocations() throws Exception;
+
+	DeviceSensor createDeviceSensor(DeviceSensor deviceSensor) throws Exception;
 
 	Observation createObservation(Observation observation) throws Exception;
 

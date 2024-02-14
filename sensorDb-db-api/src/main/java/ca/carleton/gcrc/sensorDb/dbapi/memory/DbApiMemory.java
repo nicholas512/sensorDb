@@ -11,6 +11,7 @@ import java.util.Vector;
 import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 import ca.carleton.gcrc.sensorDb.dbapi.Device;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceLocation;
+import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensor;
 import ca.carleton.gcrc.sensorDb.dbapi.DeviceSensorProfile;
 import ca.carleton.gcrc.sensorDb.dbapi.ImportRecord;
 import ca.carleton.gcrc.sensorDb.dbapi.Location;
@@ -37,6 +38,7 @@ public class DbApiMemory implements DbAPI {
 	private Map<String,Sensor> sensorsById = new HashMap<String,Sensor>();
 	private Map<String,Device> devicesById = new HashMap<String,Device>();
 	private Map<String,DeviceLocation> deviceLocationsById = new HashMap<String,DeviceLocation>();
+	private Map<String,DeviceSensor> deviceSensorsById = new HashMap<String,DeviceSensor>();
 	private Map<String,Location> locationsById = new HashMap<String,Location>();
 	private Map<String,Observation> observationsById = new HashMap<String,Observation>();
 	private Map<String,ImportRecord> importRecordsById = new HashMap<String,ImportRecord>();
@@ -71,7 +73,6 @@ public class DbApiMemory implements DbAPI {
 		
 		dbSensor.setId( getNextUUID() );
 		dbSensor.setAccuracy( sensor.getAccuracy() );
-		dbSensor.setDeviceId( sensor.getDeviceId() );
 		dbSensor.setHeightInMetres( sensor.getHeightInMetres() );
 		dbSensor.setLabel( sensor.getLabel() );
 		dbSensor.setPrecision( sensor.getPrecision() );
@@ -92,15 +93,31 @@ public class DbApiMemory implements DbAPI {
 	}
 
 	@Override
+	public Sensor getSensorFromSensorId(String sensorId) throws Exception {
+		return sensorsById.get(sensorId);
+	}
+
+	@Override
 	public List<Sensor> getSensorsFromDeviceId(String device_id) throws Exception {
+		Set<Sensor> uniqueSensors = new HashSet<Sensor>();
 		List<Sensor> sensors = new Vector<Sensor>();
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
 		
-		for(Sensor sensor : sensorsById.values()){
-			if( device_id.equals( sensor.getDeviceId() ) ){
-				sensors.add(sensor);
+		for (DeviceSensor deviceSensor : deviceSensorsById.values()){
+			if ( device_id.equals( deviceSensor.getDeviceId() ) ){
+				deviceSensors.add(deviceSensor);
+			}
+		}
+
+		for (DeviceSensor deviceSensor : deviceSensors){ // TODO: make this better than O(n^2)
+			for (Sensor sensor : sensorsById.values()){
+				if ( deviceSensor.getSensorId().equals(sensor.getId() ) ) {
+					uniqueSensors.add(sensor);
+				}
 			}
 		}
 		
+		sensors.addAll(uniqueSensors);
 		return sensors;
 	}
 
@@ -181,6 +198,26 @@ public class DbApiMemory implements DbAPI {
 	}
 
 	@Override
+	public List<DeviceSensor> getDeviceSensors() throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>( deviceSensorsById.values() );
+		
+		return deviceSensors;
+	}
+
+	@Override
+	public List<DeviceSensor> getDeviceSensorsFromDeviceId(String device_id) throws Exception {
+		List<DeviceSensor> deviceSensors = new Vector<DeviceSensor>();
+		
+		for(DeviceSensor deviceSensor : deviceSensorsById.values()){
+			if( device_id.equals(deviceSensor.getDeviceId()) ){
+				deviceSensors.add(deviceSensor);
+			}
+		}
+		
+		return deviceSensors;
+	}
+
+	@Override
 	public List<Location> getLocationsFromDeviceLocations(List<DeviceLocation> deviceLocations) throws Exception {
 		List<Location> locations = new Vector<Location>();
 		
@@ -199,6 +236,27 @@ public class DbApiMemory implements DbAPI {
 		}
 		
 		return locations;
+	}
+
+	@Override
+	public List<Sensor> getSensorsFromDeviceSensors(List<DeviceSensor> deviceSensors) throws Exception {
+		List<Sensor> sensors = new Vector<Sensor>();
+		
+		// Accumulate all sensor ids
+		Set<String> sensorIds = new HashSet<String>();
+		for(DeviceSensor deviceSensor : deviceSensors){
+			String sensorId = deviceSensor.getSensorId();
+			if( null != sensorId ){
+				sensorIds.add(sensorId);
+			}
+		}
+		
+		for(String sensorId : sensorIds){
+			Sensor sensor = getSensorFromSensorId(sensorId);
+			sensors.add(sensor);
+		}
+		
+		return sensors;
 	}
 
 	@Override
@@ -228,6 +286,21 @@ public class DbApiMemory implements DbAPI {
 		List<Location> locations = new Vector<Location>( locationsById.values() );
 		
 		return locations;
+	}
+
+	@Override
+	public DeviceSensor createDeviceSensor(DeviceSensor deviceSensor) throws Exception {
+		DeviceSensor dbDeviceSensor = new DeviceSensor();
+		
+		dbDeviceSensor.setId( getNextUUID() );
+		dbDeviceSensor.setDeviceId( deviceSensor.getDeviceId() );
+		dbDeviceSensor.setSensorId( deviceSensor.getSensorId() );
+		dbDeviceSensor.setNotes( deviceSensor.getNotes() );
+		dbDeviceSensor.setTimestamp( deviceSensor.getTimestamp() );
+		
+		deviceSensorsById.put(dbDeviceSensor.getId(), dbDeviceSensor);
+		
+		return dbDeviceSensor;
 	}
 
 	@Override
