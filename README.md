@@ -188,7 +188,7 @@ After an observation file is uploaded, a log is generated. The log contains info
  
 # Schema
 
+A simplified diagram of the database schema is presented below:
 
-![schema](https://user-images.githubusercontent.com/59845773/165125911-46cf07ab-5b29-4ea5-8b2a-4d2fd82ba33e.png)
-
+![new_schema](https://github.com/geocryology/sensorDb/assets/15223327/955ce584-b644-40a3-a0da-3538776ccf9d)
 
