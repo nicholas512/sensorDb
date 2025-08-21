@@ -3,6 +3,7 @@ package ca.carleton.gcrc.sensorDb.jdbc;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.SQLException; 
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,12 @@ import ca.carleton.gcrc.sensorDb.dbapi.DbAPI;
 public class DbConnection {
 
 	final static protected Logger logger = LoggerFactory.getLogger(DbConnection.class);
+	private final String connectionString;
+	private final String user;
+	private final String password;
 	
+	private Connection connection;
+
 	static public DbConnection fromParameters(
 			String connectionString,
 			String user,
@@ -37,7 +43,7 @@ public class DbConnection {
 				logger.warn("Database connection was stale or closed. Reconnecting...");
 				this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
 			}
-		} catch (Exception e) {
+		} catch (SQLException e) {
 			logger.error("Database connection validation failed. Reconnecting...", e);
 			// If isValid() throws an error, the connection is definitely dead.
 			this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
