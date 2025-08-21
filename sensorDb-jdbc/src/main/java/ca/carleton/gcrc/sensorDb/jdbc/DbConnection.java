@@ -19,10 +19,37 @@ public class DbConnection {
 			String password
 			) throws Exception {
 		
-		Connection con = null;
+		Connection con = createNewSqlConnection(connectionString, user, password);
+		return new DbConnection(con, connectionString, user, password);
+	}
+
+	private DbConnection(Connection connection, String connectionString, String user, String password) {
+		this.connection = connection;
+		this.connectionString = connectionString;
+		this.user = user;
+		this.password = password;
+	}
+
+	public synchronized Connection getConnection() throws Exception {
+		try {
+			// Check if the connection is dead, using a 2-second timeout.
+			if (this.connection == null || !this.connection.isValid(2)) {
+				logger.warn("Database connection was stale or closed. Reconnecting...");
+				this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
+			}
+		} catch (Exception e) {
+			logger.error("Database connection validation failed. Reconnecting...", e);
+			// If isValid() throws an error, the connection is definitely dead.
+			this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
+		}
+
+		return this.connection;
+	}
+
+	private static Connection createNewSqlConnection(String connectionString, String user, String password) throws Exception {
 		try {
 		    Class.forName("org.postgresql.Driver"); //load the driver
-			con = DriverManager.getConnection(
+			Connection con = DriverManager.getConnection(
 					"jdbc:postgresql:"+connectionString,
 					user,
 					password
@@ -30,25 +57,13 @@ public class DbConnection {
 		    DatabaseMetaData dbmd = con.getMetaData(); //get MetaData to confirm connection
 		    logger.info("Connection to "+dbmd.getDatabaseProductName()+" "+
 		                       dbmd.getDatabaseProductVersion()+" successful.\n");
-
-		} catch(Exception e) {
+			return con;
+		} catch (Exception e) {
 			throw new Exception("Couldn't get db connection: "+connectionString,e);
 		}
-		
-		return new DbConnection(con);
 	}
-	
-	private Connection connection;
-	
-	private DbConnection(Connection connection) {
-		this.connection = connection;
-	}
-	
-	public Connection getConnection(){
-		return this.connection;
-	}
-	
-	public DbAPI getAPI(){
+
+	public DbAPI getAPI() throws Exception {
 		return new DbApiJdbc(this);
 	}
 }
