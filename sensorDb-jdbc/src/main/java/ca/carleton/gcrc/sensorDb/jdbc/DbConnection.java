@@ -48,8 +48,8 @@ public class DbConnection {
 			// If isValid() throws an error, the connection is definitely dead.
 			try {
 				this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
-			} catch (Exception e) { 
-				logger.error("Failed to reconnect to the database. Returning null connection", e);
+			} catch (Exception newConnectException) { 
+				logger.error("Failed to reconnect to the database. Returning null connection", newConnectException);
 				this.connection = null;
 				}
 		}
