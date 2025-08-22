@@ -1204,7 +1204,11 @@ public class DbApiJdbc implements DbAPI {
 
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,import_time,filename,import_parameters FROM imports ORDER BY import_time DESC LIMIT 10"
+				"SELECT id,import_time,filename,import_parameters 
+				   FROM imports 
+				  WHERE import_parameters != ''
+			   ORDER BY import_time DESC 
+			      LIMIT 10"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -1215,7 +1219,15 @@ public class DbApiJdbc implements DbAPI {
 				String fileName = resultSet.getString(3);
 				String importParametersStr = resultSet.getString(4);
 				
-				JSONObject importParameters = new JSONObject(importParametersStr);
+				JSONObject importParameters;
+
+				try {
+					JSONObject importParameters = new JSONObject(importParametersStr);
+				} catch (Exception e) {
+					JSONObject importParameters = new JSONObject()
+					importParameters.put("unknown", importParametersStr);
+				}
+				
 
 				ImportRecord importRecord = new ImportRecord();
 				importRecord.setId(id);
