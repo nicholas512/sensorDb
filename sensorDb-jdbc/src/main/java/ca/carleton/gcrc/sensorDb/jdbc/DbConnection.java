@@ -74,7 +74,7 @@ public class DbConnection {
 		}
 	}
 
-	public DbAPI getAPI() throws Exception {
+	public DbAPI getAPI()  {
 		return new DbApiJdbc(this);
 	}
 }
