@@ -1218,9 +1218,9 @@ public class DbApiJdbc implements DbAPI {
 				JSONObject importParameters;
 
 				try {
-					JSONObject importParameters = new JSONObject(importParametersStr);
+					importParameters = new JSONObject(importParametersStr);
 				} catch (Exception e) {
-					JSONObject importParameters = new JSONObject();
+					importParameters = new JSONObject();
 					importParameters.put("unknown", importParametersStr);
 				}
 				
