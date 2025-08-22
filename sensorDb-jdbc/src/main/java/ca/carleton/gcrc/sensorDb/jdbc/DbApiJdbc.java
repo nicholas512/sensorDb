@@ -1206,7 +1206,6 @@ public class DbApiJdbc implements DbAPI {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
 				"SELECT id,import_time,filename,import_parameters 
 				   FROM imports 
-				  WHERE import_parameters != ''
 			   ORDER BY import_time DESC 
 			      LIMIT 10"
 			);
