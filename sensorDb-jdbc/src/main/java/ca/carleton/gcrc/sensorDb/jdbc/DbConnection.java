@@ -36,17 +36,22 @@ public class DbConnection {
 		this.password = password;
 	}
 
-	public synchronized Connection getConnection() throws Exception {
+	public synchronized Connection getConnection() {
 		try {
 			// Check if the connection is dead, using a 2-second timeout.
 			if (this.connection == null || !this.connection.isValid(2)) {
 				logger.warn("Database connection was stale or closed. Reconnecting...");
 				this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			logger.error("Database connection validation failed. Reconnecting...", e);
 			// If isValid() throws an error, the connection is definitely dead.
-			this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
+			try {
+				this.connection = createNewSqlConnection(this.connectionString, this.user, this.password);
+			} catch (Exception e) { 
+				logger.error("Failed to reconnect to the database. Returning null connection", e);
+				this.connection = null;
+				}
 		}
 
 		return this.connection;
