@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -1204,7 +1205,7 @@ public class DbApiJdbc implements DbAPI {
 
 		try {
 			PreparedStatement pstmt = dbConn.getConnection().prepareStatement(
-				"SELECT id,import_time,filename,import_parameters FROM imports ORDER BY import_time DESC LIMIT 10"
+				"SELECT id,import_time,filename,import_parameters FROM imports ORDER BY import_time DESC  LIMIT 10"
 			);
 			
 			ResultSet resultSet = pstmt.executeQuery();
@@ -1215,7 +1216,15 @@ public class DbApiJdbc implements DbAPI {
 				String fileName = resultSet.getString(3);
 				String importParametersStr = resultSet.getString(4);
 				
-				JSONObject importParameters = new JSONObject(importParametersStr);
+				JSONObject importParameters;
+
+				try {
+					importParameters = new JSONObject(importParametersStr);
+				} catch (Exception e) {
+					importParameters = new JSONObject();
+					importParameters.put("unknown", importParametersStr);
+				}
+				
 
 				ImportRecord importRecord = new ImportRecord();
 				importRecord.setId(id);
@@ -1227,6 +1236,8 @@ public class DbApiJdbc implements DbAPI {
 			}
 			
 			resultSet.close();
+
+			Collections.reverse(importRecords);  // newest first
 			
 		} catch (Exception e) {
 			throw new Exception("Error retrieving import records from database", e);
